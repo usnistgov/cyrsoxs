@@ -19,6 +19,7 @@ numThreads = 4; number of threads for execution
 numX = 2048; # number of voxels in X direction
 numY = 2048;# number of voxels in Y direction
 numZ = 1;# number of voxels in Z direction
+physSize = 5.0; #Physical size
 ``` 
 
 This code also generate the optical constants for each Energy level
