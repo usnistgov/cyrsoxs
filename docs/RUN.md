@@ -70,5 +70,5 @@ Copy all the generated files to a directory. In order to run Cy-RSOXS you need t
 from the directory.
 
 ```
-./Cy-RSoXS $(PATH_TO_CY-RSoXS_BUILD_DIR) $(PATH_TO_HDF5_FILE)
+./$(PATH_TO_CY-RSoXS_BUILD_DIR)/Cy-RSoXS  $(PATH_TO_HDF5_FILE)
 ```
