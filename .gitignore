@@ -1,0 +1,14 @@
+build/
+cmake-build-*/
+.idea/
+
+# run-generated files
+*.dat
+*.vtu
+*.pvtu
+ic_*.vtk
+timestep_*.vtk
+IO/*.vti
+*.pyc
+__pycache__
+
