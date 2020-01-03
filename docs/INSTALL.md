@@ -38,6 +38,7 @@ wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.5/src/CM
 tar - xzvf CMake-hdf5-1.10.5.tar.gz
 ./build-unix.sh
 ```
+This step might take some time. Do not cancel until all the tests have passed.
 This step will create a cmake files in location `$HFD5_DIR/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5`
 
 
