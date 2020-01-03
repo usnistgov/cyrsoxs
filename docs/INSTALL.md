@@ -41,8 +41,20 @@ tar - xzvf CMake-hdf5-1.10.5.tar.gz
 This step will create a cmake files in location `$HFD5_DIR/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5`
 
 
-Compiling Cy-RSoXS Cmake Options
-================================
+Building Cy-RSoXS 
+==================
+
+**Downloading Cy-RSoXS**
+
+You can download Cy-RSoXS by cloning into the repository
+
+```bash
+git clone https://bitbucket.org/baskargroup/cy-rsoxs.git
+```
+
+It will ask for your username and password.
+
+**Cmake options**
 
 One should have a valid C/C++ compiler and CUDA-toolkit in addition to above modules installed to 
 compile Cy-RSoXS.
