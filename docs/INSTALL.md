@@ -63,7 +63,7 @@ compile Cy-RSoXS.
 cd $Cy-RSoXS_DIR
 mkdir build; 
 cd build;
-cmake .. -DCMAKE_BUILD_TYPE=Release -DHDF5_DIR=$HFD5_DIR/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5 -DDLEVEL2=Yes -DNUM_MATERIALS=4 
+cmake .. -DCMAKE_BUILD_TYPE=Release -DHDF5_DIR=$HFD5_DIR/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5 -DDLEVEL2=Yes -DNUM_MATERIAL=4 
 ```
 
 **Compiling with intel compiler**
