@@ -183,9 +183,9 @@ __global__ void computeScatter3D(const Complex *polarizationX,
   q.z = 0;
 #else
   if (Z <= midZ) {
-    q.z = static_cast<Real>((-M_PI / PHYSSIZE) + (midZ - Z) * dx.z);
+    q.z = static_cast<Real>((-M_PI / physSize) + (midZ - Z) * dx.z);
   } else {
-    q.z = static_cast<Real>((M_PI / PHYSSIZE) - (Z - (midZ + 1)) * dx.z);
+    q.z = static_cast<Real>((M_PI / physSize) - (Z - (midZ + 1)) * dx.z);
   }
 #endif
 
@@ -292,7 +292,7 @@ __global__ void computeEwaldProjectionGPU(Real *projection, const Real *scatter3
 #if (ENABLE_2D)
   dx.z = 0;
 #else
-  dx.z = static_cast<Real>((2.0 * M_PI / PHYSSIZE) / ((voxel.z - 1) * 1.0));
+  dx.z = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.z - 1) * 1.0));
 #endif
   UINT Y = static_cast<UINT>(floorf(threadID) / (voxel.x * 1.0));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x);
