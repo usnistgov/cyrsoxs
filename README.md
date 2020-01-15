@@ -18,9 +18,17 @@ Dependencies
 
 #### Optional Dependencies
 * Doxygen
+* Docker
 
-Installation Instruction
-========================
+Running Cy-RSoXS with docker
+============================
+
+The docker for Cy-RSoXS is available at [Docker Hub](https://hub.docker.com/repository/docker/maksbh/cy-rsoxs/general).
+See [docs/DOCKER.md](docs/DOCKER.md) for detailed instructions on how to build Cy-RSoXS with the docker image.
+
+
+Installation Instruction without Docker
+======================================
 See [docs/INSTALL.md](docs/INSTALL.md) for detailed instructions on how to build Cy-RSoXS and its dependencies.
 
 See [docs/RUN.md](docs/RUN.md) for detailed instructions on how to run Cy-RSoXS.
