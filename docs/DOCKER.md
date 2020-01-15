@@ -26,7 +26,7 @@ REPOSITORY          TAG                 IMAGE ID            CREATED             
 maksbh/cy-rsoxs     latest              655455b309d5        17 minutes ago      4.77GB
 ```
 
-Running Cy-RSoXS
+Installing Cy-RSoXS
 ====================
 
 First you need to run the docker interactively:

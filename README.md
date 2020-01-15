@@ -32,6 +32,8 @@ Installation Instruction without Docker
 ======================================
 See [docs/INSTALL.md](docs/INSTALL.md) for detailed instructions on how to build Cy-RSoXS and its dependencies.
 
+Running Cy-RSoXS
+================
 See [docs/RUN.md](docs/RUN.md) for detailed instructions on how to run Cy-RSoXS.
 
 
