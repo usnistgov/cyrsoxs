@@ -66,9 +66,16 @@ Once the script has successfully completed, it will generate the files `config.t
  
 Running RSoXS
 =============
- 
-Copy all the generated files to a directory. In order to run Cy-RSOXS you need to execute the following command
-from the directory.
+
+Copy all the generated files to run directory.
+
+In the run directory, please make sure to make a directory named `Projection`.
+All the final output will be written to this directory. If this directory is not available,
+the code might throw an error or Segmentation Fault.
+
+
+ In order to run Cy-RSOXS you need to execute the following command
+from the run directory.
 
 ```
 ./$(PATH_TO_CY-RSoXS_BUILD_DIR)/Cy-RSoXS  $(PATH_TO_HDF5_FILE)
