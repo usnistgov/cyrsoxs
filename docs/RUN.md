@@ -69,14 +69,13 @@ Running RSoXS
 
 Copy all the generated files to run directory.
 
-In the run directory, please make sure to make a directory named `Projection`.
-All the final output will be written to this directory. If this directory is not available,
-the code might throw an error or Segmentation Fault.
-
-
  In order to run Cy-RSOXS you need to execute the following command
 from the run directory.
 
 ```
 ./$(PATH_TO_CY-RSoXS_BUILD_DIR)/Cy-RSoXS  $(PATH_TO_HDF5_FILE)
 ```
+
+The output will be generated in the folder named `Projection`that will be
+created in the run directory. The output are generated in `.vti` format which
+can be visualized using [Paraview](https://www.paraview.org/) or [Visit](https://wci.llnl.gov/simulation/computer-codes/visit/).

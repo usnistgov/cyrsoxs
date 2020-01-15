@@ -28,6 +28,15 @@ int warmup(){
 }
 
 
+void createDirectory(const std::string dirName){
+
+  int ierr = mkdir(dirName.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  if (ierr != 0 && errno != EEXIST) {
+    std::cout  << "Could not create folder for storing results (" <<  strerror(errno) << "\n";
+    exit(EXIT_FAILURE);
+  }
+}
+
 __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     const Voxel<NUM_MATERIAL> *voxelInput,
                                     const ElectricField elefield,
@@ -126,6 +135,7 @@ int cudaMain(const UINT *voxel,
 
 #endif
 #ifdef DLEVEL2
+  createDirectory("Projection");
   Real *projectionGPUAveraged = new Real[numEnergyLevel * voxel[0] * voxel[1]];
 #endif
 

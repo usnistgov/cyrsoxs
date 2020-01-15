@@ -31,6 +31,12 @@
 #include <iostream>
 #include <vector>
 #include <Input/InputData.h>
+#include <sys/types.h>
+#include <string>
+#include <errno.h> //Allows use of error numbers
+#include <fcntl.h> //Specified in man 2 open
+#include <stdio.h>
+#include <sys/stat.h>
 
 /**
  * @brief calls for the cuda kernel are made through this function.
@@ -72,3 +78,9 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     Complex *polarizationY,
                                     Complex *polarizationZ
 );
+
+/**
+ * @brief Creates the directory.
+ * @param dirname The name of the directory
+ */
+void createDirectory(const std::string dirname);
