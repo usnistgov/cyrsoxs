@@ -24,6 +24,7 @@ Running Cy-RSoXS with docker
 ============================
 
 The docker for Cy-RSoXS is available at [Docker Hub](https://hub.docker.com/repository/docker/maksbh/cy-rsoxs/general).
+This comes installed with nvidia toolkit and other dependencies.
 See [docs/DOCKER.md](docs/DOCKER.md) for detailed instructions on how to build Cy-RSoXS with the docker image.
 
 

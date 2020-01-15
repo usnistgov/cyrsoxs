@@ -38,6 +38,24 @@ Then run the following command:
 ```
 cd; ./configure;
 ```
+Note that you might need to change the configure file. Here are the contents of configuration file:
+
+```
+#clone the git repository
+git clone https://bitbucket.org/baskargroup/cy-rsoxs.git
+
+# Go into the directory
+cd cy-rsoxs;
+
+mkdir build; cd build;
+
+#Cmake option.Might need to change that.
+cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_BUILD_TYPE=Release -DHDF5_DIR=/root/Dependencies/CMake-hdf5-1.10.5/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5 -DDLEVEL2=Yes -DNUM_MATERIAL=4
+
+#Make the executable
+make
+```
+
 
 It will ask for your bitbucket username and password. The code will automatically compile and you can run.
 
