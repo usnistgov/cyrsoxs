@@ -38,6 +38,9 @@ Then run the following command:
 ```
 cd; ./configure;
 ```
+
+It will ask for your bitbucket username and password. The code will automatically compile and you can run.
+
 Note that you might need to change the configure file. Here are the contents of configuration file:
 
 ```
@@ -57,7 +60,6 @@ make
 ```
 
 
-It will ask for your bitbucket username and password. The code will automatically compile and you can run.
 
 Contributors
 ============
