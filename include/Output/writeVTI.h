@@ -406,7 +406,7 @@ void writeVariableHeaderScalar(FILE * fp, const char * var_name, const bool isCo
     fprintf(fp," <DataArray type=\"Float32\" Name=\"%s \" NumberOfComponents=\"2\" format=\"binary\">\n",var_name);
 #else
 
-    out << " <DataArray type=\"Float32\" Name=\"" << var_name << "\" NumberOfComponents=\"2\" format=\"ascii\">" << std::endl;
+    fprintf(fp," <DataArray type=\"Float32\" Name=\"%s \" NumberOfComponents=\"2\" format=\"ascii\">\n",var_name);
 #endif
   }
 
@@ -416,7 +416,7 @@ void writeVariableHeaderScalar(FILE * fp, const char * var_name, const bool isCo
 #if VTI_BINARY
     fprintf(fp,"<DataArray type=\"Float32\" Name=\"%s\" format=\"binary\">\n",var_name);
 #else
-    out << " <DataArray type=\"Float32\" Name=\"" << var_name << "\" format=\"ascii\">" << std::endl;
+    fprintf(fp,"<DataArray type=\"Float32\" Name=\"%s\" format=\"ascii\">\n",var_name);
 #endif
 
   }
@@ -503,7 +503,7 @@ void writeVoxelDataScalar(const Voxel<NUM_MATERIAL> *data,
     vtk_write_binary(fout, (char *) scalardata, sizeof(Real) * totalSize);
 #else
     for(int i = 0; i < totalSize; i++){
-      fout  <<   data[i].phi_unaligned[numMat] << " ";
+      fout  <<   data[i].s1[numMat].w << " ";
     }
 #endif
     writeVariableFooter(fout);
@@ -703,7 +703,7 @@ void writeDataScalar2DFP(Real * data,const UINT *voxelSize,
   }
 #else
   for(int i = 0; i < totalSize; i++){
-    fout << data[i]<< " "  << " ";
+    fprintf(fp,"%f ", data[i]);
   }
 #endif
   writeVariableFooter(fp);
@@ -714,15 +714,6 @@ void writeDataScalar2DFP(Real * data,const UINT *voxelSize,
 #ifdef  PROFILING
   std::chrono::high_resolution_clock::time_point fileTimerEnd =std::chrono::high_resolution_clock::now();
   std::chrono::duration<double, std::milli> time_span = fileTimerEnd - fileTimerStart;
-  if(omp_get_thread_num() == 0) {
-    std::cout << "[File TIMER]: Time for total file Writing [C] " << time_span.count() << "\n";
-    time_span = fileTimerOpen - fileTimerStart;
-    std::cout << "[File TIMER]: Time for file opening [C] " << time_span.count() << "\n";
-    time_span = fileTimerCompression - fileTimerOpen;
-    std::cout << "[File TIMER]: Time for compression [C] " << time_span.count() << "\n";
-    time_span = fileTimerEnd - fileTimerCompression;
-    std::cout << "[File TIMER]: Time for file closing [C] " << time_span.count() << "\n";
-  }
 #endif
 }
 
