@@ -117,16 +117,20 @@ int cudaMain(const UINT *voxel,
 
 #ifdef DUMP_FILES
 
+  createDirectory("Polarize");
+  createDirectory("FFT");
+  createDirectory("Scatter");
+
   /** Writing VTI files as a cross check **/
 
-#if (NUM_COMPONENT==2)
+#if (NUM_MATERIAL==2)
   const char * varnameVector[2] = {"material1_s1","material2_s1"};
-#elif (NUM_COMPONENT==4)
+#elif (NUM_MATERIAL==4)
   const char * varnameVector[4] = {"material1_s","material2_s","material3_s","material4_s"};
 #endif
-#if (NUM_COMPONENT==2)
+#if (NUM_MATERIAL==2)
   const char * varnameScalar[2] = {"phi0","phi1"};
-#elif (NUM_COMPONENT==4)
+#elif (NUM_MATERIAL==4)
   const char * varnameScalar[4] = {"phi0","phi1", "phi2", "phi3"};
 #endif
 
@@ -398,6 +402,16 @@ int cudaMain(const UINT *voxel,
         cudaThreadSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
+#ifdef DUMP_FILES
+        CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaPeekAtLastError())
+        {
+          std::string dirname = "Scatter/";
+          std::string fname = dirname + "scatter" + std::to_string(i);
+          VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
+        }
+
+#endif
 
 #ifdef PROFILING
         {
@@ -471,14 +485,7 @@ int cudaMain(const UINT *voxel,
 #endif
 #endif
 
-#ifdef DUMP_FILES
-        {
-          std::string dirname = "Scatter/";
-          std::string fname = dirname + "scatter" + std::to_string(i);
-          VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
-        }
 
-#endif
 
 #ifdef PROFILING
         {
