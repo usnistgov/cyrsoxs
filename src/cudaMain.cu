@@ -67,8 +67,11 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
   Real3 hanningWeight;
   hanningWeight.x = 0.5*(1 - cos(2*M_PI*X/(voxel.x)));
   hanningWeight.y = 0.5*(1 - cos(2*M_PI*Y/(voxel.y)));
+#ifdef ENABLE_2D
+  hanningWeight.z = 1.0;
+#else
   hanningWeight.z = 0.5*(1 - cos(2*M_PI*Z/(voxel.z)));
-
+#endif
   Real totalHanningWeight =hanningWeight.x * hanningWeight.y * hanningWeight.z;
   polarizationX[threadID].x *= totalHanningWeight;   polarizationX[threadID].y *= totalHanningWeight;
   polarizationY[threadID].x *= totalHanningWeight;   polarizationY[threadID].y *= totalHanningWeight;
