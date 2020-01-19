@@ -41,12 +41,13 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     const Voxel<NUM_MATERIAL> *voxelInput,
                                     const ElectricField elefield,
                                     const Real angle,
-                                    const BigUINT voxelNum,
+                                    const uint3 voxel,
                                     Complex *polarizationX,
                                     Complex *polarizationY,
                                     Complex *polarizationZ
 ) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  const UINT voxelNum = voxel.x*voxel.y*voxel.z;
 
   if (threadID >= voxelNum) {
     return;
@@ -56,6 +57,23 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
     computePolarizationUniaxial(&materialInput,angle,voxelInput,threadID,polarizationX,polarizationY,polarizationZ);
 #else
     printf("Kernel not spported\n");
+#endif
+
+
+#ifdef HANNING
+  UINT Z = static_cast<UINT>(floorf(threadID / (voxel.y * voxel.x * 1.0)));
+  UINT Y = static_cast<UINT>(floorf((threadID - Z * voxel.y * voxel.x) / voxel.x * 1.0));
+  UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
+  Real3 hanningWeight;
+  hanningWeight.x = 0.5*(1 - cos(2*M_PI*X/(voxel.x)));
+  hanningWeight.y = 0.5*(1 - cos(2*M_PI*Y/(voxel.y)));
+  hanningWeight.z = 0.5*(1 - cos(2*M_PI*Z/(voxel.z)));
+
+  Real totalHanningWeight =hanningWeight.x * hanningWeight.y * hanningWeight.z;
+  polarizationX[threadID].x *= totalHanningWeight;   polarizationX[threadID].y *= totalHanningWeight;
+  polarizationY[threadID].x *= totalHanningWeight;   polarizationY[threadID].y *= totalHanningWeight;
+  polarizationZ[threadID].x *= totalHanningWeight;   polarizationZ[threadID].y *= totalHanningWeight;
+
 #endif
 
 }
@@ -299,7 +317,7 @@ int cudaMain(const UINT *voxel,
 #endif
 
         computePolarization << < BlockSize, NUM_THREADS >>
-            > (materialInput[j], d_voxelInput, eleField, angle, voxelSize, d_polarizationX, d_polarizationY, d_polarizationZ);
+            > (materialInput[j], d_voxelInput, eleField, angle, vx, d_polarizationX, d_polarizationY, d_polarizationZ);
 
         gpuErrchk(cudaPeekAtLastError());
         cudaThreadSynchronize();
