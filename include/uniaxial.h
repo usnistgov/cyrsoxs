@@ -190,23 +190,26 @@ __global__ void computeScatter3D(const Complex *polarizationX,
 #endif
 
   Complex val;
+  Real res;
  // q.z <-> q.x from original Igor code
   val.x = q.z * (2 * elefield.k.z + q.z) * pX.x
       + q.y * (elefield.k.z + q.z) * pY.x + q.x * (elefield.k.z + q.z) * pZ.x;
   val.y = q.z * (2 * elefield.k.z + q.z) * pX.y
       + q.y * (elefield.k.z + q.z) * pY.y + q.x * (elefield.k.z + q.z) * pZ.y;
+  res = val.x * val.x + val.y * val.y;
 
-  val.x += q.y * (elefield.k.z + q.z) * pX.x
+  val.x = q.y * (elefield.k.z + q.z) * pX.x
       + (q.y * q.y - elefield.k.z * elefield.k.z) * pY.x + q.y * q.x * pZ.x;
-  val.y += q.y * (elefield.k.z + q.z) * pX.y
+  val.y = q.y * (elefield.k.z + q.z) * pX.y
       + (q.y * q.y - elefield.k.z * elefield.k.z) * pY.y + q.y * q.x * pZ.y;
+  res += val.x * val.x + val.y * val.y;
 
-  val.x += q.x * (elefield.k.z + q.z) * pX.x + (q.y * q.x) * pY.x
+  val.x = q.x * (elefield.k.z + q.z) * pX.x + (q.y * q.x) * pY.x
       + (q.x * q.x - elefield.k.z * elefield.k.z) * pZ.x;
-  val.y += q.x * (elefield.k.z + q.z) * pX.y + (q.y * q.x) * pY.y
+  val.y = q.x * (elefield.k.z + q.z) * pX.y + (q.y * q.x) * pY.y
       + (q.x * q.x - elefield.k.z * elefield.k.z) * pZ.y;
 
-  Real res = val.x * val.x + val.y * val.y;
+  res += val.x * val.x + val.y * val.y;
   Scatter3D[threadID] = res;
 
 }
