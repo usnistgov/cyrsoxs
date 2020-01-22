@@ -91,11 +91,16 @@ If you are running the case with 1 element in the thickness direction
 
 
 Optional Cmake Flags can be added:
+**For enabling Hanning window**
+```bash
+-DHANNING=Yes
+```
 
 **For profiling**
 ```bash
 -DPROFILING=Yes
 ```
+
 **For ASCII writing of output files (This is slow as compared to BINARY)**
 ```bash
 -DVTI_BINARY=No
