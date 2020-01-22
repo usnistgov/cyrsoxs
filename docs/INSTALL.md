@@ -91,6 +91,7 @@ If you are running the case with 1 element in the thickness direction
 
 
 Optional Cmake Flags can be added:
+
 **For enabling Hanning window**
 ```bash
 -DHANNING=Yes
