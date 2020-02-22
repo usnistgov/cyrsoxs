@@ -73,6 +73,7 @@ else ()
 endif ()
 
 
+
 find_package(CUDA 9 REQUIRED)
 find_package(OpenMP REQUIRED)
 
@@ -104,6 +105,7 @@ set(CUDAINCLUDE
         include/Output/writeVTI.h
         include/Output/cencode.h
         include/Input/InputData.h
+        include/Output/writeH5.h
         )
 
 

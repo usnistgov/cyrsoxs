@@ -74,6 +74,8 @@ class InputData {
   UINT numZ;
   /// Physical Size
   Real physSize;
+  /// Write HDF5 file
+  bool writeHDF5 = true;
 
 
   /**
@@ -84,7 +86,6 @@ class InputData {
   InputData(std::vector<Material<NUM_MATERIAL> > &materialInput, std::string filename = "config.txt") {
     libconfig::Config cfg;
     cfg.readFile(filename.c_str());
-
     ReadValueRequired(cfg, "StartEnergy", energyStart);
     ReadValueRequired(cfg, "EndEnergy", energyEnd);
     ReadValueRequired(cfg, "IncrementEnergy", incrementEnergy);

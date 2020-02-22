@@ -84,6 +84,7 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 int cudaMain(const UINT *voxel,
              const InputData &idata,
              const std::vector<Material<NUM_MATERIAL> > &materialInput,
+             Real *& projectionGPUAveraged,
              const Voxel<NUM_MATERIAL> *voxelInput) {
 
   const BigUINT voxelSize = voxel[0] * voxel[1] * voxel[2]; /// Voxel size
@@ -161,7 +162,7 @@ int cudaMain(const UINT *voxel,
 #endif
 #ifdef DLEVEL2
   createDirectory("Projection");
-  Real *projectionGPUAveraged = new Real[numEnergyLevel * voxel[0] * voxel[1]];
+  projectionGPUAveraged = new Real[numEnergyLevel * voxel[0] * voxel[1]];
 #endif
 
   omp_set_num_threads(num_gpu);
@@ -622,6 +623,7 @@ int cudaMain(const UINT *voxel,
 #endif
   omp_set_num_threads(idata.num_threads);
   dump_files2D(projectionGPUAveraged,numEnergyLevel,voxel);
+
 #ifdef PROFILING
   {
     tDumpLevel2End = std::chrono::high_resolution_clock::now();
@@ -666,7 +668,7 @@ int cudaMain(const UINT *voxel,
   delete[] projectionGPU;
 #endif
 #ifdef DLEVEL2
-  delete[] projectionGPUAveraged;
+//  delete[] projectionGPUAveraged;
 #endif
 
 #endif

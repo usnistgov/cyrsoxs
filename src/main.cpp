@@ -72,7 +72,8 @@
 #include <Input/readH5.h>
 #include <cstdlib>
 #include <Input/InputData.h>
-
+#include <Output/writeH5.h>
+#include <cstring>
 
 /**
  * *
@@ -87,8 +88,28 @@ int main(int argc, char **argv) {
   std::string fname = argv[1];
   Voxel<NUM_MATERIAL> * voxelData;
   H5::readFile(fname,voxelSize,voxelData);
+  Real * projectionGPUAveraged;
+  cudaMain(voxelSize,inputData,materialInput,projectionGPUAveraged,voxelData);
 
-  cudaMain(voxelSize,inputData,materialInput,voxelData);
+
+  if(inputData.writeHDF5) {
+    createDirectory("HDF5");
+    const UINT
+        numEnergyLevel =
+        static_cast<UINT>(std::round((inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
+    const UINT voxel2DSize = voxelSize[0] * voxelSize[1];
+
+    Real *oneEnergyData = new Real[voxel2DSize];
+    for (UINT i = 0; i < numEnergyLevel; i++) {
+      std::memcpy(oneEnergyData, &projectionGPUAveraged[i * voxel2DSize], sizeof(Real) * voxel2DSize);
+      Real energy = inputData.energyStart + i * inputData.incrementEnergy;
+      const std::string fname = "Energy_" + std::to_string(energy);
+
+      H5::writeFile2D(fname, oneEnergyData, voxelSize);
+    }
+    delete[] oneEnergyData;
+  }
+
 
   return EXIT_SUCCESS;
 
