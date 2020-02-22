@@ -93,6 +93,21 @@ int main(int argc, char **argv) {
   Real * projectionGPUAveraged;
   cudaMain(voxelSize,inputData,materialInput,projectionGPUAveraged,voxelData);
 
+  std::fstream file("metadata.txt");
+  file << "---------------- Scaling Information--------------\n";
+  file << "Number of pixel = [" << inputData.numX << "," << inputData.numY << "]\n";
+  file << "Q range  = [" << -M_PI/inputData.physSize << "," << M_PI/inputData.physSize << "]\n";
+  file << "Electric field rotated through = [" << inputData.startAngle << "," << inputData.endAngle << "]\n";
+  file << "Increments in electric field rotation " << inputData.incrementEnergy << "\n";
+  file << "\n\n";
+  file << "-----------------Morphology information-----------------\n";
+  file << "Data set name = " << fname << "\n";
+  file << "\n\n";
+  file << "-----------------Simulation information -----------------\n";
+  file << "Number of materials =" << NUM_MATERIAL << "\n";
+  file << "Energies simulated from " << inputData.energyStart << " to " << inputData.energyEnd << " with increment of " << inputData.incrementEnergy << "\n";
+  file.close();
+
 
   if(inputData.writeHDF5) {
     createDirectory("HDF5");
