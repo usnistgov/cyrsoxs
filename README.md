@@ -36,6 +36,9 @@ Running Cy-RSoXS
 ================
 See [docs/RUN.md](docs/RUN.md) for detailed instructions on how to run Cy-RSoXS.
 
+Visualization
+==============
+See [docs/Visualiztion.md](docs/Visualization.md) for detailed instructions on how to visualize the output of Cy-RSoXS.
 
 Contributors
 ============
