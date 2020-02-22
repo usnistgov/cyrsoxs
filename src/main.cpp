@@ -74,6 +74,8 @@
 #include <Input/InputData.h>
 #include <Output/writeH5.h>
 #include <cstring>
+#include <omp.h>
+#include <iomanip>
 
 /**
  * *
@@ -94,20 +96,31 @@ int main(int argc, char **argv) {
 
   if(inputData.writeHDF5) {
     createDirectory("HDF5");
-    const UINT
-        numEnergyLevel =
-        static_cast<UINT>(std::round((inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
-    const UINT voxel2DSize = voxelSize[0] * voxelSize[1];
+    omp_set_num_threads(inputData.num_threads);
 
-    Real *oneEnergyData = new Real[voxel2DSize];
-    for (UINT i = 0; i < numEnergyLevel; i++) {
-      std::memcpy(oneEnergyData, &projectionGPUAveraged[i * voxel2DSize], sizeof(Real) * voxel2DSize);
-      Real energy = inputData.energyStart + i * inputData.incrementEnergy;
-      const std::string fname = "Energy_" + std::to_string(energy);
+#pragma omp parallel
+    {
+      const UINT
+          numEnergyLevel =
+          static_cast<UINT>(std::round((inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
+      const UINT voxel2DSize = voxelSize[0] * voxelSize[1];
+      Real *oneEnergyData = new Real[voxel2DSize];
+      UINT chunkSize = static_cast<UINT>(std::ceil(numEnergyLevel *1.0/ (omp_get_num_threads()*1.0)));
+      UINT threadID = omp_get_thread_num();
+      UINT startID = threadID * chunkSize;
+      UINT endID = ((threadID + 1) * chunkSize);
 
-      H5::writeFile2D(fname, oneEnergyData, voxelSize);
+      for (UINT csize = startID; csize < std::min(endID, numEnergyLevel); csize++) {std::stringstream stream;
+        Real energy = inputData.energyStart + csize * inputData.incrementEnergy;
+        stream << std::fixed << std::setprecision(2) << energy;
+        std::string s = stream.str();
+        std::memcpy(oneEnergyData, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
+        const std::string fname = "HDF5/Energy_" + s;
+
+        H5::writeFile2D(fname, oneEnergyData, voxelSize);
+      }
+      delete[] oneEnergyData;
     }
-    delete[] oneEnergyData;
   }
 
 

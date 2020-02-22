@@ -161,7 +161,7 @@ int cudaMain(const UINT *voxel,
 
 #endif
 #ifdef DLEVEL2
-  createDirectory("Projection");
+  createDirectory("VTI");
   projectionGPUAveraged = new Real[numEnergyLevel * voxel[0] * voxel[1]];
 #endif
 

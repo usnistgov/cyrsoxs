@@ -467,7 +467,7 @@ __host__ void dump_files2D(const Real * data, const UINT numData,const UINT  * e
 
         std::memcpy(projectionLocal, &data[csize * totalSize], sizeof(Real) * totalSize);
 
-        std::string dirname = "Projection/";
+        std::string dirname = "VTI/";
         std::string fnameFP = dirname + "projectionAverage" + std::to_string(csize);
         VTI::writeDataScalar2DFP(projectionLocal, eachDataSize, fnameFP.c_str(), "projection");
 
