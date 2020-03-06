@@ -112,6 +112,7 @@ class InputData {
     }
 #endif
     UINT numEnergy = std::round((energyEnd - energyStart) / incrementEnergy + 1);
+
     materialInput.resize(numEnergy);
 
     for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
@@ -120,9 +121,11 @@ class InputData {
       for (int i = 0; i < numEnergy; i++) {
         const auto &global = cfg.getRoot()["EnergyData" + std::to_string(i)];
         Real energy = global["Energy"];
-        Real diff = fabs(energy - (energyStart + i * incrementEnergy));
+        Real currEnergy = (energyStart + i * incrementEnergy);
+        Real diff = fabs(energy - currEnergy);
+
         if (diff > 1E-3) {
-          std::cout << "[Input Error] No energy found for" << energy << "\n";
+          std::cout << "[Input Error] No energy found for " << currEnergy << "\n";
           exit(EXIT_FAILURE);
         }
 

@@ -158,7 +158,6 @@ int cudaMain(const UINT *voxel,
 
   VTI::writeVoxelDataVector(voxelInput, voxel, "S1", varnameVector);
   VTI::writeVoxelDataScalar(voxelInput, voxel, "Phi", varnameScalar);
-
 #endif
 #ifdef DLEVEL2
   createDirectory("VTI");
@@ -313,7 +312,7 @@ int cudaMain(const UINT *voxel,
       eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
       Real angle;
       for (int i = 0; i < numAnglesRotation; i++) {
-        angle = static_cast<Real>(i * M_PI / 180.0);
+        angle = static_cast<Real>((idata.startAngle + i) * M_PI / 180.0);
 #ifdef PROFILING
         {
           t3 = std::chrono::high_resolution_clock::now();

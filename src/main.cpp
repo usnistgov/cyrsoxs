@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
   Real * projectionGPUAveraged;
   cudaMain(voxelSize,inputData,materialInput,projectionGPUAveraged,voxelData);
 
-  std::fstream file("metadata.txt");
+  std::ofstream file("metadata.txt");
   file << "---------------- Scaling Information--------------\n";
   file << "Number of pixel = [" << inputData.numX << "," << inputData.numY << "]\n";
   file << "Q range  = [" << -M_PI/inputData.physSize << "," << M_PI/inputData.physSize << "]\n";

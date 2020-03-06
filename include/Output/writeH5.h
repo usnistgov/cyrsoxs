@@ -23,6 +23,7 @@ void writeFile2D(const std::string fname, const Real *data, const UINT *dim) {
   H5::DataSet dataset = file->createDataSet("projection", H5::PredType::NATIVE_FLOAT, dataspace);
 
   dataset.write(data, H5::PredType::NATIVE_FLOAT);
+  dataset.close();
   delete file;
 
 }
