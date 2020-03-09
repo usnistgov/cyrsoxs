@@ -111,7 +111,7 @@ int main(int argc, char **argv) {
 
   if(inputData.writeHDF5) {
     createDirectory("HDF5");
-    omp_set_num_threads(inputData.num_threads);
+    omp_set_num_threads(1);
 
 #pragma omp parallel
     {
