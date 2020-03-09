@@ -125,7 +125,8 @@ int main(int argc, char **argv) {
       UINT startID = threadID * chunkSize;
       UINT endID = ((threadID + 1) * chunkSize);
 
-      for (UINT csize = startID; csize < std::min(endID, numEnergyLevel); csize++) {std::stringstream stream;
+      for (UINT csize = startID; csize < std::min(endID, numEnergyLevel); csize++) {
+        std::stringstream stream;
         Real energy = inputData.energyStart + csize * inputData.incrementEnergy;
         stream << std::fixed << std::setprecision(2) << energy;
         std::string s = stream.str();
@@ -137,6 +138,7 @@ int main(int argc, char **argv) {
       delete[] oneEnergyData;
     }
   }
+  delete[] voxelData;
 
 
   return EXIT_SUCCESS;
