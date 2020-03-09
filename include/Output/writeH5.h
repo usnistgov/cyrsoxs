@@ -16,15 +16,28 @@ namespace H5 {
 void writeFile2D(const std::string fname, const Real *data, const UINT *dim) {
   const std::string filename =fname+".h5";
   H5::H5File file(filename.c_str(), H5F_ACC_TRUNC);
+  try{
   const int RANK = 2;
   const hsize_t dims[2]{dim[0], dim[1]};
 
   H5::DataSpace dataspace(RANK, dims);
   H5::DataSet dataset = file.createDataSet("projection", H5::PredType::NATIVE_FLOAT, dataspace);
-
   dataset.write(data, H5::PredType::NATIVE_FLOAT);
   dataset.close();
+  }
+  catch(H5::FileIException error) {
+    error.printErrorStack();
+  }
+  catch(H5::DataSetIException error)
+  {
+    error.printErrorStack();
 
+  }
+  catch(H5::DataSpaceIException error)
+  {
+    error.printErrorStack();
+
+  }
 }
 }
 #endif //CY_RSOXS_WRITEH5_H
