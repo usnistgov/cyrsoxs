@@ -29,7 +29,7 @@ unaligned_fraction = np.zeros(((num_materials,size)),dtype = np.float32)
 
 ## TODO: Edit enteries of volume fractions.
 for i in range(0,num_materials):
-    volume_fraction[i,:] = 0
+    volume_fraction[i,:] = 1
 
 
 ## TODO: Edit enteries of alignment vectors.
