@@ -38,9 +38,9 @@
 namespace H5 {
 
 inline const UINT getNumMaterial(const H5::H5File &file) {
-  float numMaterial;
+  int numMaterial;
   DataSet dataSet = file.openDataSet("igor_parameters/igormaterialnum");
-  dataSet.read(&numMaterial, PredType::NATIVE_FLOAT);
+  dataSet.read(&numMaterial, PredType::NATIVE_INT32);
   std::cout << "Number of material = " << numMaterial << "\n";
   assert(numMaterial == NUM_MATERIAL);
 

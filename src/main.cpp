@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
     }
   }
   delete[] voxelData;
-
+  std::cout << "Complete. Exiting \n";
 
   return EXIT_SUCCESS;
 
