@@ -12,13 +12,13 @@ Dependencies
 * A C++ compiler with C++11 support is required. We aim for compatibility with gcc and icc (Intel C++ compiler).
 * Nvidia - CUDA
 * Cuda Toolkit
-* OpenCV
 * libconfig
 * OpenMP
 
 #### Optional Dependencies
 * Doxygen
 * Docker
+* OpenCV
 
 Running Cy-RSoXS with docker
 ============================
