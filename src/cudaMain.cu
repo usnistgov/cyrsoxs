@@ -484,20 +484,20 @@ int cudaMain(const UINT *voxel,
         cudaThreadSynchronize();
         const double alpha = cos(angle);
         const double beta = sin(angle);
-
+        /**https://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html?highlight=warpaffine**/
         const double coeffs[2][3]{
-            alpha, beta, static_cast<Real>(((1 - alpha) * voxel[0] / 2 - beta * voxel[0] / 2.)),
-            -beta, alpha, static_cast<Real>(beta * voxel[0] / 2. + (1 - alpha) * voxel[0] / 2.)
+            alpha, beta, static_cast<Real>(((1 - alpha) * voxel[0] / 2 - beta * voxel[1] / 2.)),
+            -beta, alpha, static_cast<Real>(beta * voxel[0] / 2. + (1 - alpha) * voxel[1] / 2.)
         };
 
         cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
 
         NppStatus status = nppiWarpAffine_32f_C1R(d_projection,
                                                   sizeImage,
-                                                  voxel[0] * sizeof(Real),
+                                                  voxel[1] * sizeof(Real),
                                                   rect,
                                                   d_rotProjection,
-                                                  voxel[0] * sizeof(Real),
+                                                  voxel[1] * sizeof(Real),
                                                   rect,
                                                   coeffs,
                                                   NPPI_INTER_LINEAR);
