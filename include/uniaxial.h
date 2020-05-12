@@ -340,7 +340,14 @@ __host__ __device__ BigUINT computeEquivalentID(const Real3 pos,
 //    index.z = (voxel.z - 1) - (k - mid.z - 1);
 //  }
 //#endif
-  UINT k = static_cast<UINT >(round((pos.z - start) / (dx.z)));
+
+  UINT k;
+  if(voxel.z == 1) {
+    k = 0;
+  } else{
+    k = static_cast<UINT >(round((pos.z - start) / (dx.z)));
+  }
+
   BigUINT id = k * voxel.x * voxel.y + j * voxel.x + i;
   return id;
 
