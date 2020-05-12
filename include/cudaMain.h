@@ -85,3 +85,5 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
  * @param dirname The name of the directory
  */
 void createDirectory(const std::string dirname);
+
+int testMain();

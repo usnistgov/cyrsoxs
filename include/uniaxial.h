@@ -54,23 +54,25 @@
  */
 
 __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *material, const Real angle,
-                                    const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
-                                    Complex *polarizationX, Complex *polarizationY, Complex * polarizationZ){
+                                            const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
+                                            Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
 
   Complex pX, pY, pZ, npar[NUM_MATERIAL], nper[NUM_MATERIAL];
   Real4 s1[NUM_MATERIAL];
 
+  pX.x = 0;
+  pX.y = 0;
+  pY.x = 0;
+  pY.y = 0;
+  pZ.x = 0;
+  pZ.y = 0;
 
-  pX.x = 0; pX.y = 0;
-  pY.x = 0; pY.y = 0;
-  pZ.x = 0; pZ.y = 0;
-
-  static  constexpr  Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
+  static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
   Real temp;
-  for(int i = 0;i < NUM_MATERIAL;i++){
+  for (int i = 0; i < NUM_MATERIAL; i++) {
     s1[i] = voxelInput[threadID].s1[i];
-    temp = cos(angle)*voxelInput[threadID].s1[i].y - sin(angle)*voxelInput[threadID].s1[i].z;
-    s1[i].z = sin(angle)*s1[i].y + cos(angle)*s1[i].z;
+    temp = cos(angle) * voxelInput[threadID].s1[i].y - sin(angle) * voxelInput[threadID].s1[i].z;
+    s1[i].z = sin(angle) * s1[i].y + cos(angle) * s1[i].z;
     s1[i].y = temp;
     npar[i] = material->npara[i];
     nper[i] = material->nperp[i];
@@ -94,7 +96,8 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
     pY.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].y;
 
     pZ.x +=
-        (s1[i].w * nsum.x) / 9.0 + npar[i].x * s1[i].z * s1[i].z + nper[i].x * (s1[i].x * s1[i].x + s1[i].y * s1[i].y) - phi;
+        (s1[i].w * nsum.x) / 9.0 + npar[i].x * s1[i].z * s1[i].z + nper[i].x * (s1[i].x * s1[i].x + s1[i].y * s1[i].y)
+            - phi;
     pZ.y +=
         (s1[i].w * nsum.y) / 9.0 + npar[i].y * s1[i].z * s1[i].z + nper[i].y * (s1[i].x * s1[i].x + s1[i].y * s1[i].y);
   }
@@ -112,8 +115,76 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
   polarizationY[threadID] = pY;
   polarizationZ[threadID] = pZ;
 
+}
+
+__device__ inline BigUINT reshape3Dto1D(UINT i, UINT j, UINT k, uint3 voxel) {
+  return ((i) + (j) * voxel.x + (k) * voxel.x * voxel.y);
+}
+
+__device__ inline void reshape1Dto3D(BigUINT id, UINT & X, UINT & Y, UINT & Z, uint3 voxel) {
+  Z = static_cast<UINT>(floorf(id / (voxel.y * voxel.x * 1.0)));
+  Y = static_cast<UINT>(floorf((id - Z * voxel.y * voxel.x) / voxel.x * 1.0));
+  X = static_cast<UINT>(id - Y * voxel.x - Z * voxel.y * voxel.x);
+}
+
+template<typename T>
+__device__ inline void swap(T &var1, T &var2) {
+  T temp;
+  temp = var1;
+  var1 = var2;
+  var2 = temp;
+}
+
+
+__device__ void FFTShift(Complex *array,  uint3 voxel) {
+  uint3 mid;
+  mid.x = voxel.x / 2;
+  mid.y = voxel.y / 2;
+  mid.z = voxel.z / 2;
+  UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  BigUINT totalSize = (voxel.x * voxel.y * voxel.z);
+  if (threadID >= totalSize) {
+    return;
+  }
+
+  UINT X,Y,Z;
+  reshape1Dto3D(threadID,X,Y,Z,voxel);
+  if(voxel.z == 1){
+    if ((X < mid.x) and (Y < mid.y)){
+      BigUINT copyID = reshape3Dto1D(X + mid.x, Y + mid.y, Z + mid.z, voxel);
+      BigUINT currID = threadID;
+      swap(array[currID], array[copyID]);
+      copyID = reshape3Dto1D(mid.x + X, Y, mid.z + Z, voxel);
+      currID = reshape3Dto1D(X, mid.y + Y, Z, voxel);
+      swap(array[currID], array[copyID]);
+    }
+    return;
+  }
+  if ((X < mid.x) and (Y < mid.y) and (Z < mid.z)) {
+    BigUINT copyID = reshape3Dto1D(X + mid.x, Y + mid.y, Z + mid.z, voxel);
+    BigUINT currID = threadID;
+    swap(array[currID], array[copyID]);
+
+    copyID = reshape3Dto1D(mid.x + X, mid.y + Y, Z, voxel);
+    currID = reshape3Dto1D(X, Y, mid.z + Z, voxel);
+    swap(array[currID], array[copyID]);
+
+    copyID = reshape3Dto1D(mid.x + X, Y, mid.z + Z, voxel);
+    currID = reshape3Dto1D(X, mid.y + Y, Z, voxel);
+    swap(array[currID], array[copyID]);
+
+    copyID = reshape3Dto1D(X, mid.y + Y, mid.z + Z, voxel);
+    currID = reshape3Dto1D(mid.x + X, Y, Z, voxel);
+    swap(array[currID], array[copyID]);
+
+    copyID = reshape3Dto1D(mid.x + X, mid.y + Y, mid.z + Z, voxel);
+    currID = reshape3Dto1D(X, Y, mid.z + Z, voxel);
+    swap(copyID, currID);
+  }
+
 
 }
+
 
 /**
  * @brief This function computes the Scatter3D computation. The current implementation
@@ -131,14 +202,18 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
  * @param [in] voxel          Number of voxel in each direciton.
  * @param [in] physSize       Physical Size
  */
-__global__ void computeScatter3D(const Complex *polarizationX,
-                                 const Complex *polarizationY,
-                                 const Complex *polarizationZ,
+__global__ void computeScatter3D(Complex *polarizationX,
+                                 Complex *polarizationY,
+                                 Complex *polarizationZ,
                                  Real *Scatter3D,
                                  const ElectricField elefield,
                                  const BigUINT voxelNum,
                                  const uint3 voxel,
                                  const Real physSize) {
+
+  FFTShift(polarizationX,voxel);
+  FFTShift(polarizationY,voxel);
+  FFTShift(polarizationZ,voxel);
 
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   if (threadID >= voxelNum) {
@@ -149,9 +224,8 @@ __global__ void computeScatter3D(const Complex *polarizationX,
   const Complex pY = polarizationY[threadID];
   const Complex pZ = polarizationZ[threadID];
 
-  UINT Z = static_cast<UINT>(floorf(threadID / (voxel.y * voxel.x * 1.0)));
-  UINT Y = static_cast<UINT>(floorf((threadID - Z * voxel.y * voxel.x) / voxel.x * 1.0));
-  UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
+  UINT X,Y,Z;
+  reshape1Dto3D(threadID,X,Y,Z,voxel);
 
   UINT midX = static_cast<UINT>(voxel.x / 2.0);
   UINT midY = static_cast<UINT>(voxel.y / 2.0);
@@ -167,31 +241,37 @@ __global__ void computeScatter3D(const Complex *polarizationX,
   dx.z = static_cast<Real>((2 * M_PI / physSize) / ((voxel.z - 1) * 1.0));
 #endif
   Real3 q;
-
-  if (X <= midX) {
-    q.x = static_cast<Real>((-M_PI / physSize) + (midX - X) * dx.x);
-  } else {
-    q.x = static_cast<Real>((M_PI / physSize) - (X - (midX + 1)) * dx.x);
-  }
-
-  if (Y <= midY) {
-    q.y = static_cast<Real>((-M_PI / physSize) + (midY - Y) * dx.y);
-  } else {
-    q.y = static_cast<Real>((M_PI / physSize) - (Y - (midY + 1)) * dx.y);
-  }
+  q.x = static_cast<Real>((-M_PI / physSize) + X * dx.x);
+  q.y = static_cast<Real>((-M_PI / physSize) + Y * dx.y);
 #if ENABLE_2D
   q.z = 0;
 #else
-  if (Z <= midZ) {
-    q.z = static_cast<Real>((-M_PI / physSize) + (midZ - Z) * dx.z);
-  } else {
-    q.z = static_cast<Real>((M_PI / physSize) - (Z - (midZ + 1)) * dx.z);
-  }
+  q.z = static_cast<Real>((-M_PI / physSize) + Z * dx.z);
 #endif
+//  if (X <= midX) {
+//    q.x = static_cast<Real>((-M_PI / physSize) + (midX - X) * dx.x);
+//  } else {
+//    q.x = static_cast<Real>((M_PI / physSize) - (X - (midX + 1)) * dx.x);
+//  }
+//
+//  if (Y <= midY) {
+//    q.y = static_cast<Real>((-M_PI / physSize) + (midY - Y) * dx.y);
+//  } else {
+//    q.y = static_cast<Real>((M_PI / physSize) - (Y - (midY + 1)) * dx.y);
+//  }
+//#if ENABLE_2D
+//  q.z = 0;
+//#else
+//  if (Z <= midZ) {
+//    q.z = static_cast<Real>((-M_PI / physSize) + (midZ - Z) * dx.z);
+//  } else {
+//    q.z = static_cast<Real>((M_PI / physSize) - (Z - (midZ + 1)) * dx.z);
+//  }
+//#endif
 
   Complex val;
   Real res;
- // q.z <-> q.x from original Igor code
+  // q.z <-> q.x from original Igor code
   val.x = q.z * (2 * elefield.k.z + q.z) * pX.x
       + q.y * (elefield.k.z + q.z) * pY.x + q.x * (elefield.k.z + q.z) * pZ.x;
   val.y = q.z * (2 * elefield.k.z + q.z) * pX.y
@@ -233,36 +313,35 @@ __host__ __device__ BigUINT computeEquivalentID(const Real3 pos,
                                                 const Real3 dx,
                                                 const uint3 voxel) {
 
-
-
-  uint3 mid;
-  mid.x = voxel.x / 2;
-  mid.y = voxel.y / 2;
-  mid.z = voxel.z / 2;
-
-  uint3 index;
-  if (i <= mid.x) {
-    index.x = mid.x - i;
-  } else {
-    index.x = (voxel.x - 1) - (i - mid.x - 1);
-  }
-
-  if (j <= mid.y) {
-    index.y = mid.y - j;
-  } else {
-    index.y = (voxel.y - 1) - (j - mid.y - 1);
-  }
-#if (ENABLE_2D)
-  index.z = 0;
-#else
+//  uint3 mid;
+//  mid.x = voxel.x / 2;
+//  mid.y = voxel.y / 2;
+//  mid.z = voxel.z / 2;
+//
+//  uint3 index;
+//  if (i <= mid.x) {
+//    index.x = mid.x - i;
+//  } else {
+//    index.x = (voxel.x - 1) - (i - mid.x - 1);
+//  }
+//
+//  if (j <= mid.y) {
+//    index.y = mid.y - j;
+//  } else {
+//    index.y = (voxel.y - 1) - (j - mid.y - 1);
+//  }
+//#if (ENABLE_2D)
+//  index.z = 0;
+//#else
+//  UINT k = static_cast<UINT >(round((pos.z - start) / (dx.z)));
+//  if (k <= mid.z) {
+//    index.z = mid.z - k;
+//  } else {
+//    index.z = (voxel.z - 1) - (k - mid.z - 1);
+//  }
+//#endif
   UINT k = static_cast<UINT >(round((pos.z - start) / (dx.z)));
-  if (k <= mid.z) {
-    index.z = mid.z - k;
-  } else {
-    index.z = (voxel.z - 1) - (k - mid.z - 1);
-  }
-#endif
-  BigUINT id = index.z * voxel.x * voxel.y + index.y * voxel.x + index.x;
+  BigUINT id = k * voxel.x * voxel.y + j * voxel.x + i;
   return id;
 
 }
@@ -280,7 +359,11 @@ __host__ __device__ BigUINT computeEquivalentID(const Real3 pos,
  * @param [in] physSize Physical Size.
  */
 
-__global__ void computeEwaldProjectionGPU(Real *projection, const Real *scatter3D, const uint3 voxel, const Real k,const Real physSize){
+__global__ void computeEwaldProjectionGPU(Real *projection,
+                                          const Real *scatter3D,
+                                          const uint3 voxel,
+                                          const Real k,
+                                          const Real physSize) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const int totalSize = voxel.x * voxel.y;
   if (threadID >= totalSize) {
@@ -310,8 +393,6 @@ __global__ void computeEwaldProjectionGPU(Real *projection, const Real *scatter3
   } else {
     projection[threadID] = NAN;
   }
-
-
 
 }
 
@@ -394,7 +475,11 @@ __host__ void rotateImage(Real *projection, const uint3 voxel, const Real rotAng
  * @param voxel 2D voxel size in x and y
  * @param physSize Physical Size
  */
-__global__ void radialIntegrate(Real *integrate, const Real2 angle, const Real *projection, const uint2 voxel, const Real physSize) {
+__global__ void radialIntegrate(Real *integrate,
+                                const Real2 angle,
+                                const Real *projection,
+                                const uint2 voxel,
+                                const Real physSize) {
 
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const int totalSize = voxel.x * voxel.y;
@@ -443,6 +528,7 @@ __global__ void radialIntegrate(Real *integrate, const Real2 angle, const Real *
   }
 }
 
+
 /**
  * This function dumps the 2D files in parallel.
  * This function is tested with dumping the file for DLEVEL2
@@ -451,13 +537,13 @@ __global__ void radialIntegrate(Real *integrate, const Real2 angle, const Real *
  * @param eachDataSize The size of each data in 2D.
  */
 
-__host__ void dump_files2D(const Real * data, const UINT numData,const UINT  * eachDataSize){
+__host__ void dump_files2D(const Real *data, const UINT numData, const UINT *eachDataSize) {
 #pragma omp parallel
   {
 
     UINT threadID = omp_get_thread_num();
-    UINT chunkSize = static_cast<UINT>(std::ceil(numData *1.0/ (omp_get_num_threads()*1.0)));
-    const UINT totalSize = eachDataSize[0]*eachDataSize[1];
+    UINT chunkSize = static_cast<UINT>(std::ceil(numData * 1.0 / (omp_get_num_threads() * 1.0)));
+    const UINT totalSize = eachDataSize[0] * eachDataSize[1];
     Real *projectionLocal = new Real[totalSize];
     UINT startID = threadID * chunkSize;
     UINT endID = ((threadID + 1) * chunkSize);
