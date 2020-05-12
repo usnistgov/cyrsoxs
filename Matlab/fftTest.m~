@@ -1,0 +1,75 @@
+clear all;
+clc;
+close all;
+
+sizeX = 8;
+sizeY = 8;
+sizeZ = 8;
+X = rand(sizeX,sizeY,sizeZ);
+
+originalFFT = fftn(X);
+
+shiftedFFT = fftshift(fftn(X));
+
+computedFFT = zeros(sizeX,sizeY,sizeZ);
+midX =  floor(sizeX/2);
+midY =  floor(sizeY/2);
+midZ = floor(sizeZ/2);
+
+if((mod(sizeX,2) == 0) && (mod(sizeY,2) == 0) && (mod(sizeZ,2) == 0))
+for k = 1:midZ
+for j = 1:midY
+    for i = 1: midX
+        computedFFT(i,j,k) = originalFFT(midX+i,midY+j,midZ+k);
+        
+        computedFFT(i,j,midZ+k) = originalFFT(midX+i,midY+j,k);
+        computedFFT(i,midY+j,k) = originalFFT(midX+i,j,midZ+k);
+        computedFFT(midX+i,j,k) = originalFFT(i,midY+j,midZ+k);
+        
+        computedFFT(i,midY+j,midZ+k) = originalFFT(midX+i,j,k);
+        computedFFT(midX+i,j,midZ+k) = originalFFT(i,midY+j,k);
+        computedFFT(midX+i,midY+j,k) = originalFFT(i,j,k);
+       
+        computedFFT(midX+i,midY+j,midZ+k) = originalFFT(i,j,k);
+       
+    end
+end
+end
+end
+
+% if((mod(sizeX,2) == 0) && (mod(sizeY,2) == 1))
+% for j = 1:midY
+%     for i = 1: midX
+%         computedFFT(i,j) = originalFFT(midX+i,midY+j + 1);
+%         computedFFT(midX+i+1,midY+ 1 +j) = originalFFT(i,j);
+%         computedFFT(midX+i+1,j) = originalFFT(i,midY+j+1);
+%         computedFFT(i,midY+j+1) = originalFFT(midX+ i,j);
+%     end
+% end
+% end
+
+% for j = 1:midY
+% for i = 1:midX
+%     if(mod(sizeX,2) == 1)
+%         computedFFT(i,1) = originalFFT(midX + i + 1,midY+i);    
+%     else
+%         computedFFT(i,1) = originalFFT(midX + i,midY+i);    
+%     end
+%     
+% end
+% end
+% 
+% count = 0;
+% 
+% for i = midX+1:sizeX
+%     computedFFT(i,1) = originalFFT(i-midX,1);
+% end
+ computedFFT - shiftedFFT
+
+% computedFFTinplace = originalFFT;
+% for i = 1:sizeX
+%     if(i <=mid) 
+%         temp = computedFFTinplace(i,1);
+%         computedFFTinplace(i,1) = computedFFT
+%     end
+% end
