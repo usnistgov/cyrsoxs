@@ -99,7 +99,7 @@ def dump_data(valArray,index,labelEnergy,f):
     
 
 def main(startEnergy, endEnergy,increment,dict,labelEnergy,numMaterial):
-    NumEnergy = int(np.round((endEnergy - startEnergy)/increment + 1));
+    NumEnergy = int(np.round((endEnergy - startEnergy)/0.1 + 1));
     
     for numMat in range(0,numMaterial):
         f = open("Material" + str(numMat) + ".txt", "w")

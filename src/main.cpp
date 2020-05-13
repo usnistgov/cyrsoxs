@@ -85,6 +85,7 @@
  */
 int main(int argc, char **argv) {
 //  testMain();
+//  return 0;
   std::vector<Material<NUM_MATERIAL> >materialInput;
   InputData inputData(materialInput);
   const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
