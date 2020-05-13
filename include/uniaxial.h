@@ -136,22 +136,6 @@ __device__ inline void swap(T &var1, T &var2) {
 }
 
 
-//__device__ inline void swap(Complex &var1, Complex &var2) {
-//  if(&var1 == &var2){
-//    var1.x = var1.x + 1;
-//  } else {
-//    var1.x = var1.x + 1;
-//    var2.x = var2.x + 1;
-//  }
-//  }
-__device__ inline void swap1(Complex &var1, Complex &var2) {
-//  if(&var1 == &var2){
-//    var1.x = var1.x + 1;
-//  }
-
-  var2.x = -1;
-  var1.x = -1;
-}
 
 
 
@@ -205,178 +189,6 @@ __device__ void FFTShift(T *array,  uint3 voxel) {
 
 
 }
-__global__ void FFTMatlabShift(Complex * array, uint3 voxel){
-  FFTShift(array,voxel);
-}
-
-__global__ void FFTShiftIgor(Complex *array,  uint3 voxel) {
-
-
-  uint3 mid;
-  mid.x = voxel.x / 2;
-  mid.y = voxel.y / 2;
-  mid.z = voxel.z / 2;
-  UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
-  BigUINT totalSize = (voxel.x * voxel.y * voxel.z);
-  if (threadID >= totalSize) {
-    return;
-  }
-
-  UINT X,Y,Z;
-  reshape1Dto3D(threadID,X,Y,Z,voxel);
-  BigUINT currID,copyID;
-
-  if(voxel.z == 1){
-    if ((X == 0) and (Y == 0)){
-      return;
-    }
-    if((Y == 0) and (X <= mid.x)){
-      currID = reshape3Dto1D(X,0,Z,voxel);
-      copyID = reshape3Dto1D(voxel.x - X ,0 ,Z,voxel);
-      swap(array[copyID],array[currID]);
-      return;
-    }
-    if((X == 0) and (Y <= mid.y)){
-      currID = reshape3Dto1D(0,Y,Z,voxel);
-      copyID = reshape3Dto1D(0,voxel.y - Y ,Z,voxel);
-      swap(array[copyID],array[currID]);
-      return;
-    }
-
-
-    if ((X <= (mid.x) and (Y <= (mid.y)))){
-      currID = reshape3Dto1D(X,Y,Z,voxel);
-      copyID = reshape3Dto1D(voxel.x - X ,voxel.y - Y ,Z,voxel);
-      swap(array[copyID],array[currID]);
-    }
-    if ((X < (mid.x) and (Y < (mid.y)))){
-      currID = reshape3Dto1D(voxel.x - X,Y,Z,voxel);
-      copyID = reshape3Dto1D(X ,voxel.y - Y ,Z,voxel);
-      swap(array[copyID],array[currID]);
-    }
-
-  }
-
-
-//  uint3 mid;
-//  mid.x = voxel.x / 2;
-//  mid.y = voxel.y / 2;
-//  mid.z = voxel.z / 2;
-//
-//  UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
-//  BigUINT totalSize = (voxel.x * voxel.y * voxel.z);
-//  if (threadID >= totalSize) {
-//    return;
-//  }
-//
-//  UINT X,Y,Z;
-//  reshape1Dto3D(threadID,X,Y,Z,voxel);
-//  if(voxel.z == 1){
-//    if ((X < mid.x) and (Y < mid.y)){
-//      BigUINT copyID = reshape3Dto1D(X + mid.x, Y + mid.y, Z + mid.z, voxel);
-//      BigUINT currID = threadID;
-//      swap(array[currID], array[copyID]);
-//      copyID = reshape3Dto1D(mid.x + X, Y, mid.z + Z, voxel);
-//      currID = reshape3Dto1D(X, mid.y + Y, Z, voxel);
-//      swap(array[currID], array[copyID]);
-//    }
-//    return;
-//  }
-//
-//  uint3 swapIDs;
-//  swapIDs.x = static_cast<UINT >(ceil(mid.x/2.));
-//  swapIDs.y = static_cast<UINT >(ceil(mid.y/2.));
-//  swapIDs.z = static_cast<UINT >(ceil(mid.z/2.));
-//
-//  uint3 rightCurrent, leftCurrent, rightCopy, leftCopy;
-//  leftCopy.x = mid.x - X;
-//  leftCopy.y = mid.y - Y;
-//  leftCopy.z = mid.z - Z;
-//
-//  leftCurrent.x = X;
-//  leftCurrent.y = Y;
-//  leftCurrent.z = Z;
-//
-//  rightCurrent.x = mid.x + X + 1;
-//  rightCurrent.y = mid.y + Y + 1;
-//  rightCurrent.z = mid.z + Z + 1;
-//
-//  rightCopy.x = voxel.x - X - 1;
-//  rightCopy.y = voxel.y - Y - 1;
-//  rightCopy.z = voxel.z - Z - 1;
-//
-//
-//  BigUINT  copyID,currID;
-//  if ((X <= swapIDs.x) and (Y <= swapIDs.y) and (Z <= swapIDs.z)) {
-//
-//    /** (x,y,z)**/
-//    copyID = reshape3Dto1D(leftCopy.x,leftCopy.y,leftCopy.z, voxel);
-//    currID = reshape3Dto1D(leftCurrent.x,leftCurrent.y,leftCurrent.z, voxel);
-//    swap(array[currID], array[copyID]);
-//
-//
-//    /**(midx+x,y,z) **/
-//    if(rightCopy.x >= rightCurrent.x){
-//      copyID = reshape3Dto1D(rightCopy.x,leftCopy.y,leftCopy.z, voxel);
-//      currID = reshape3Dto1D(rightCurrent.x,leftCurrent.y,leftCurrent.z, voxel);
-////      printf("Swapping (%d, %d , %d) -> (%d, %d , %d) -> (%f %f) (%f %f)\n",rightCurrent.x,leftCurrent.y,leftCurrent.z,rightCopy.x,leftCopy.y,leftCopy.z,array[copyID].x,array[copyID].y,array[currID].x, array[currID].y);
-//      swap(array[currID], array[copyID]);
-//    }
-////////    /**(x,midy+y,z) **/
-//    if(rightCopy.y >= rightCurrent.y){
-//      copyID = reshape3Dto1D(leftCopy.x,rightCopy.y,leftCopy.z, voxel);
-//      currID = reshape3Dto1D(leftCurrent.x,rightCurrent.y,leftCurrent.z, voxel);
-//      printf("Swapping (%d, %d , %d) -> (%d, %d , %d) -> (%f %f) (%f %f)\n",leftCurrent.x,rightCurrent.y,leftCurrent.z,leftCopy.x,rightCopy.y,leftCopy.z,array[copyID].x,array[copyID].y,array[currID].x, array[currID].y);
-//      swap(array[currID], array[copyID]);
-//    }
-//
-//    if(rightCopy.z >= rightCurrent.z){
-//      copyID = reshape3Dto1D(leftCopy.x,leftCopy.y,rightCopy.z, voxel);
-//      currID = reshape3Dto1D(leftCurrent.x,leftCurrent.y,rightCurrent.z, voxel);
-////      if ((rightCopy.z == 15) and (leftCopy.x == 0) and (leftCopy.y == 0)){
-////        printf("Here\n");
-//////    printf("Swapping (%d, %d , %d) -> (%d, %d , %d) -> (%f %f) (%f %f)\n",leftCurrent.x,leftCurrent.y,rightCurrent.z,leftCopy.x,leftCopy.y,rightCopy.z,array[copyID].x,array[copyID].y,array[currID].x, array[currID].y);
-////      }
-//
-//      swap(array[currID], array[copyID]);
-//    }
-////
-//    if ((rightCopy.x >= rightCurrent.x) and (rightCopy.y >= rightCurrent.y)){
-//      copyID = reshape3Dto1D(rightCopy.x,rightCopy.y,leftCopy.z, voxel);
-//      currID = reshape3Dto1D(rightCurrent.x,rightCurrent.y,leftCurrent.z, voxel);
-//      swap(array[currID], array[copyID]);
-//    }
-////
-//    if ((rightCopy.x >= rightCurrent.x) and (rightCopy.z >= rightCurrent.z)){
-//      copyID = reshape3Dto1D(rightCopy.x,leftCopy.y,rightCopy.z, voxel);
-//      currID = reshape3Dto1D(rightCurrent.x,leftCurrent.y,rightCurrent.z, voxel);
-//      swap(array[currID], array[copyID]);
-//    }
-//
-//    if ((rightCopy.y >= rightCurrent.y) and (rightCopy.z >= rightCurrent.z)){
-//      copyID = reshape3Dto1D(leftCopy.x,rightCopy.y,rightCopy.z, voxel);
-//      currID = reshape3Dto1D(leftCurrent.x,rightCurrent.y,rightCurrent.z, voxel);
-//      swap(array[currID], array[copyID]);
-//    }
-////
-//    if ((rightCopy.y >= rightCurrent.y) and (rightCopy.z >= rightCurrent.z) and (rightCopy.y >= rightCurrent.y)){
-//      copyID = reshape3Dto1D(rightCopy.x,rightCopy.y,rightCopy.z, voxel);
-//      currID = reshape3Dto1D(rightCurrent.x,rightCurrent.y,rightCurrent.z, voxel);
-//      swap(array[currID], array[copyID]);
-//    }
-//
-//
-//
-//  }
-////  if ((X > ceil(voxel.x/2.)) and (Y > ceil(mid.y/2)) and (Z < ceil(mid.z/2.))) {
-////    BigUINT copyID = reshape3Dto1D(X + mid.x, Y + mid.y, Z + mid.z, voxel);
-////    BigUINT currID = threadID;
-////    swap(array[currID], array[copyID]);
-////  }
-
-
-
-}
 
 
 /**
@@ -404,6 +216,11 @@ __global__ void computeScatter3D(Complex *polarizationX,
                                  const uint3 voxel,
                                  const Real physSize) {
 
+
+
+  FFTShift(polarizationX,voxel);
+  FFTShift(polarizationY,voxel);
+  FFTShift(polarizationZ,voxel);
 
 
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;

@@ -105,77 +105,7 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 
 }
 
-int testMain(){
-  uint3 voxel;
-  voxel.x = 8;
-  voxel.y = 8;
-  voxel.z = 1;
-  int size = voxel.x * voxel.y * voxel.z;
-  Complex * pX = new Complex[size];
-  for(int i = 0; i < voxel.x/2; i++){
-    for(int j = 0; j < voxel.y; j++){
-      pX[i*8+j].x = i;//i*8+j;
-      pX[i*8+j].y = j;//i*8+j;
-    }
-  }
-  for(int i = 0; i < voxel.x; i++){
-    for(int j = 0; j < voxel.y; j++){
-      std::cout << pX[i*8+j].x << " " << pX[i*8+j].y << " ";
-    }
-    std::cout << "\n";
-  }
 
-  Complex * dpX;
-
-//  for(int i = 0; i < size; i++){
-//    std::cout << pX[i].x  << "\n";
-//  }
-  UINT BlockSize = static_cast<UINT >(ceil(size * 1.0 / NUM_THREADS));
-
-  CUDA_CHECK_RETURN(cudaMalloc((void **) &dpX, sizeof(Complex) * size));
-  gpuErrchk(cudaPeekAtLastError());
-  CUDA_CHECK_RETURN(cudaMemcpy(dpX,
-                               pX,
-                               sizeof(Complex) * size,
-                               cudaMemcpyHostToDevice));
-  gpuErrchk(cudaPeekAtLastError());
-  cufftHandle plan;
-  cufftPlan3d(&plan, voxel.z, voxel.y,voxel.x, CUFFT_C2C);
-  cufftExecC2C(plan, dpX, dpX, CUFFT_FORWARD);
-
-  FFTMatlabShift<<<BlockSize,NUM_THREADS>>> (dpX,voxel);
-  gpuErrchk(cudaPeekAtLastError());
-  cudaThreadSynchronize();
-  CUDA_CHECK_RETURN(cudaMemcpy(pX,
-                               dpX,
-                               sizeof(Complex) * size,
-                               cudaMemcpyDeviceToHost));
-  gpuErrchk(cudaPeekAtLastError());
-  std::cout << "AfterMatlab\n";
-  for(int i = 0; i < voxel.x; i++){
-    for(int j = 0; j < voxel.y; j++){
-      std::cout << pX[i*8+j].x << " " << pX[i*8+j].y << " ";
-    }
-    std::cout << "\n";
-  }
-  FFTShiftIgor<<<BlockSize,NUM_THREADS>>> (dpX,voxel);
-  gpuErrchk(cudaPeekAtLastError());
-  cudaThreadSynchronize();
-  CUDA_CHECK_RETURN(cudaMemcpy(pX,
-                               dpX,
-                               sizeof(Complex) * size,
-                               cudaMemcpyDeviceToHost));
-  gpuErrchk(cudaPeekAtLastError());
-  std::cout << "After\n";
-  for(int i = 0; i < voxel.x; i++){
-    for(int j = 0; j < voxel.y; j++){
-      std::cout << pX[i*8+j].x << " " << pX[i*8+j].y << " ";
-    }
-    std::cout << "\n";
-  }
-
-
-}
 
 int cudaMain(const UINT *voxel,
              const InputData &idata,
@@ -478,18 +408,6 @@ int cudaMain(const UINT *voxel,
           exit(EXIT_FAILURE);
         }
 
-        FFTMatlabShift<<<BlockSize,NUM_THREADS>>>(d_polarizationX,vx);
-        FFTMatlabShift<<<BlockSize,NUM_THREADS>>>(d_polarizationY,vx);
-        FFTMatlabShift<<<BlockSize,NUM_THREADS>>>(d_polarizationZ,vx);
-        gpuErrchk(cudaPeekAtLastError());
-        cudaThreadSynchronize();
-        FFTShiftIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationX,vx);
-        FFTShiftIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationY,vx);
-        FFTShiftIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationZ,vx);
-        gpuErrchk(cudaPeekAtLastError());
-        cudaThreadSynchronize();
-
-
 
 
 #ifdef PROFILING
@@ -570,6 +488,7 @@ int cudaMain(const UINT *voxel,
         cudaThreadSynchronize();
         const double alpha = cos(angle);
         const double beta = sin(angle);
+
         /**https://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html?highlight=warpaffine**/
         const double coeffs[2][3]{
             alpha, beta, static_cast<Real>(((1 - alpha) * voxel[0] / 2 - beta * voxel[1] / 2.)),
