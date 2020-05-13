@@ -179,7 +179,7 @@ __device__ void FFTShift(Complex *array,  uint3 voxel) {
 
     copyID = reshape3Dto1D(mid.x + X, mid.y + Y, mid.z + Z, voxel);
     currID = reshape3Dto1D(X, Y, mid.z + Z, voxel);
-    swap(copyID, currID);
+    swap(array[copyID], array[currID]);
   }
 
 
