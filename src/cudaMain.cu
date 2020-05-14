@@ -105,7 +105,71 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 
 }
 
+int testMain(){
+  uint3 voxel;
+  voxel.x = 9;
+  voxel.y = 9;
+  voxel.z = 4;
+  int size = voxel.x*voxel.y*voxel.z;
+  Complex * pX = new Complex[size];
+  Complex * dPX ,*dtemp;
 
+    for (int i = 0; i <= voxel.x/2 ; i++) {
+      for (int j = 0; j < voxel.y; j++) {
+        for (int k = 0; j < voxel.z; k++) {
+          pX[k*voxel.x*voxel.y + voxel.y * i + j].x = i;
+          pX[k*voxel.x*voxel.y + voxel.y * i + j].y = j;
+        }
+      }
+    }
+
+
+  for(int i = 0; i < voxel.x; i++){
+    for(int j = 0; j < voxel.y; j++){
+      for(int k = 0; k < voxel.z; k++) {
+        std::cout << pX[k*voxel.y*voxel.x + voxel.y * i + j].x << " " << pX[voxel.y * i + j].y << " ";
+      }
+    }
+    std::cout << "\n";
+  }
+  UINT BlockSize = static_cast<UINT >(ceil(size * 1.0 / NUM_THREADS));
+
+  CUDA_CHECK_RETURN(cudaMalloc((void **) &dPX, sizeof(Complex) * size));
+  CUDA_CHECK_RETURN(cudaMalloc((void **) &dtemp, sizeof(Complex) * size));
+  gpuErrchk(cudaPeekAtLastError());
+
+  CUDA_CHECK_RETURN(cudaMemcpy(dPX,
+                               pX,
+                               sizeof(Complex) * size,
+                               cudaMemcpyHostToDevice));
+  gpuErrchk(cudaPeekAtLastError());
+
+
+  gpuErrchk(cudaPeekAtLastError());
+  cufftHandle plan;
+  cufftPlan3d(&plan, voxel.z,voxel.y,voxel.x, CUFFT_C2C);
+
+  cufftExecC2C(plan, dPX, dPX, CUFFT_FORWARD);
+  CUDA_CHECK_RETURN(cudaMemcpy(dtemp,
+                               dPX,
+                               sizeof(Complex) * size,
+                               cudaMemcpyDeviceToDevice));
+  FFTIgor<<<BlockSize,NUM_THREADS>>>(dPX,dtemp,voxel);
+  cudaDeviceSynchronize();
+  CUDA_CHECK_RETURN(cudaMemcpy(pX,
+                               dPX,
+                               sizeof(Complex) * size,
+                               cudaMemcpyDeviceToHost));
+  gpuErrchk(cudaPeekAtLastError());
+  std::cout << "After\n";
+  for(int i = 0; i < voxel.x; i++){
+    for(int j = 0; j < voxel.y; j++){
+      std::cout << pX[voxel.y*i + j].x  << " " << pX[voxel.y*i + j].y << " ";
+    }
+    std::cout << "\n";
+  }
+
+}
 
 int cudaMain(const UINT *voxel,
              const InputData &idata,
@@ -252,6 +316,8 @@ int cudaMain(const UINT *voxel,
     Complex *polarizationY = new Complex[voxelSize];
     Real *scatter3D = new Real[voxelSize];
 
+#pragma message "Remove me. I am not needed if doing inplace swap"
+    Complex * d_temporarySwapVariable;
 #ifdef EOC
     Real *projectionCPU = new Real[BATCH * voxel[0] * voxel[1]];
 #else
@@ -270,6 +336,8 @@ int cudaMain(const UINT *voxel,
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_polarizationY, sizeof(Complex) * voxelSize));
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_scatter3D, sizeof(Real) * voxelSize));
+    gpuErrchk(cudaPeekAtLastError());
+    CUDA_CHECK_RETURN(cudaMalloc((void **) &d_temporarySwapVariable, sizeof(Complex) * voxelSize));
     gpuErrchk(cudaPeekAtLastError());
 
 #ifndef EOC
@@ -349,7 +417,7 @@ int cudaMain(const UINT *voxel,
             > (materialInput[j], d_voxelInput, eleField, angle, vx, d_polarizationX, d_polarizationY, d_polarizationZ);
 
         gpuErrchk(cudaPeekAtLastError());
-        cudaThreadSynchronize();
+        cudaDeviceSynchronize();
 
 #ifdef PROFILING
         {
@@ -408,6 +476,35 @@ int cudaMain(const UINT *voxel,
           exit(EXIT_FAILURE);
         }
 
+#pragma message "Fix me! Remove me for inplace transofrmation. Not needed and make me as a callback"
+
+        CUDA_CHECK_RETURN(cudaMemcpy(d_temporarySwapVariable,
+                                     d_polarizationX,
+                                     sizeof(Complex) * voxelSize,
+                                     cudaMemcpyDeviceToDevice));
+        gpuErrchk(cudaPeekAtLastError());
+
+        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationX,d_temporarySwapVariable,vx);
+        gpuErrchk(cudaPeekAtLastError());
+
+        CUDA_CHECK_RETURN(cudaMemcpy(d_temporarySwapVariable,
+                                     d_polarizationY,
+                                     sizeof(Complex) * voxelSize,
+                                     cudaMemcpyDeviceToDevice));
+        gpuErrchk(cudaPeekAtLastError());
+
+        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationY,d_temporarySwapVariable,vx);
+        gpuErrchk(cudaPeekAtLastError());
+
+        CUDA_CHECK_RETURN(cudaMemcpy(d_temporarySwapVariable,
+                                     d_polarizationZ,
+                                     sizeof(Complex) * voxelSize,
+                                     cudaMemcpyDeviceToDevice));
+        gpuErrchk(cudaPeekAtLastError());
+
+        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationZ,d_temporarySwapVariable,vx);
+        gpuErrchk(cudaPeekAtLastError());
+
 
 
 #ifdef PROFILING
@@ -448,7 +545,7 @@ int cudaMain(const UINT *voxel,
         /** Scatter 3D computation **/
         computeScatter3D << < BlockSize, NUM_THREADS >>
             > (d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, voxelSize, vx, idata.physSize);
-        cudaThreadSynchronize();
+        cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
 #ifdef DUMP_FILES
@@ -485,7 +582,7 @@ int cudaMain(const UINT *voxel,
 #else
         UINT BlockSize2 = static_cast<UINT>(ceil(voxel[0] * voxel[1] * 1.0 / NUM_THREADS));
         computeEwaldProjectionGPU << < BlockSize2, NUM_THREADS >> > (d_projection, d_scatter3D, vx, eleField.k.z,idata.physSize);
-        cudaThreadSynchronize();
+        cudaDeviceSynchronize();
         const double alpha = cos(angle);
         const double beta = sin(angle);
 

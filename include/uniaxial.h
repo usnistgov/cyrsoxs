@@ -123,7 +123,7 @@ __device__ inline BigUINT reshape3Dto1D(UINT i, UINT j, UINT k, uint3 voxel) {
 
 __device__ inline void reshape1Dto3D(BigUINT id, UINT & X, UINT & Y, UINT & Z, uint3 voxel) {
   Z = static_cast<UINT>(floorf(id / (voxel.y * voxel.x * 1.0)));
-  Y = static_cast<UINT>(floorf((id - Z * voxel.y * voxel.x) / voxel.x * 1.0));
+  Y = static_cast<UINT>(floorf(id - Z * voxel.y * voxel.x) / (voxel.x * 1.0));
   X = static_cast<UINT>(id - Y * voxel.x - Z * voxel.y * voxel.x);
 }
 
@@ -135,9 +135,51 @@ __device__ inline void swap(T &var1, T &var2) {
   var2 = temp;
 }
 
+#pragma  message "FiX Me. Make me inplace"
+
+template <typename T>
+__global__ void FFTIgor(T* polarization, T *array,  uint3 voxel){
+  UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  BigUINT totalSize = (voxel.x * voxel.y * voxel.z);
+  if (threadID >= totalSize) {
+    return;
+  }
 
 
+  UINT X,Y,Z;
+  reshape1Dto3D(threadID,X,Y,Z,voxel);
 
+  uint3 midX;
+  midX.x = voxel.x/2;
+  midX.y = voxel.y/2;
+  midX.z = voxel.z/2;
+
+  uint3 id;
+  if(X <= midX.x){
+      id.x = midX.x - X;
+  }
+  else{
+    id.x = voxel.x + (midX.x - X);
+  }
+
+  if(Y <= midX.y){
+    id.y = midX.y - Y;
+  }
+  else{
+    id.y = voxel.y + (midX.y - Y);
+  }
+
+  if(Z <= midX.z){
+    id.z = midX.z - Z;
+  }
+  else{
+    id.z = voxel.z + (midX.z - Z);
+  }
+
+  BigUINT copyID = reshape3Dto1D(id.x,id.y,id.z,voxel);
+  polarization[threadID] = array[copyID];
+
+}
 
 template<typename T>
 __device__ void FFTShift(T *array,  uint3 voxel) {
@@ -216,11 +258,6 @@ __global__ void computeScatter3D(Complex *polarizationX,
                                  const uint3 voxel,
                                  const Real physSize) {
 
-
-
-  FFTShift(polarizationX,voxel);
-  FFTShift(polarizationY,voxel);
-  FFTShift(polarizationZ,voxel);
 
 
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
