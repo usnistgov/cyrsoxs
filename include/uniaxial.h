@@ -346,7 +346,7 @@ __host__ __device__ BigUINT computeEquivalentID(const Real3 pos,
 }
 
 
-__host__ __device__ Real  computeBilinearInterpolation(const Real * data,
+__host__ __device__ inline Real  computeBilinearInterpolation(const Real * data,
                                                        const Real3 pos,
                                                        const Real  start,
                                                        const Real3 dx,
@@ -376,7 +376,7 @@ __host__ __device__ Real  computeBilinearInterpolation(const Real * data,
 
 }
 
-__host__ __device__ Real  computeTrilinearInterpolation(const Real * data,
+__host__ __device__ inline Real  computeTrilinearInterpolation(const Real * data,
                                                        const Real3 pos,
                                                        const Real start,
                                                        const Real3 dx,
