@@ -242,10 +242,10 @@ __device__ void computeMatrixTimesVector(const Complex Matrix[][3],const Real3 V
   matVec[2].y = Matrix[2][0].y*Vec.x + Matrix[2][1].y*Vec.y + Matrix[2][2].y*Vec.z;
 }
 
-__global__ void inline getMaxandMinimum(const Real *val, const int2 idx, const uint2 voxel, Real *values) {
+__global__ void  getMaxandMinimum(const Real *val, const int2 idx, const uint2 voxel, Real *values) {
   const int blockID = blockIdx.x + blockIdx.y * gridDim.x;
   const int threadID = blockID * (blockDim.x * blockDim.y) + threadIdx.y * blockDim.x + threadIdx.x;
-  const int totalSize = voxel.x * voxel.y;
+
   // Minimum
   if (threadID == idx.x) {
     values[0] = val[threadID];

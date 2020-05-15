@@ -31,6 +31,13 @@
 
 #define NUM_THREADS 128
 
+enum EwaldsInterpolation: short{
+  NEARESTNEIGHBOUR = 0,
+  LINEAR = 1
+};
+
+
+
 #if HALF_FLOAT
 typedef half Real;
 #else

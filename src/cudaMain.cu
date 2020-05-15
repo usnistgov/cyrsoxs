@@ -105,71 +105,6 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 
 }
 
-int testMain(){
-  uint3 voxel;
-  voxel.x = 9;
-  voxel.y = 9;
-  voxel.z = 4;
-  int size = voxel.x*voxel.y*voxel.z;
-  Complex * pX = new Complex[size];
-  Complex * dPX ,*dtemp;
-
-    for (int i = 0; i <= voxel.x/2 ; i++) {
-      for (int j = 0; j < voxel.y; j++) {
-        for (int k = 0; j < voxel.z; k++) {
-          pX[k*voxel.x*voxel.y + voxel.y * i + j].x = i;
-          pX[k*voxel.x*voxel.y + voxel.y * i + j].y = j;
-        }
-      }
-    }
-
-
-  for(int i = 0; i < voxel.x; i++){
-    for(int j = 0; j < voxel.y; j++){
-      for(int k = 0; k < voxel.z; k++) {
-        std::cout << pX[k*voxel.y*voxel.x + voxel.y * i + j].x << " " << pX[voxel.y * i + j].y << " ";
-      }
-    }
-    std::cout << "\n";
-  }
-  UINT BlockSize = static_cast<UINT >(ceil(size * 1.0 / NUM_THREADS));
-
-  CUDA_CHECK_RETURN(cudaMalloc((void **) &dPX, sizeof(Complex) * size));
-  CUDA_CHECK_RETURN(cudaMalloc((void **) &dtemp, sizeof(Complex) * size));
-  gpuErrchk(cudaPeekAtLastError());
-
-  CUDA_CHECK_RETURN(cudaMemcpy(dPX,
-                               pX,
-                               sizeof(Complex) * size,
-                               cudaMemcpyHostToDevice));
-  gpuErrchk(cudaPeekAtLastError());
-
-
-  gpuErrchk(cudaPeekAtLastError());
-  cufftHandle plan;
-  cufftPlan3d(&plan, voxel.z,voxel.y,voxel.x, CUFFT_C2C);
-
-  cufftExecC2C(plan, dPX, dPX, CUFFT_FORWARD);
-  CUDA_CHECK_RETURN(cudaMemcpy(dtemp,
-                               dPX,
-                               sizeof(Complex) * size,
-                               cudaMemcpyDeviceToDevice));
-  FFTIgor<<<BlockSize,NUM_THREADS>>>(dPX,dtemp,voxel);
-  cudaDeviceSynchronize();
-  CUDA_CHECK_RETURN(cudaMemcpy(pX,
-                               dPX,
-                               sizeof(Complex) * size,
-                               cudaMemcpyDeviceToHost));
-  gpuErrchk(cudaPeekAtLastError());
-  std::cout << "After\n";
-  for(int i = 0; i < voxel.x; i++){
-    for(int j = 0; j < voxel.y; j++){
-      std::cout << pX[voxel.y*i + j].x  << " " << pX[voxel.y*i + j].y << " ";
-    }
-    std::cout << "\n";
-  }
-
-}
 
 int cudaMain(const UINT *voxel,
              const InputData &idata,
@@ -581,7 +516,7 @@ int cudaMain(const UINT *voxel,
         computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
 #else
         UINT BlockSize2 = static_cast<UINT>(ceil(voxel[0] * voxel[1] * 1.0 / NUM_THREADS));
-        computeEwaldProjectionGPU << < BlockSize2, NUM_THREADS >> > (d_projection, d_scatter3D, vx, eleField.k.z,idata.physSize);
+        computeEwaldProjectionGPU << < BlockSize2, NUM_THREADS >> > (d_projection, d_scatter3D, vx, eleField.k.z,idata.physSize,EwaldsInterpolation::LINEAR);
         cudaDeviceSynchronize();
         const double alpha = cos(angle);
         const double beta = sin(angle);
@@ -721,6 +656,10 @@ int cudaMain(const UINT *voxel,
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaFree(d_voxelInput));
     gpuErrchk(cudaPeekAtLastError());
+#pragma message "Fix Mw! You have not allocated me. No need to delete me"
+    CUDA_CHECK_RETURN(cudaFree(d_temporarySwapVariable));
+    gpuErrchk(cudaPeekAtLastError());
+
 #ifndef EOC
     CUDA_CHECK_RETURN(cudaFree(d_projection));
     gpuErrchk(cudaPeekAtLastError());
