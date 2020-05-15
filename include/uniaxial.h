@@ -477,7 +477,7 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
       pos.z = -k + sqrt(val);
       UINT Z = static_cast<UINT >(round((pos.z - start) / (dx.z)));
 #if (ENABLE_2D)
-      projection[threadID] = computeBilinearInterpolation(scatter3D,pos,dx,X,Y,voxel);
+      projection[threadID] = computeBilinearInterpolation(scatter3D,pos,start,dx,X,Y,voxel);
 #else
       projection[threadID] = computeTrilinearInterpolation(scatter3D,pos,start,dx,X,Y,Z,voxel);
 #endif
