@@ -92,6 +92,11 @@ If you are running the case with 1 element in the thickness direction
 
 Optional Cmake Flags can be added:
 
+**For compiling in double precision mode:**
+```bash
+-DOUBLE_PRECISION=Yes
+```
+
 **For enabling Hanning window**
 ```bash
 -DHANNING=Yes

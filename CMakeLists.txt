@@ -120,7 +120,11 @@ target_include_directories(cuda_base PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTO
 set_target_properties(cuda_base
         PROPERTIES CUDA_SEPARABLE_COMPILATION ON
         )
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp")
+string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
+
+
+set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp -DNDEBUG -O3 --use_fast_math")
+#list(APPEND CMAKE_CUDA_FLAGS CUDA_NVCC_FLAGS_RELEASE)
 #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -gencode arch=compute_30,code=sm_30")
 if (NUM_MATERIAL)
     target_compile_definitions(cuda_base PUBLIC NUM_MATERIAL=${NUM_MATERIAL})

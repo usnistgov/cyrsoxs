@@ -1,8 +1,8 @@
 GPU enabled RSoXS simulation (Release 1.0 - Beta version)
 ====================================
 This code solves the X-ray scattering on Graphical processing units (GPU).
-Currently it supports the operation with 32 bit float datatypes.
-In future, we would also support 16 bit float datatypes.
+Currently it supports the operation with 32 bit / 64 bit float datatypes.
+
 
 
 
