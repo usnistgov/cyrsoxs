@@ -202,8 +202,6 @@ int cudaMain(const UINT *voxel,
     cudaDeviceProp dprop;
     cudaGetDeviceProperties(&dprop, omp_get_thread_num());
     cudaGetDeviceCount(&device_gpu);
-    std::cout << "Number of GPU detected = " << device_gpu << "\n";
-
     if(warmup() == EXIT_SUCCESS){
       std::cout << "Warmup completed on GPU " << dprop.name << "\n";
     }
