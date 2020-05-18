@@ -406,7 +406,7 @@ int cudaMain(const UINT *voxel,
 #endif
 
         /** FFT Computation **/
-        result = performFFT(d_polarizationX,plan); //cufftExecC2C(plan, d_polarizationX, d_polarizationX, CUFFT_FORWARD);
+        result = performFFT(d_polarizationX,plan);
         if (result != CUFFT_SUCCESS) {
           std::cout << "CUFFT failed with result " << result << "\n";
           #pragma omp cancel parallel
