@@ -77,7 +77,11 @@ inline void getMatAllignment(const H5::H5File &file,
     std::string varname = groupName + "Mat_" + std::to_string(i) + "_alignment";
     H5::DataSet dataSet = file.openDataSet(varname);
     H5::DataSpace dataspace = dataSet.getSpace();
+#ifdef DOUBLE_PRECISION
+    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE, memspace, dataspace);
+#else
     dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT, memspace, dataspace);
+#endif
   }
 }
 /**
@@ -111,7 +115,11 @@ inline void getMatUnAlligned(const H5::H5File &file,
     std::string varname = groupName + "Mat_" + std::to_string(i) + "_unaligned";
     H5::DataSet dataSet = file.openDataSet(varname);
     H5::DataSpace dataspace = dataSet.getSpace();
+#ifdef DOUBLE_PRECISION
+    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE, memspace, dataspace);
+#else
     dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT, memspace, dataspace);
+#endif
   }
 
 }

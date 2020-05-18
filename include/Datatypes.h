@@ -39,8 +39,12 @@ enum EwaldsInterpolation: int{
 
 
 
-#if HALF_FLOAT
-typedef half Real;
+#ifdef DOUBLE_PRECISION
+typedef double Real;
+typedef double2 Real2;
+typedef double3 Real3;
+typedef double4 Real4;
+typedef double2 Complex;
 #else
 typedef float Real;
 typedef float2 Real2;

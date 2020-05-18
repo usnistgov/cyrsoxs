@@ -52,6 +52,7 @@ int warmup(){
 }
 
 
+
 void createDirectory(const std::string dirName){
 
   int ierr = mkdir(dirName.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
@@ -214,8 +215,11 @@ int cudaMain(const UINT *voxel,
 
     cufftResult result;
     cufftHandle plan;
+#ifdef DOUBLE_PRECISION
+    cufftPlan3d(&plan, voxel[2], voxel[1], voxel[0], CUFFT_Z2Z);
+#else
     cufftPlan3d(&plan, voxel[2], voxel[1], voxel[0], CUFFT_C2C);
-
+#endif
     cublasHandle_t handle;
     cublasStatus_t stat;
     cublasCreate(&handle);
@@ -404,21 +408,21 @@ int cudaMain(const UINT *voxel,
 #endif
 
         /** FFT Computation **/
-        result = cufftExecC2C(plan, d_polarizationX, d_polarizationX, CUFFT_FORWARD);
+        result = performFFT(d_polarizationX,plan); //cufftExecC2C(plan, d_polarizationX, d_polarizationX, CUFFT_FORWARD);
         if (result != CUFFT_SUCCESS) {
           std::cout << "CUFFT failed with result " << result << "\n";
           #pragma omp cancel parallel
           exit(EXIT_FAILURE);
         }
 
-        result = cufftExecC2C(plan, d_polarizationY, d_polarizationY, CUFFT_FORWARD);
+        result = performFFT(d_polarizationX,plan);
         if (result != CUFFT_SUCCESS) {
           std::cout << "CUFFT failed with result " << result << "\n";
           #pragma omp cancel parallel
           exit(EXIT_FAILURE);
         }
 
-        result = cufftExecC2C(plan, d_polarizationZ, d_polarizationZ, CUFFT_FORWARD);
+        result = performFFT(d_polarizationZ,plan);
         if (result != CUFFT_SUCCESS) {
           std::cout << "CUFFT failed with result " << result << "\n";
           exit(EXIT_FAILURE);
@@ -545,8 +549,18 @@ int cudaMain(const UINT *voxel,
             -beta, alpha, static_cast<Real>(beta * voxel[0] / 2. + (1 - alpha) * voxel[1] / 2.)
         };
 
+#ifdef DOUBLE_PRECISION
+        NppStatus status = nppiWarpAffine_64f_C1R(d_projection,
+                                                  sizeImage,
+                                                  voxel[1] * sizeof(Real),
+                                                  rect,
+                                                  d_rotProjection,
+                                                  voxel[1] * sizeof(Real),
+                                                  rect,
+                                                  coeffs,
+                                                  NPPI_INTER_LINEAR);
 
-
+#else
         NppStatus status = nppiWarpAffine_32f_C1R(d_projection,
                                                   sizeImage,
                                                   voxel[1] * sizeof(Real),
@@ -556,6 +570,8 @@ int cudaMain(const UINT *voxel,
                                                   rect,
                                                   coeffs,
                                                   NPPI_INTER_LINEAR);
+#endif
+
         if (status != NPP_SUCCESS) {
           std::cout << "Image rotation failed with error = " << status << "\n";
           exit(-1);
@@ -568,7 +584,11 @@ int cudaMain(const UINT *voxel,
 
 #ifdef DLEVEL2
         const Real factor = static_cast<Real>(1.0);
+#ifdef DOUBLE_PRECISION
+        stat = cublasDaxpy(handle, voxel[0] * voxel[1], &factor, d_rotProjection, 1, d_projectionAverage, 1);
+#else
         stat = cublasSaxpy(handle, voxel[0] * voxel[1], &factor, d_rotProjection, 1, d_projectionAverage, 1);
+#endif
         if (stat != CUBLAS_STATUS_SUCCESS) {
           std::cout << "CUBLAS during sum failed  with status " << stat << "\n";
           exit(EXIT_FAILURE);
@@ -614,7 +634,11 @@ int cudaMain(const UINT *voxel,
       else {
         /// The averaging out for all angles
         const Real alphaFac = static_cast<Real>(1.0 / numAnglesRotation);
+#ifdef DOUBLE_PRECISION
+        stat = cublasDscal(handle, voxel[0] * voxel[1], &alphaFac, d_projectionAverage, 1);
+#else
         stat = cublasSscal(handle, voxel[0] * voxel[1], &alphaFac, d_projectionAverage, 1);
+#endif
         if (stat != CUBLAS_STATUS_SUCCESS) {
           std::cout << "CUBLAS during averaging failed  with status " << stat << "\n";
           exit(EXIT_FAILURE);

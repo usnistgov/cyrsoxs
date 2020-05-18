@@ -3,7 +3,7 @@ project(Cy-RSoXS LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 ")
 
-option(HALF_FLOAT "Use 16 bit indices for floating point" OFF)
+option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
 option(VTI_BINARY "Write VTI in binary with 64 base encoding" ON)
 option(ENABLE_2D "Set to ON if only 1 id in Z direction" OFF)
 option(DUMP_FILES "Dump files for debugging " OFF)
@@ -17,9 +17,9 @@ option(BUILD_DOCS "Build Documentation" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 
-if (HALF_FLOAT)
-    add_definitions(-DHALF_FLOAT)
-    message(Configuring with Half float)
+if (DOUBLE_PRECISION)
+    add_definitions(-DDOUBLE_PRECISION)
+    message(Configuring with Double precision)
 endif ()
 
 

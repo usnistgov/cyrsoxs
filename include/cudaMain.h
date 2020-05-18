@@ -37,6 +37,7 @@
 #include <fcntl.h> //Specified in man 2 open
 #include <stdio.h>
 #include <sys/stat.h>
+#include <cufft.h>
 
 /**
  * @brief calls for the cuda kernel are made through this function.
@@ -46,8 +47,8 @@
  * @param voxelInput voxelInput
  * @return EXIT_SUCCESS on success of execution
  */
-int cudaMain(const UINT * voxel,const InputData & idata,const std::vector<Material<NUM_MATERIAL> >& materialInput,
-    Real *& projectionAverage,const Voxel<NUM_MATERIAL> * voxelInput ) ;
+int cudaMain(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
+             Real *&projectionAverage, const Voxel<NUM_MATERIAL> *voxelInput);
 
 /**
  * This is done to warmup the GPU. The first instruction takes usulally
@@ -85,3 +86,12 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
  * @param dirname The name of the directory
  */
 void createDirectory(const std::string dirname);
+
+
+__host__ inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan) {
+#ifdef DOUBLE_PRECISION
+    return (cufftExecZ2Z(plan, polarization, polarization, CUFFT_FORWARD));
+#else
+    return (cufftExecC2C(plan, polarization, polarization, CUFFT_FORWARD));
+#endif
+}
