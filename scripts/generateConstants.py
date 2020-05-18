@@ -133,7 +133,10 @@ if __name__ == "__main__":
     numY = 2048;# number of voxels in Y direction
     numZ = 1;# number of voxels in Z direction
     physSize = 5.0;
-    
+    rotMask = False;
+    EwaldsInterpolation = 1; # 1 : Linear Interpolation 0: Nearest Neighbour
+    writeVTI = False;
+
     #Files corresponding to Each material. For vacuum pass null
     dict={'Material0':'../OpticalConstants/PEOlig2018.txt',
           'Material1': '../OpticalConstants/PEOlig2018.txt',
@@ -161,6 +164,9 @@ if __name__ == "__main__":
     f.write("NumY = " + str(numY) + ";\n");
     f.write("NumZ = " + str(numZ) + ";\n");
     f.write("PhysSize = " + str(physSize) + ";\n");
+    f.write("rotMask = " + str(rotMask) + ";\n");
+    f.write("EwaldsInterpolation= " + str(EwaldsInterpolation) + ";\n");
+    f.write("writeVTI = " + str(writeVTI) + ";\n");
     f.close();
     
     
