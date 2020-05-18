@@ -31,10 +31,11 @@
 
 #define NUM_THREADS 128
 
-enum EwaldsInterpolation: short{
+enum EwaldsInterpolation: int{
   NEARESTNEIGHBOUR = 0,
   LINEAR = 1
 };
+
 
 
 

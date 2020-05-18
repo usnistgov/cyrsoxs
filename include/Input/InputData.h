@@ -45,11 +45,26 @@ class InputData {
   void ReadValueRequired(libconfig::Config & config, const std::string key, T & value ){
     bool res = config.lookupValue(key, value);
     if(res == false){
-      std::cerr << "[Input Error] No value corresponding to " << key  << "found. Exiting\n";
-      exit(-1);
+      std::cerr << "[Input Error] No value corresponding to " << key  << " found. Exiting\n";
+      exit(EXIT_FAILURE);
     }
   }
-
+  /**
+   *
+   * @tparam T
+   * @param config
+   * @param key
+   * @param value
+   * @return
+   */
+  template <typename T>
+  bool ReadValue(libconfig::Config & config, const std::string key, T & value ){
+    bool res = config.lookupValue(key, value);
+    if(res == false){
+      std::cout << "[WARNING] : No value corresponding to " << key << " found. Setting to default\n";
+    }
+    return res;
+  }
 
  public:
   /// start of energy
@@ -76,7 +91,12 @@ class InputData {
   Real physSize;
   /// Write HDF5 file
   bool writeHDF5 = true;
-
+  /// Write VTI file
+  bool writeVTI = false;
+  /// whether to do masking for rotation or not
+  bool rotMask = false;
+  /// Type of Ewalds interpolation
+  int ewaldsInterpolation = EwaldsInterpolation::LINEAR;
 
   /**
    * Constructor to read input data
@@ -97,6 +117,9 @@ class InputData {
     ReadValueRequired(cfg, "NumY", numY);
     ReadValueRequired(cfg, "NumZ", numZ);
     ReadValueRequired(cfg, "PhysSize", physSize);
+    if(ReadValue(cfg, "rotMask",rotMask)){}
+    if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
+    if(ReadValue(cfg, "WriteVTI",writeVTI)){}
 #if ENABLE_2D
 
     if(numZ != 1){

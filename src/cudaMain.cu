@@ -185,7 +185,9 @@ int cudaMain(const UINT *voxel,
   VTI::writeVoxelDataScalar(voxelInput, voxel, "Phi", varnameScalar);
 #endif
 #ifdef DLEVEL2
-  createDirectory("VTI");
+  if(idata.writeVTI) {
+    createDirectory("VTI");
+  }
   projectionGPUAveraged = new Real[numEnergyLevel * voxel[0] * voxel[1]];
 #endif
 
@@ -264,6 +266,7 @@ int cudaMain(const UINT *voxel,
 
     Complex *d_polarizationZ, *d_polarizationX, *d_polarizationY;
     Real *d_scatter3D;
+    UINT * d_mask;
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_polarizationZ, sizeof(Complex) * voxelSize));
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_polarizationX, sizeof(Complex) * voxelSize));
@@ -275,12 +278,18 @@ int cudaMain(const UINT *voxel,
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_temporarySwapVariable, sizeof(Complex) * voxelSize));
     gpuErrchk(cudaPeekAtLastError());
 
+
+
 #ifndef EOC
     Real *d_projection, *d_rotProjection, *d_projectionAverage;
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_projection, sizeof(Real) * (voxel[0] * voxel[1])));
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_rotProjection, sizeof(Real) * (voxel[0] * voxel[1])));
     gpuErrchk(cudaPeekAtLastError());
+    if(idata.rotMask){
+      CUDA_CHECK_RETURN(cudaMalloc((void **) &d_mask, sizeof(UINT) * voxel[0]*voxel[1]));
+      gpuErrchk(cudaPeekAtLastError());
+    }
 
 #ifdef DLEVEL2
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_projectionAverage, sizeof(Real) * (voxel[0] * voxel[1])));
@@ -316,6 +325,7 @@ int cudaMain(const UINT *voxel,
 #endif
 
     UINT BlockSize = static_cast<UINT >(ceil(voxelSize * 1.0 / NUM_THREADS));
+    UINT BlockSize2 = static_cast<UINT>(ceil(voxel[0] * voxel[1] * 1.0 / NUM_THREADS));
 
     for (UINT j = numStart; j < numEnd; j++) {
 
@@ -325,6 +335,9 @@ int cudaMain(const UINT *voxel,
 #ifdef DLEVEL2
       CUDA_CHECK_RETURN(cudaMemset(d_projectionAverage, 0, voxel[0] * voxel[1] * sizeof(Real)));
       gpuErrchk(cudaPeekAtLastError());
+      if(idata.rotMask) {
+        cudaMemset(d_mask, 0, sizeof(UINT) * voxel[0] * voxel[1]);
+      }
 #endif
 
 #ifdef  PROFILING
@@ -420,6 +433,7 @@ int cudaMain(const UINT *voxel,
         gpuErrchk(cudaPeekAtLastError());
 
         FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationX,d_temporarySwapVariable,vx);
+        cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
         CUDA_CHECK_RETURN(cudaMemcpy(d_temporarySwapVariable,
@@ -429,6 +443,7 @@ int cudaMain(const UINT *voxel,
         gpuErrchk(cudaPeekAtLastError());
 
         FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationY,d_temporarySwapVariable,vx);
+        cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
         CUDA_CHECK_RETURN(cudaMemcpy(d_temporarySwapVariable,
@@ -438,6 +453,7 @@ int cudaMain(const UINT *voxel,
         gpuErrchk(cudaPeekAtLastError());
 
         FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationZ,d_temporarySwapVariable,vx);
+        cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
 
@@ -515,8 +531,10 @@ int cudaMain(const UINT *voxel,
 #endif
         computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
 #else
-        UINT BlockSize2 = static_cast<UINT>(ceil(voxel[0] * voxel[1] * 1.0 / NUM_THREADS));
-        computeEwaldProjectionGPU << < BlockSize2, NUM_THREADS >> > (d_projection, d_scatter3D, vx, eleField.k.z,idata.physSize,EwaldsInterpolation::LINEAR);
+        cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
+
+        computeEwaldProjectionGPU << < BlockSize2, NUM_THREADS >> > (d_projection,d_rotProjection, d_scatter3D, vx,
+            eleField.k.z,idata.physSize, static_cast<EwaldsInterpolation>(idata.ewaldsInterpolation));
         cudaDeviceSynchronize();
         const double alpha = cos(angle);
         const double beta = sin(angle);
@@ -527,7 +545,7 @@ int cudaMain(const UINT *voxel,
             -beta, alpha, static_cast<Real>(beta * voxel[0] / 2. + (1 - alpha) * voxel[1] / 2.)
         };
 
-        cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
+
 
         NppStatus status = nppiWarpAffine_32f_C1R(d_projection,
                                                   sizeImage,
@@ -542,6 +560,12 @@ int cudaMain(const UINT *voxel,
           std::cout << "Image rotation failed with error = " << status << "\n";
           exit(-1);
         }
+
+        if(idata.rotMask){
+          computeRotationMask<< < BlockSize2, NUM_THREADS >> >(d_rotProjection,d_mask,vx);
+          cudaDeviceSynchronize();
+        }
+
 #ifdef DLEVEL2
         const Real factor = static_cast<Real>(1.0);
         stat = cublasSaxpy(handle, voxel[0] * voxel[1], &factor, d_rotProjection, 1, d_projectionAverage, 1);
@@ -549,6 +573,8 @@ int cudaMain(const UINT *voxel,
           std::cout << "CUBLAS during sum failed  with status " << stat << "\n";
           exit(EXIT_FAILURE);
         }
+
+
 #endif
 
 #ifdef PROFILING
@@ -579,14 +605,21 @@ int cudaMain(const UINT *voxel,
       }
 
 #ifdef DLEVEL2
-      /// The averaging out for all angles
-      const Real alphaFac = static_cast<Real>(1.0 / numAnglesRotation);
-      stat = cublasSscal(handle, voxel[0] * voxel[1], &alphaFac, d_projectionAverage, 1);
-      if (stat != CUBLAS_STATUS_SUCCESS) {
-        std::cout << "CUBLAS during averaging failed  with status " << stat << "\n";
-        exit (EXIT_FAILURE);
-      }
 
+      if(idata.rotMask){
+        averageRotation<<<BlockSize2,NUM_THREADS>>>(d_projectionAverage,d_mask,vx);
+        cudaDeviceSynchronize();
+        gpuErrchk(cudaPeekAtLastError());
+      }
+      else {
+        /// The averaging out for all angles
+        const Real alphaFac = static_cast<Real>(1.0 / numAnglesRotation);
+        stat = cublasSscal(handle, voxel[0] * voxel[1], &alphaFac, d_projectionAverage, 1);
+        if (stat != CUBLAS_STATUS_SUCCESS) {
+          std::cout << "CUBLAS during averaging failed  with status " << stat << "\n";
+          exit(EXIT_FAILURE);
+        }
+      }
       CUDA_CHECK_RETURN(cudaMemcpy(&projectionGPUAveraged[j * voxel[0] * voxel[1]],
                                    d_projectionAverage,
                                    sizeof(Real) * (voxel[0] * voxel[1]),
@@ -656,7 +689,7 @@ int cudaMain(const UINT *voxel,
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaFree(d_voxelInput));
     gpuErrchk(cudaPeekAtLastError());
-#pragma message "Fix Mw! You have not allocated me. No need to delete me"
+#pragma message "Fix Me! You have not allocated me. No need to delete me"
     CUDA_CHECK_RETURN(cudaFree(d_temporarySwapVariable));
     gpuErrchk(cudaPeekAtLastError());
 
@@ -665,6 +698,10 @@ int cudaMain(const UINT *voxel,
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaFree(d_rotProjection));
     gpuErrchk(cudaPeekAtLastError());
+    if(idata.rotMask) {
+      CUDA_CHECK_RETURN(cudaFree(d_mask));
+      gpuErrchk(cudaPeekAtLastError());
+    }
 #endif
 
     delete[] polarizationX;
@@ -685,8 +722,10 @@ int cudaMain(const UINT *voxel,
     tDumpLevel2Start = std::chrono::high_resolution_clock::now();
   }
 #endif
-  omp_set_num_threads(idata.num_threads);
-  dump_files2D(projectionGPUAveraged,numEnergyLevel,voxel);
+  if(idata.writeVTI) {
+    omp_set_num_threads(idata.num_threads);
+    dump_files2D(projectionGPUAveraged, numEnergyLevel, voxel);
+  }
 
 #ifdef PROFILING
   {

@@ -437,13 +437,14 @@ __host__ __device__ inline Real  computeTrilinearInterpolation(const Real * data
  */
 
 __global__ void computeEwaldProjectionGPU(Real *projection,
+                                          Real *d_rotprojection,
                                           const Real *scatter3D,
                                           const uint3 voxel,
                                           const Real k,
                                           const Real physSize,
                                           const EwaldsInterpolation interpolation) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
-  const int totalSize = voxel.x * voxel.y;
+  const UINT totalSize = voxel.x * voxel.y;
   if (threadID >= totalSize) {
     return;
   }
@@ -486,6 +487,48 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
       projection[threadID] = NAN;
     }
   }
+  d_rotprojection[threadID] = NAN;
+
+}
+/**
+ * @brief This function computes the rotation masks.
+ * If during the rotation, some values has been NANs, because they do not belong
+ * within the boundary, this function resets it to zero. In addition, it computes a
+ * mask counter keeping track of which pixels has been NANs as wedo not want to average
+ * the final result which has been NANs.
+ * @param [in,out] rotProjection the rotated projection
+ * @param [out] mask the mask vector
+ * @param [in] Number of voxel in each direction
+ */
+__global__ void computeRotationMask(Real * rotProjection, UINT * mask, const uint3 voxel){
+  UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  const UINT totalSize = voxel.x * voxel.y;
+  if (threadID >= totalSize) {
+    return;
+  }
+  if(isnan(rotProjection[threadID])){
+    rotProjection[threadID] = 0.0;
+  }
+  else{
+    mask[threadID]++;
+  }
+
+}
+
+/**
+ * @brief This functions performs the averaging of the pixels keeping track of how
+ * many values are Non NANs for each pixel.
+ * @param rotProjection rotation vector
+ * @param mask mask vector
+ * @param voxel Number of voxel in each direction
+ */
+__global__ void averageRotation(Real * rotProjection,const  UINT * mask, const uint3 voxel){
+  UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  const UINT totalSize = voxel.x * voxel.y;
+  if (threadID >= totalSize) {
+    return;
+  }
+  rotProjection[threadID] = rotProjection[threadID] * static_cast<Real>(1.0/(mask[threadID]*1.0));
 
 }
 
