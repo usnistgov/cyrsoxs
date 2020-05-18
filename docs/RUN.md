@@ -80,5 +80,5 @@ from the run directory.
 ```
 
 The output will be generated in the folder named `Projection`that will be
-created in the run directory. The output are generated in `.vti` format which
+created in the run directory. The output are generated in `.vti` / `.hdf5` format which
 can be visualized using [Paraview](https://www.paraview.org/) or [Visit](https://wci.llnl.gov/simulation/computer-codes/visit/).
