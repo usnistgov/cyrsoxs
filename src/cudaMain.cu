@@ -87,7 +87,6 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 
 
 if(windowing == FFTWindowing::HANNING) {
-  printf("Windowing\n");
   UINT Z = static_cast<UINT>(floorf(threadID / (voxel.y * voxel.x * 1.0)));
   UINT Y = static_cast<UINT>(floorf((threadID - Z * voxel.y * voxel.x) / (voxel.x * 1.0)));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
