@@ -94,7 +94,7 @@ Optional Cmake Flags can be added:
 
 **For compiling in double precision mode:**
 ```bash
--DOUBLE_PRECISION=Yes
+-DDOUBLE_PRECISION=Yes
 ```
 
 **For profiling**
