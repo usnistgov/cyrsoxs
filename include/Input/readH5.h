@@ -66,21 +66,31 @@ inline void getMatAllignment(const H5::H5File &file,
   for (UINT i = 0; i < numMaterial; i++) {
     inputData[i].resize(numVoxel * 3);
   }
-  int rank = 4;
-  hsize_t dimsm[4]{static_cast<hsize_t>(voxelSize[0]),
-                   static_cast<hsize_t>(voxelSize[1]),
-                   static_cast<hsize_t>(voxelSize[2]),
-                   3};
-  H5::DataSpace memspace(rank, dimsm);
-
   for (int i = 1; i <= numMaterial; i++) {
     std::string varname = groupName + "Mat_" + std::to_string(i) + "_alignment";
     H5::DataSet dataSet = file.openDataSet(varname);
-    H5::DataSpace dataspace = dataSet.getSpace();
+    H5::DataType dataType = dataSet.getDataType();
 #ifdef DOUBLE_PRECISION
-    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE, memspace, dataspace);
+    if(dataType != PredType::NATIVE_DOUBLE){
+       std::cout << "The data format is not supported for double precision \n";
+       exit(EXIT_FAILURE);
+    }
+    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
+
 #else
-    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT, memspace, dataspace);
+    if(dataType == PredType::NATIVE_DOUBLE){
+
+      std::vector<double> alignedData(numVoxel*3);
+      dataSet.read(alignedData.data(), H5::PredType::NATIVE_DOUBLE);
+      for(int id = 0;id < numVoxel;id++){
+        inputData[i - 1][id*3 + 0]= static_cast<Real>(alignedData[3*id + 0]);
+        inputData[i - 1][id*3 + 1]= static_cast<Real>(alignedData[3*id + 1]);
+        inputData[i - 1][id*3 + 2]= static_cast<Real>(alignedData[3*id + 2]);
+      }
+    }
+    else if (dataType == PredType::NATIVE_FLOAT){
+      dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT);
+    }
 #endif
   }
 }
@@ -105,20 +115,35 @@ inline void getMatUnAlligned(const H5::H5File &file,
   for (UINT i = 0; i < numMaterial; i++) {
     inputData[i].resize(numVoxel);
   }
-  int rank = 3;
-  hsize_t dimsm[3]{static_cast<hsize_t>(voxelSize[0]),
-                   static_cast<hsize_t>(voxelSize[1]),
-                   static_cast<hsize_t>(voxelSize[2])};
-  H5::DataSpace memspace(rank, dimsm);
-
   for (int i = 1; i <= numMaterial; i++) {
     std::string varname = groupName + "Mat_" + std::to_string(i) + "_unaligned";
+
     H5::DataSet dataSet = file.openDataSet(varname);
-    H5::DataSpace dataspace = dataSet.getSpace();
+    H5::DataType dataType = dataSet.getDataType();
+
 #ifdef DOUBLE_PRECISION
-    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE, memspace, dataspace);
+    if(dataType != PredType::NATIVE_DOUBLE){
+       std::cout << "The data format is not supported for double precision \n";
+       exit(EXIT_FAILURE);
+    }
+    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
 #else
-    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT, memspace, dataspace);
+    if(dataType == PredType::NATIVE_DOUBLE){
+      std::vector<double> unalignedData(numVoxel);
+      dataSet.read(unalignedData.data(), H5::PredType::NATIVE_DOUBLE);
+      for(int id = 0;id < unalignedData.size();id++){
+        inputData[i - 1][id]= static_cast<Real>(unalignedData[id]);
+      }
+    }
+    else if (dataType == PredType::NATIVE_FLOAT){
+      dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT);
+    }
+    else{
+      std::cout << "This data format is not supported \n";
+      exit(EXIT_FAILURE);
+    }
+    dataType.close();
+    dataSet.close();
 #endif
   }
 
@@ -162,7 +187,9 @@ void readFile(const std::string hdf5file, const UINT *voxelSize, Voxel<NUM_MATER
     }
   }
 
+
 }
+
 
 }
 #endif //PRS_READH5_H
