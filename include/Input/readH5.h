@@ -91,6 +91,8 @@ inline void getMatAllignment(const H5::H5File &file,
     else if (dataType == PredType::NATIVE_FLOAT){
       dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT);
     }
+    dataType.close();
+    dataSet.close();
 #endif
   }
 }
