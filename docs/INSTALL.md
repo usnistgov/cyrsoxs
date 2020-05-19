@@ -97,11 +97,6 @@ Optional Cmake Flags can be added:
 -DOUBLE_PRECISION=Yes
 ```
 
-**For enabling Hanning window**
-```bash
--DHANNING=Yes
-```
-
 **For profiling**
 ```bash
 -DPROFILING=Yes

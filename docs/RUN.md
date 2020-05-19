@@ -20,9 +20,10 @@ numX = 2048; # number of voxels in X direction
 numY = 2048;# number of voxels in Y direction
 numZ = 1;# number of voxels in Z direction
 physSize = 5.0; #Physical size
-rotMask = False; #Default: False
+RotMask = False; #Default: False
 EwaldsInterpolation = 1; # 1 : Linear Interpolation (default) 0: Nearest Neighbour 
-writeVTI = False; (Default : False)
+WriteVTI = False; # Default : False
+WindowingType = 0; # 0: None (Default) 1: Hanning 
 ``` 
 
 This code also generate the optical constants for each Energy level

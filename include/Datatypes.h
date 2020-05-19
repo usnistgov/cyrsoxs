@@ -29,16 +29,6 @@
 #include <cinttypes>
 #include <vector_types.h>
 
-#define NUM_THREADS 128
-
-enum EwaldsInterpolation: int{
-  NEARESTNEIGHBOUR = 0,
-  LINEAR = 1
-};
-
-
-
-
 #ifdef DOUBLE_PRECISION
 typedef double Real;
 typedef double2 Real2;
@@ -55,4 +45,17 @@ typedef float2 Complex;
 #endif
 typedef uint64_t BigUINT;
 typedef uint32_t UINT;
+
+#define NUM_THREADS 128
+
+enum EwaldsInterpolation: UINT{
+  NEARESTNEIGHBOUR = 0,
+  LINEAR = 1
+};
+
+enum FFTWindowing:UINT{
+  HANNING =1,
+  NONE = 0
+};
+
 #endif

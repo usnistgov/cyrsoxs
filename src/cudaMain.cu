@@ -69,7 +69,8 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     const uint3 voxel,
                                     Complex *polarizationX,
                                     Complex *polarizationY,
-                                    Complex *polarizationZ
+                                    Complex *polarizationZ,
+                                    FFTWindowing windowing
 ) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const UINT voxelNum = voxel.x*voxel.y*voxel.z;
@@ -85,24 +86,28 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 #endif
 
 
-#ifdef HANNING
+if(windowing == FFTWindowing::HANNING) {
+  printf("Windowing\n");
   UINT Z = static_cast<UINT>(floorf(threadID / (voxel.y * voxel.x * 1.0)));
-  UINT Y = static_cast<UINT>(floorf((threadID - Z * voxel.y * voxel.x) / voxel.x * 1.0));
+  UINT Y = static_cast<UINT>(floorf((threadID - Z * voxel.y * voxel.x) / (voxel.x * 1.0)));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
   Real3 hanningWeight;
-  hanningWeight.x = 0.5*(1 - cos(2*M_PI*X/(voxel.x)));
-  hanningWeight.y = 0.5*(1 - cos(2*M_PI*Y/(voxel.y)));
+  hanningWeight.x = static_cast<Real> (0.5 * (1 - cos(2 * M_PI * X / (voxel.x))));
+  hanningWeight.y = static_cast<Real> (0.5 * (1 - cos(2 * M_PI * Y / (voxel.y))));
 #ifdef ENABLE_2D
-  hanningWeight.z = 1.0;
+  hanningWeight.z = static_cast<Real>(1.0);
 #else
-  hanningWeight.z = 0.5*(1 - cos(2*M_PI*Z/(voxel.z)));
+  hanningWeight.z = static_cast<Real>(0.5 * (1 - cos(2 * M_PI * Z / (voxel.z))));
 #endif
-  Real totalHanningWeight =hanningWeight.x * hanningWeight.y * hanningWeight.z;
-  polarizationX[threadID].x *= totalHanningWeight;   polarizationX[threadID].y *= totalHanningWeight;
-  polarizationY[threadID].x *= totalHanningWeight;   polarizationY[threadID].y *= totalHanningWeight;
-  polarizationZ[threadID].x *= totalHanningWeight;   polarizationZ[threadID].y *= totalHanningWeight;
+  Real totalHanningWeight = hanningWeight.x * hanningWeight.y * hanningWeight.z;
+  polarizationX[threadID].x *= totalHanningWeight;
+  polarizationX[threadID].y *= totalHanningWeight;
+  polarizationY[threadID].x *= totalHanningWeight;
+  polarizationY[threadID].y *= totalHanningWeight;
+  polarizationZ[threadID].x *= totalHanningWeight;
+  polarizationZ[threadID].y *= totalHanningWeight;
 
-#endif
+}
 
 }
 
@@ -364,7 +369,8 @@ int cudaMain(const UINT *voxel,
 #endif
 
         computePolarization << < BlockSize, NUM_THREADS >>
-            > (materialInput[j], d_voxelInput, eleField, angle, vx, d_polarizationX, d_polarizationY, d_polarizationZ);
+            > (materialInput[j], d_voxelInput, eleField, angle, vx, d_polarizationX, d_polarizationY, d_polarizationZ,
+                static_cast<FFTWindowing >(idata.windowingType));
 
         gpuErrchk(cudaPeekAtLastError());
         cudaDeviceSynchronize();

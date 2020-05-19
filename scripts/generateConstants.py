@@ -136,6 +136,7 @@ if __name__ == "__main__":
     rotMask = False;
     EwaldsInterpolation = 1; # 1 : Linear Interpolation 0: Nearest Neighbour
     writeVTI = False;
+    windowingType = 0;
 
     #Files corresponding to Each material. For vacuum pass null
     dict={'Material0':'../OpticalConstants/PEOlig2018.txt',
@@ -164,9 +165,10 @@ if __name__ == "__main__":
     f.write("NumY = " + str(numY) + ";\n");
     f.write("NumZ = " + str(numZ) + ";\n");
     f.write("PhysSize = " + str(physSize) + ";\n");
-    f.write("rotMask = " + str(rotMask) + ";\n");
+    f.write("RotMask = " + str(rotMask) + ";\n");
     f.write("EwaldsInterpolation= " + str(EwaldsInterpolation) + ";\n");
-    f.write("writeVTI = " + str(writeVTI) + ";\n");
+    f.write("WriteVTI = " + str(writeVTI) + ";\n");
+    f.write("WindowingType = " + str(windowingType) + ";\n");
     f.close();
     
     

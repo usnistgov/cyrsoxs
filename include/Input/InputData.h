@@ -96,7 +96,9 @@ class InputData {
   /// whether to do masking for rotation or not
   bool rotMask = false;
   /// Type of Ewalds interpolation
-  int ewaldsInterpolation = EwaldsInterpolation::LINEAR;
+  UINT ewaldsInterpolation = EwaldsInterpolation::LINEAR;
+  /// Windowing Type
+  UINT windowingType = FFTWindowing::NONE;
 
   /**
    * Constructor to read input data
@@ -117,9 +119,10 @@ class InputData {
     ReadValueRequired(cfg, "NumY", numY);
     ReadValueRequired(cfg, "NumZ", numZ);
     ReadValueRequired(cfg, "PhysSize", physSize);
-    if(ReadValue(cfg, "rotMask",rotMask)){}
+    if(ReadValue(cfg, "RotMask",rotMask)){}
     if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
     if(ReadValue(cfg, "WriteVTI",writeVTI)){}
+    if(ReadValue(cfg, "WindowingType",windowingType)){}
 #if ENABLE_2D
 
     if(numZ != 1){
