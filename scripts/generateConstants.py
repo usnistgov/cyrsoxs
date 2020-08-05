@@ -59,7 +59,7 @@ def get_interpolated_value(array,value,nearest_id,energy_id):
             
     else:
         for i in range(0,len(valArray)):
-            valArray[i] = value[nearest_id][i];
+            valArray[i] = array[nearest_id][i];
             
     valArray[energy_id] = value;
     return valArray;
@@ -99,7 +99,7 @@ def dump_data(valArray,index,labelEnergy,f):
     
 
 def main(startEnergy, endEnergy,increment,dict,labelEnergy,numMaterial):
-    NumEnergy = int(np.round((endEnergy - startEnergy)/0.1 + 1));
+    NumEnergy = int(np.round((endEnergy - startEnergy)/increment + 1));
     
     for numMat in range(0,numMaterial):
         f = open("Material" + str(numMat) + ".txt", "w")
