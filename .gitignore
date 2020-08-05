@@ -1,7 +1,7 @@
 build/
 cmake-build-*/
 .idea/
-
+.vscode/
 # run-generated files
 *.dat
 *.vtu
@@ -11,4 +11,3 @@ timestep_*.vtk
 IO/*.vti
 *.pyc
 __pycache__
-

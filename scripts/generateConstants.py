@@ -10,7 +10,7 @@ Created on Mon Dec 16 14:27:24 2019
 import numpy as np
 
 """
-Function to find the nearest index 
+Function to find the nearest index
 
 Parameters
 ----------
@@ -47,23 +47,22 @@ def get_interpolated_value(array,value,nearest_id,energy_id):
     valArray = np.zeros(array.shape[1]);
     if(array[nearest_id][energy_id] > value):
         xp = [array[nearest_id][energy_id], array[nearest_id - 1][energy_id]];
-        for i in range(0,energy_id):
+        for i in range(0,array.shape[1]):
             yp = [array[nearest_id][i], array[nearest_id - 1][i]];
             valArray[i] = np.interp(value,xp,yp);
-            
+
     elif (array[nearest_id][energy_id] < value):
         xp = [array[nearest_id][energy_id], array[nearest_id + 1][energy_id]];
-        for i in range(0,energy_id):
+        for i in range(0,array.shape[1]):
             yp = [array[nearest_id][i], array[nearest_id + 1][i]];
             valArray[i] = np.interp(value,xp,yp);
-            
+
     else:
         for i in range(0,len(valArray)):
             valArray[i] = array[nearest_id][i];
-            
-    valArray[energy_id] = value;
+
     return valArray;
-         
+
 def dump_dataVacuum(index,energy,f):
      Header = "EnergyData" + str(index) +":\n{\n";
      f.write(Header);
@@ -78,7 +77,7 @@ def dump_dataVacuum(index,energy,f):
      DeltaPerp = "DeltaPerp = " + str(0.0) + ";\n";
      f.write(DeltaPerp);
      f.write("}\n");
-       
+
 
 def dump_data(valArray,index,labelEnergy,f):
      Header = "EnergyData" + str(index) +":\n{\n";
@@ -94,13 +93,13 @@ def dump_data(valArray,index,labelEnergy,f):
      DeltaPerp = "DeltaPerp = " + str(valArray[labelEnergy["DeltaPerp"]]) + ";\n";
      f.write(DeltaPerp);
      f.write("}\n");
-     
 
-    
+
+
 
 def main(startEnergy, endEnergy,increment,dict,labelEnergy,numMaterial):
     NumEnergy = int(np.round((endEnergy - startEnergy)/increment + 1));
-    
+
     for numMat in range(0,numMaterial):
         f = open("Material" + str(numMat) + ".txt", "w")
         fname = dict["Material" + str(numMat)]
@@ -111,16 +110,16 @@ def main(startEnergy, endEnergy,increment,dict,labelEnergy,numMaterial):
                 currentEnergy = startEnergy + i* increment;
                 nearest_id = find_nearest(Data[:,labelEnergy["Energy"]],currentEnergy)
                 ValArray = get_interpolated_value(Data,currentEnergy,nearest_id,labelEnergy["Energy"])
-                dump_data(ValArray,i,labelEnergy,f)   
-            
+                dump_data(ValArray,i,labelEnergy,f)
+
         else:
             for i in range(0,NumEnergy):
                 energy = startEnergy + increment*i
                 dump_dataVacuum(i,energy,f)
-        f.close()    
-    
-    
-    
+        f.close()
+
+
+
 if __name__ == "__main__":
     startEnergy = 280.0; #Start energy
     endEnergy = 290.0;   #End  energy
@@ -139,21 +138,18 @@ if __name__ == "__main__":
     windowingType = 0;
 
     #Files corresponding to Each material. For vacuum pass null
-    dict={'Material0':'../OpticalConstants/PEOlig2018.txt',
-          'Material1': '../OpticalConstants/PEOlig2018.txt',
-          'Material2':'../OpticalConstants/PEOlig2018.txt',
-          'Material3':'vacuum'}
-    
-    
+    dict={'Material0':'constants.txt'}
+
+
     # Label of energy to look for
-    labelEnergy={"BetaPara":0,
-                 "BetaPerp":1,
-                 "DeltaPara":2,
-                 "DeltaPerp":3,
-                 "Energy":6}
+    labelEnergy={"BetaPara":1,
+                 "BetaPerp":2,
+                 "DeltaPara":3,
+                 "DeltaPerp":4,
+                 "Energy":0}
 
 #### Do not change below this
-    f = open("config.txt", "w") 
+    f = open("config.txt", "w")
     f.write("StartEnergy = " + str(startEnergy) + ";\n");
     f.write("EndEnergy = " + str(endEnergy) + ";\n");
     f.write("IncrementEnergy = " + str(incrementEnergy) + ";\n");
@@ -170,7 +166,7 @@ if __name__ == "__main__":
     f.write("WriteVTI = " + str(writeVTI) + ";\n");
     f.write("WindowingType = " + str(windowingType) + ";\n");
     f.close();
-    
-    
-    
+
+
+
     main(startEnergy,endEnergy,incrementEnergy,dict,labelEnergy,len(dict));
