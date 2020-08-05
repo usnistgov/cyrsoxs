@@ -137,7 +137,7 @@ if __name__ == "__main__":
     writeVTI = False;
     windowingType = 0;
 
-    #Files corresponding to Each material. For vacuum pass null
+    #Files corresponding to Each material. For vacuum pass vacuum
     dict={'Material0':'constants.txt'}
 
 
