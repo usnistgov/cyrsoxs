@@ -7,7 +7,10 @@ Created on Mon Dec 16 14:27:24 2019
 """
 
 
+
+
 import numpy as np
+from termcolor import colored, cprint 
 
 """
 Function to find the nearest index
@@ -46,9 +49,9 @@ valArray : Numpy array
 def get_interpolated_value(array,value,nearest_id,energy_id):
     valArray = np.zeros(array.shape[1]);
     if(array[nearest_id][energy_id] > value):
-        xp = [array[nearest_id][energy_id], array[nearest_id - 1][energy_id]];
+        xp = [array[nearest_id - 1][energy_id], array[nearest_id ][energy_id]];
         for i in range(0,array.shape[1]):
-            yp = [array[nearest_id][i], array[nearest_id - 1][i]];
+            yp = [array[nearest_id - 1][i], array[nearest_id][i]];
             valArray[i] = np.interp(value,xp,yp);
 
     elif (array[nearest_id][energy_id] < value):
@@ -61,7 +64,29 @@ def get_interpolated_value(array,value,nearest_id,energy_id):
         for i in range(0,len(valArray)):
             valArray[i] = array[nearest_id][i];
 
+    
+
     return valArray;
+
+
+def removeDuplicates(Data,energy_id):
+    listIn = Data.tolist()
+    listOut=[]
+    listOut.append(listIn[0])
+    currEnergy = listIn[0][energy_id]
+    duplicateFound = False;
+    for i in range(1,len(listIn)):
+        if(listIn[i][0] == currEnergy):
+            duplicateFound = True;
+            continue
+        else:
+            listOut.append(listIn[i])
+            currEnergy = listIn[i][energy_id]
+
+    if(duplicateFound):
+        cprint('Duplicates in Energy found. Removing it', 'yellow') 
+    return(np.array(listOut))
+    
 
 def dump_dataVacuum(index,energy,f):
      Header = "EnergyData" + str(index) +":\n{\n";
@@ -106,6 +131,7 @@ def main(startEnergy, endEnergy,increment,dict,labelEnergy,numMaterial):
         if(fname != 'vacuum'):
             Data = np.loadtxt(fname,skiprows=1);
             Data = Data[Data[:,labelEnergy["Energy"]].argsort()]
+            Data = removeDuplicates(Data,labelEnergy["Energy"])
             for i in range(0,NumEnergy):
                 currentEnergy = startEnergy + i* increment;
                 nearest_id = find_nearest(Data[:,labelEnergy["Energy"]],currentEnergy)
