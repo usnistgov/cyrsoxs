@@ -76,7 +76,7 @@ def removeDuplicates(Data,energy_id):
     currEnergy = listIn[0][energy_id]
     duplicateFound = False;
     for i in range(1,len(listIn)):
-        if(listIn[i][0] == currEnergy):
+        if(listIn[i][energy_id] == currEnergy):
             duplicateFound = True;
             continue
         else:
