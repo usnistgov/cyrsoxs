@@ -28,8 +28,9 @@
 #include "cudaHeaders.h"
 #include "cudaUtils.h"
 #include <Input/Input.h>
+#include <cmath>
+#include <complex>
 #include <math.h>
-#include <complex.h>
 
 #ifdef EOC
 #include <opencv2/opencv.hpp>

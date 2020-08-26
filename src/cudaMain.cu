@@ -38,7 +38,6 @@
 #include <npp.h>
 
 
-
 int warmup(){
   double *d_warmup, *warmup;
   warmup = new double[1000];
@@ -367,8 +366,7 @@ int cudaMain(const UINT *voxel,
         }
 #endif
 
-        computePolarization << < BlockSize, NUM_THREADS >>
-            > (materialInput[j], d_voxelInput, eleField, angle, vx, d_polarizationX, d_polarizationY, d_polarizationZ,
+        computePolarization <<< BlockSize, NUM_THREADS >>> (materialInput[j], d_voxelInput, eleField, angle, vx, d_polarizationX, d_polarizationY, d_polarizationZ,
                 static_cast<FFTWindowing >(idata.windowingType));
 
         gpuErrchk(cudaPeekAtLastError());
@@ -501,8 +499,7 @@ int cudaMain(const UINT *voxel,
 #endif
 
         /** Scatter 3D computation **/
-        computeScatter3D << < BlockSize, NUM_THREADS >>
-            > (d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, voxelSize, vx, idata.physSize);
+        computeScatter3D <<< BlockSize, NUM_THREADS >>> (d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, voxelSize, vx, idata.physSize);
         cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
@@ -540,7 +537,7 @@ int cudaMain(const UINT *voxel,
 #else
         cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
 
-        computeEwaldProjectionGPU << < BlockSize2, NUM_THREADS >> > (d_projection,d_rotProjection, d_scatter3D, vx,
+        computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>> (d_projection,d_rotProjection, d_scatter3D, vx,
             eleField.k.z,idata.physSize, static_cast<EwaldsInterpolation>(idata.ewaldsInterpolation));
         cudaDeviceSynchronize();
         const double alpha = cos(angle);
@@ -581,7 +578,7 @@ int cudaMain(const UINT *voxel,
         }
 
         if(idata.rotMask){
-          computeRotationMask<< < BlockSize2, NUM_THREADS >> >(d_rotProjection,d_mask,vx);
+          computeRotationMask<<< BlockSize2, NUM_THREADS >>>(d_rotProjection,d_mask,vx);
           cudaDeviceSynchronize();
         }
 

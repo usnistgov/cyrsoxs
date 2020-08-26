@@ -13,6 +13,7 @@ option(DLEVEL1 "Dump Level 1" OFF)
 option(DLEVEL2 "Dump Level 2" ON)
 option(BIAXIAL "Biaxial Computation" OFF)
 option(BUILD_DOCS "Build Documentation" OFF)
+option(PYBIND "Pybind support for Cy-RSoXS" OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 
@@ -67,6 +68,10 @@ else ()
     message("Performing Uniaxial computation")
 endif ()
 
+if(PYBIND)
+    add_definitions(-DPYBIND)
+    message("WARNING: Compiling for PyBind. This will not produce any executable")
+endif()
 
 
 find_package(CUDA 9 REQUIRED)
@@ -78,10 +83,23 @@ if (OPENMP_FOUND)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif ()
 
+if(PYBIND)
+    find_package(PythonInterp 3.6 REQUIRED)
+    find_package(PythonLibs 3.6 REQUIRED)
+    set(PYBIND_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11)
+    add_subdirectory(${PYBIND_LOCATION})
+    include_directories(
+            ${PYTHON_INCLUDE_DIRS}
+            external/pybind11/include
+    )
+endif()
+
 find_package(Config++)
 if (NOT ${CONFIG++_FOUND})
     message(FATAL_ERROR "Libconfig++ could not be located.")
 endif ()
+
+
 find_package(HDF5 COMPONENTS CXX HL REQUIRED)
 link_directories(${HDF5_LIBRARY_DIRS})
 include_directories(${HDF5_INCLUDE_DIR})
@@ -100,11 +118,12 @@ set(CUDAINCLUDE
         include/Output/writeVTI.h
         include/Output/cencode.h
         include/Input/InputData.h
+        include/Input/Input.h
         include/Output/writeH5.h
         )
 
 
-add_library(cuda_base ${CUDAINCLUDE} ${CUDASRC})
+cuda_add_library(cuda_base STATIC ${CUDAINCLUDE} ${CUDASRC})
 find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 target_include_directories(cuda_base PUBLIC include ${CONFIG++_INCLUDE_DIR})
 if (EOC)
@@ -124,13 +143,27 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp -DNDEBUG --use_fas
 if (NUM_MATERIAL)
     target_compile_definitions(cuda_base PUBLIC NUM_MATERIAL=${NUM_MATERIAL})
 endif ()
+
+if(PYBIND)
+
+    set(PYBIND_SRC
+            src/pymain.cpp
+            )
+
+
+    cuda_add_library(Cy-RSoXS SHARED
+            ${PYBIND_SRC})
+    target_link_libraries(cuda_base
+            ${PYTHON_LIBRARIES} {HDF5_CXX_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
+    set_target_properties(cuda_base PROPERTIES PREFIX "")
+    target_include_directories(Cy-RSoXS PUBLIC include)
+
+else()
 set(PRS_INC
-        include/Input/Input.h
-        include/Input/InputData.h)
+        )
 set(PRS_SRC
         src/main.cpp
         )
-
 add_executable(Cy-RSoXS ${PRS_INC} ${PRS_SRC})
 
 set_target_properties(
@@ -139,12 +172,12 @@ set_target_properties(
         CUDA_SEPARABLE_COMPILATION ON
 )
 
-
 if (EOC)
     target_link_libraries(Cy-RSoXS cuda_base ${OpenCV_LIBS} ${HDF5_CXX_LIBRARIES} -lcufft -lcublas -lz "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppicom_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
 else ()
     target_link_libraries(Cy-RSoXS cuda_base ${HDF5_CXX_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
 endif ()
+endif()
 
 if (BUILD_DOCS)
     find_package(Doxygen)
