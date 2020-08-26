@@ -156,6 +156,8 @@ if(PYBIND)
             ${PYTHON_LIBRARIES} {HDF5_CXX_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
     set_target_properties(Cy_RSoXS PROPERTIES PREFIX "")
     target_include_directories(cuda_base  PUBLIC include)
+    target_include_directories(Cy_RSoXS  PUBLIC include)
+
 
 else()
     target_include_directories(cuda_base PUBLIC include ${CONFIG++_INCLUDE_DIR})

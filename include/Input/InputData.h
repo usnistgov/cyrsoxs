@@ -105,6 +105,13 @@ class InputData {
   /// Windowing Type
   UINT windowingType = FFTWindowing::NONE;
 
+  void setEnergy(double energy){
+      energyStart = energy;
+  }
+  void print() const{
+
+  }
+
 #ifndef PYBIND
 
   /**
