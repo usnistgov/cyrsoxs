@@ -24,7 +24,7 @@
 
 #ifndef CY_RSOXS_WRITEH5_H
 #define CY_RSOXS_WRITEH5_H
-#ifndef PYBIND
+
 #include <Datatypes.h>
 #include "H5Cpp.h"
 namespace H5 {
@@ -63,5 +63,5 @@ void writeFile2D(const std::string fname, const Real *data, const UINT *dim) {
   }
 }
 }
-#endif
+
 #endif //CY_RSOXS_WRITEH5_H

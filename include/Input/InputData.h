@@ -32,7 +32,9 @@
 #include <Input/Input.h>
 #include <vector>
 #include <cmath>
+#ifdef PYBIND
 #include <pybind11/pybind11.h>
+#endif
 /// This function reads the input data from the file.
 class InputData {
 #ifndef PYBIND
