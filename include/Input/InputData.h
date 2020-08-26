@@ -25,13 +25,18 @@
 #ifndef PRS_READCONFIG_H
 #define PRS_READCONFIG_H
 #include <string>
+#ifndef PYBIND
 #include <libconfig.h++>
+#endif
 #include <iostream>
 #include <Input/Input.h>
 #include <vector>
 #include <cmath>
+#include <pybind11/pybind11.h>
 /// This function reads the input data from the file.
 class InputData {
+#ifndef PYBIND
+
  private:
   /**
    * This function reads the value that is compulsory to be read from
@@ -65,7 +70,7 @@ class InputData {
     }
     return res;
   }
-
+#endif
  public:
   /// start of energy
   Real energyStart;
@@ -99,6 +104,8 @@ class InputData {
   UINT ewaldsInterpolation = EwaldsInterpolation::LINEAR;
   /// Windowing Type
   UINT windowingType = FFTWindowing::NONE;
+
+#ifndef PYBIND
 
   /**
    * Constructor to read input data
@@ -170,6 +177,11 @@ class InputData {
 
     }
   }
+#else
+
+#endif
+
+
 };
 
 #endif //PRS_READCONFIG_H

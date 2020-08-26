@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
-project(Cy-RSoXS LANGUAGES CXX CUDA)
+project(Cy_RSoXS  LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 ")
 
@@ -13,7 +13,7 @@ option(DLEVEL1 "Dump Level 1" OFF)
 option(DLEVEL2 "Dump Level 2" ON)
 option(BIAXIAL "Biaxial Computation" OFF)
 option(BUILD_DOCS "Build Documentation" OFF)
-option(PYBIND "Pybind support for Cy-RSoXS" OFF)
+option(PYBIND "Pybind support for Cy_RSoXS " OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 
@@ -100,10 +100,10 @@ endif ()
 
 
 endif()
-find_package(HDF5 COMPONENTS CXX HL REQUIRED)
-link_directories(${HDF5_LIBRARY_DIRS})
-include_directories(${HDF5_INCLUDE_DIR})
-set(LINK_LIBS ${LINK_LIBS} ${HDF5_C_${LIB_TYPE}_LIBRARY})
+#find_package(HDF5 COMPONENTS CXX HL REQUIRED)
+#link_directories(${HDF5_LIBRARY_DIRS})
+#include_directories(${HDF5_INCLUDE_DIR})
+#set(LINK_LIBS ${LINK_LIBS} ${HDF5_C_${LIB_TYPE}_LIBRARY})
 
 set(CMAKE_CXX_STANDARD 11)
 set(CUDASRC
@@ -123,7 +123,7 @@ set(CUDAINCLUDE
         )
 
 
-cuda_add_library(cuda_base STATIC ${CUDAINCLUDE} ${CUDASRC})
+cuda_add_library(cuda_base SHARED ${CUDAINCLUDE} ${CUDASRC})
 find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 if (EOC)
     target_include_directories(cuda_base PRIVATE ${OpenCV_INCLUDE_DIRS})
@@ -150,12 +150,12 @@ if(PYBIND)
             )
 
 
-    cuda_add_library(Cy-RSoXS SHARED
+    cuda_add_library(Cy_RSoXS  SHARED
             ${PYBIND_SRC})
     target_link_libraries(cuda_base
             ${PYTHON_LIBRARIES} {HDF5_CXX_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
-    set_target_properties(cuda_base PROPERTIES PREFIX "")
-    target_include_directories(Cy-RSoXS PUBLIC include)
+    set_target_properties(Cy_RSoXS PROPERTIES PREFIX "")
+    target_include_directories(cuda_base  PUBLIC include)
 
 else()
     target_include_directories(cuda_base PUBLIC include ${CONFIG++_INCLUDE_DIR})
@@ -164,18 +164,18 @@ else()
     set(PRS_SRC
             src/main.cpp
             )
-    add_executable(Cy-RSoXS ${PRS_INC} ${PRS_SRC})
+    add_executable(Cy_RSoXS  ${PRS_INC} ${PRS_SRC})
 
     set_target_properties(
-            Cy-RSoXS
+            Cy_RSoXS 
             PROPERTIES
             CUDA_SEPARABLE_COMPILATION ON
     )
 
     if (EOC)
-        target_link_libraries(Cy-RSoXS cuda_base ${OpenCV_LIBS} ${HDF5_CXX_LIBRARIES} -lcufft -lcublas -lz "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppicom_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
+        target_link_libraries(Cy_RSoXS  cuda_base ${OpenCV_LIBS} ${HDF5_CXX_LIBRARIES} -lcufft -lcublas -lz "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppicom_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
     else ()
-        target_link_libraries(Cy-RSoXS cuda_base ${HDF5_CXX_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
+        target_link_libraries(Cy_RSoXS  cuda_base ${HDF5_CXX_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
     endif ()
 endif()
 
