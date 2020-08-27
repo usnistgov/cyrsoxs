@@ -211,7 +211,7 @@ class InputData {
         incrementEnergy = _energyIncrement;
         paramChecker_.set(ParamChecker::Parameters::ENERGY,true);
     }
-    void setDimension(const Real & _numX, const  Real & _numY,const  Real & _numZ) {
+    void setDimension(const UINT & _numX, const  UINT & _numY,const  UINT & _numZ) {
       numX = _numX;
       numY = _numY;
       numZ = _numZ;
