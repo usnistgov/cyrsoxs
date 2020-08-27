@@ -296,6 +296,7 @@ __global__ void computeScatter3D(Complex *polarizationX,
   // q.z <-> q.x from original Igor code
   val.x = q.z * (2 * elefield.k.z + q.z) * pX.x
       + q.y * (elefield.k.z + q.z) * pY.x + q.x * (elefield.k.z + q.z) * pZ.x;
+
   val.y = q.z * (2 * elefield.k.z + q.z) * pX.y
       + q.y * (elefield.k.z + q.z) * pY.y + q.x * (elefield.k.z + q.z) * pZ.y;
   res = val.x * val.x + val.y * val.y;

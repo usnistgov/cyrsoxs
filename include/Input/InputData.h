@@ -34,10 +34,31 @@
 #include <cmath>
 #ifdef PYBIND
 #include <pybind11/pybind11.h>
+#include <bitset>
+
+namespace ParamChecker{
+    enum Parameters: u_short {
+        ENERGY = 0,
+        DIMENSION = 1,
+        PHYSSIZE = 2,
+        ANGLE = 3,
+        MAX_SIZE = 4
+    };
+    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","ANGLE"};
+    static_assert(sizeof(ParamChecker::paramNames)/sizeof(char*) == ParamChecker::Parameters::MAX_SIZE,
+            "sizes dont match");
+
+}
 #endif
 /// This function reads the input data from the file.
 class InputData {
-#ifndef PYBIND
+
+
+#ifdef PYBIND
+
+    std::bitset<ParamChecker::Parameters::MAX_SIZE> paramChecker_;
+
+#else
 
  private:
   /**
@@ -73,6 +94,7 @@ class InputData {
     return res;
   }
 #endif
+
  public:
   /// start of energy
   Real energyStart;
@@ -106,13 +128,6 @@ class InputData {
   UINT ewaldsInterpolation = EwaldsInterpolation::LINEAR;
   /// Windowing Type
   UINT windowingType = FFTWindowing::NONE;
-
-  void setEnergy(double energy){
-      energyStart = energy;
-  }
-  void print() const{
-
-  }
 
 #ifndef PYBIND
 
@@ -187,7 +202,55 @@ class InputData {
     }
   }
 #else
+    InputData() {
+      paramChecker_.reset();
+    }
+    void setEnergy(const Real & _energyStart, const  Real & _energyEnd,const  Real & _energyIncrement){
+        energyStart = _energyStart;
+        energyEnd = _energyEnd;
+        incrementEnergy = _energyIncrement;
+        paramChecker_.set(ParamChecker::Parameters::ENERGY,true);
+    }
+    void setDimension(const Real & _numX, const  Real & _numY,const  Real & _numZ) {
+      numX = _numX;
+      numY = _numY;
+      numZ = _numZ;
+      paramChecker_.set(ParamChecker::Parameters::DIMENSION,true);
+    }
+    void setPhysSize(const Real & _physSize) {
+      physSize = _physSize;
+      paramChecker_.set(ParamChecker::Parameters::PHYSSIZE,true);
+    }
+    void setAngles(const Real & _startAngle, const Real & _endAngle, const Real & _incrementAngle) {
+      startAngle = _startAngle;
+      endAngle = _endAngle;
+      incrementAngle = _incrementAngle;
+      paramChecker_.set(ParamChecker::Parameters::ANGLE,true);
+    }
 
+    void print() const{
+        pybind11::print("--------Required options------------------");
+        pybind11::print("Dimensions           :  [",numX,",",numY,",",numZ,"]");
+        pybind11::print("PhysSize             : ", physSize);
+        pybind11::print("Energy from          : ",energyStart , "to",energyEnd,"with increment of",incrementEnergy);
+        pybind11::print("Rotation Angle  from : ",startAngle , "to",endAngle,"with increment of",incrementAngle);
+
+        pybind11::print("--------Optional options------------------");
+        pybind11::print("Number of openMP threads : ",num_threads);
+        pybind11::print("Write HDF5 : ",writeHDF5);
+    }
+
+    bool validate() const {
+      if(not(paramChecker_.all())) {
+          for(int i = 0; i < paramChecker_.size(); i++) {
+              if (not(paramChecker_.test(i))) {
+                  pybind11::print("The value for ",ParamChecker::paramNames[i], "is not set");
+              }
+          }
+      }
+      return(paramChecker_.all());
+
+    }
 #endif
 
 

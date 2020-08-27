@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
-project(Cy_RSoXS  LANGUAGES CXX CUDA)
+project(Cy-RSOXS  LANGUAGES CXX CUDA)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 ")
 
@@ -13,7 +13,7 @@ option(DLEVEL1 "Dump Level 1" OFF)
 option(DLEVEL2 "Dump Level 2" ON)
 option(BIAXIAL "Biaxial Computation" OFF)
 option(BUILD_DOCS "Build Documentation" OFF)
-option(PYBIND "Pybind support for Cy_RSoXS " OFF)
+option(PYBIND "Pybind support for Cy-RSOXS " OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 
@@ -144,38 +144,38 @@ if(PYBIND)
             )
 
 
-    cuda_add_library(Cy_RSoXS  SHARED
+    cuda_add_library(CyRSoXS  SHARED
             ${PYBIND_SRC} ${CyRSoXS_SRC} ${CyRSoXS_INC})
-    target_include_directories(Cy_RSoXS PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
-    target_link_libraries(Cy_RSoXS
+    target_include_directories(CyRSoXS PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
+    target_link_libraries(CyRSoXS
             ${PYTHON_LIBRARIES} ${HDF5_CXX_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
     if (EOC)
-        target_include_directories(Cy_RSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
-        target_link_libraries(Cy_RSoXS ${OpenCV_LIBS})
+        target_include_directories(CyRSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
+        target_link_libraries(CyRSoXS ${OpenCV_LIBS})
     endif()
 
-    set_target_properties(Cy_RSoXS
-            PROPERTIES CUDA_SEPARABLE_COMPILATION ON
-            PROPERTIES PREFIX ""
+    set_target_properties(CyRSoXS PROPERTIES
+            CUDA_SEPARABLE_COMPILATION ON
+            PREFIX ""
             )
 
 else()
     set(EXE_SRC
             src/main.cpp
             )
-    add_executable(Cy_RSoXS  ${CyRSoXS_INC} ${CyRSoXS_SRC} ${EXE_SRC})
+    add_executable(CyRSoXS  ${CyRSoXS_INC} ${CyRSoXS_SRC} ${EXE_SRC})
 
     set_target_properties(
-            Cy_RSoXS 
+            CyRSoXS
             PROPERTIES
             CUDA_SEPARABLE_COMPILATION ON
     )
-    target_include_directories(Cy_RSoXS PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR}  ${CONFIG++_INCLUDE_DIR} include)
-    target_link_libraries(Cy_RSoXS
+    target_include_directories(CyRSoXS PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR}  ${CONFIG++_INCLUDE_DIR} include)
+    target_link_libraries(CyRSoXS
             ${PYTHON_LIBRARIES} ${HDF5_CXX_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
     if (EOC)
-        target_include_directories(Cy_RSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
-        target_link_libraries(Cy_RSoXS ${OpenCV_LIBS})
+        target_include_directories(CyRSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
+        target_link_libraries(CyRSoXS ${OpenCV_LIBS})
     endif()
 endif()
 
