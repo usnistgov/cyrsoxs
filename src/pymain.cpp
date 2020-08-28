@@ -11,27 +11,37 @@
 #include <complex>
 #include <pybind11/numpy.h>
 #include <omp.h>
+#include <Input/readH5.h>
 #include <iomanip>
 
 
 namespace py = pybind11;
 
-struct EnergyData {
+class EnergyData {
     const Real &energyStart;
     const Real &energyEnd;
     const Real &incrementEnergy;
-    UINT counter = 0;
     std::vector<Material<NUM_MATERIAL> > materialInput;
+
+private:
+    std::vector<bool> isValid;
 public:
     EnergyData(const InputData &inputData)
             : energyStart(inputData.energyStart), energyEnd(inputData.energyStart),
               incrementEnergy(inputData.incrementEnergy) {
-        UINT numEnergyData = std::round(inputData.energyEnd - inputData.energyStart) / (inputData.incrementEnergy);
+        UINT numEnergyData = std::round(inputData.energyEnd - inputData.energyStart) / (inputData.incrementEnergy) + 1;
         materialInput.resize(numEnergyData);
+        isValid.resize(numEnergyData);
+        std::fill(isValid.begin(),isValid.end(),false);
     }
 
-    void addData(const std::vector<std::vector<Real>> &values, const Real Energy) {
+    void clear(){
+        std::vector<Material<NUM_MATERIAL> > _materialInput;
+        std::swap(_materialInput,materialInput);
+    }
 
+
+    void addData(const std::vector<std::vector<Real>> &values, const Real Energy) {
         enum EnergyValues : u_short {
             DeltaPara = 0,
             DeltaPerp = 1,
@@ -39,52 +49,66 @@ public:
             BetaPerp = 3
         };
         if (not(values.size() == NUM_MATERIAL)) {
-            throw std::runtime_error("Wrong input for Energy. Number not matching with number of Materials");
+            py::print("Wrong input for Energy. Number not matching with number of Materials");
+            return;
         }
         if (not(values[0].size() == 4)) {
-            throw std::runtime_error("Wrong number of input parameters. Parameters must be in the order of "
+            py::print("Wrong number of input parameters. Parameters must be in the order of "
                                      "(DeltaPara, DeltaPerp, BetaPara, BetaPerp)");
+            return;
         }
-        Real reqEnergy = energyStart + incrementEnergy * counter;
-        if (fabs(reqEnergy - Energy) > 1E-5) {
-            throw std::runtime_error("Energy input missing for " + std::to_string(reqEnergy) +
-                                     ". Input must be in ascending order of energies");
-        }
+        UINT counter = std::round((Energy - energyStart)/incrementEnergy);
+        py::print("Counter = ",counter);
         for (UINT i = 0; i < NUM_MATERIAL; i++) {
             materialInput[counter].npara[i].x = 1 - values[i][EnergyValues::DeltaPara];
             materialInput[counter].npara[i].y = values[i][EnergyValues::BetaPara];
-
             materialInput[counter].nperp[i].x = 1 - values[i][EnergyValues::DeltaPerp];
             materialInput[counter].nperp[i].y = values[i][EnergyValues::BetaPerp];
         }
+
+        isValid[counter] = true;
+
     }
 
     void printEnergyData() const {
+        py::print(materialInput.size());
         UINT count = 0;
         for (auto &values : materialInput) {
             Real currEnegy = energyStart + count * incrementEnergy;
             py::print("Energy = ", currEnegy);
-            const Material<NUM_MATERIAL> &mat = materialInput[count];
             for (int i = 0; i < NUM_MATERIAL; i++) {
-                py::print("Material = ", i, "npara = ", std::complex<Real>(mat.npara[i].x, mat.npara[i].y),
-                          "nperp = ", std::complex<Real>(mat.nperp[i].x, mat.nperp[i].y));
+                py::print("Material = ", i, "npara = ", std::complex<Real>(values.npara[i].x, values.npara[i].y),
+                          "nperp = ", std::complex<Real>(values.nperp[i].x, values.nperp[i].y));
             }
 
         }
+    }
+    const std::vector<Material<NUM_MATERIAL>>  & getEnergyData() const{
+        return materialInput;
+    }
+    bool validate () const{
+        return std::all_of(isValid.begin(),isValid.end(),[](bool x) {return (x == true); });
     }
 };
 
 
 class VoxelData {
 private:
+    enum VoxelStructure:u_short {
+        UnalignedData = 0,
+        AlignedData = 1,
+        MAX = 2
+    };
     Voxel<NUM_MATERIAL> *voxel = nullptr;
     const InputData &inputData;
+    std::bitset<NUM_MATERIAL*(VoxelStructure::MAX)> validData_;
 public:
     VoxelData(const InputData &_inputData)
             : inputData(_inputData) {
         clear();
         const BigUINT numVoxels = inputData.numX * inputData.numY * inputData.numZ;
         voxel = new Voxel<NUM_MATERIAL>[numVoxels];
+        validData_.reset();
     }
 
     void addMatAllignment(py::array_t<Real, py::array::c_style | py::array::forcecast> &array, const UINT matID) {
@@ -94,6 +118,7 @@ public:
             voxel[i].s1[matID].y = array.data()[i * 3 + 1];
             voxel[i].s1[matID].z = array.data()[i * 3 + 2];
         }
+        validData_.set(matID*(VoxelStructure::MAX + VoxelStructure::AlignedData),true);
     }
 
     void addMatUnAlligned(py::array_t<Real, py::array::c_style | py::array::forcecast> &array, const UINT matID) {
@@ -101,6 +126,14 @@ public:
         for (BigUINT i = 0; i < numVoxels; i++) {
             voxel[i].s1[matID].w = array.data()[i];
         }
+        validData_.set(matID*(VoxelStructure::MAX + VoxelStructure::UnalignedData),true);
+    }
+
+    void readFromH5(const std::string& fname){
+        const UINT voxelDim[3]{inputData.numX,inputData.numY,inputData.numZ};
+        H5::readFile(fname,voxelDim,voxel,true);
+        validData_.flip();
+
     }
 
     void writeToH5() const {
@@ -141,19 +174,39 @@ public:
     }
 
     const Voxel<NUM_MATERIAL> *data() const {
-        if (voxel != nullptr) {
-            delete[] voxel;
-        }
+        return voxel;
+    }
+
+    bool isValid() const{
+        return (validData_.all());
     }
 
 };
 
-void launch(const VoxelData &voxelData, const EnergyData &energyData, Real *&projectionGPUAveraged,
+void launch(const VoxelData &voxelData, const EnergyData &energyData,
             const InputData &inputData) {
+
+    if(not(inputData.validate())){
+        py::print("Issues with Input Data");
+        return;
+    }
+
+    if(not(energyData.validate())){
+        py::print("Issues with Energy data");
+        return;
+    }
+
+    if(not(voxelData.isValid())){
+        py::print("Issues with Voxel Data input");
+        return;
+    }
+
+    py::print("The input parameters are Validated");
+
     py::gil_scoped_release release;
     const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
     Real *projectionAveraged;
-    cudaMain(voxelDimensions, inputData, energyData.materialInput, projectionAveraged, voxelData.data());
+    cudaMain(voxelDimensions, inputData, energyData.getEnergyData(), projectionAveraged, voxelData.data());
 
     createDirectory("HDF5");
     omp_set_num_threads(1);
@@ -172,14 +225,21 @@ void launch(const VoxelData &voxelData, const EnergyData &energyData, Real *&pro
         Real energy = inputData.energyStart + csize * inputData.incrementEnergy;
         stream << std::fixed << std::setprecision(2) << energy;
         std::string s = stream.str();
-        std::memcpy(oneEnergyData, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
+        std::memcpy(oneEnergyData, &projectionAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
         const std::string fname = "HDF5/Energy_" + s;
 
         H5::writeFile2D(fname, oneEnergyData, voxelDimensions);
     }
     delete[] oneEnergyData;
+    delete [] projectionAveraged;
     py::gil_scoped_acquire acquire;
-    py::print("Finished Execution\n");
+    py::print("Finished Execution\n. Execute cleanup to free up memory from C++ code");
+}
+
+void cleanup(InputData & inputData,  EnergyData &energyData, VoxelData & voxelData){
+    voxelData.clear();
+    energyData.clear();
+
 }
 
 PYBIND11_MODULE(CyRSoXS, module) {
@@ -203,9 +263,11 @@ PYBIND11_MODULE(CyRSoXS, module) {
             .def("addMatAllignment", &VoxelData::addMatAllignment)
             .def("addMatUnalligned", &VoxelData::addMatUnAlligned)
             .def("clear",&VoxelData::clear)
+            .def("writeToH5", &VoxelData::readFromH5)
             .def("writeToH5", &VoxelData::writeToH5);
 
 
     module.def("launch", &launch, "GPU computation");
+    module.def("cleanup", &cleanup, "Cleanup");
 
 }

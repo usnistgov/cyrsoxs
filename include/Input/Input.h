@@ -26,6 +26,9 @@
 #define CUDA_BASE_INPUT_H
 
 #include <Datatypes.h>
+#include <stdio.h>
+#include <string.h>
+#include <cstring>
 
 
 #ifndef BIAXIAL
@@ -53,8 +56,11 @@ struct Voxel {
   /// s1[i].z = z component of the director vector (\f$s_z\f$) \n
   /// s1[i].w = fraction of unaligned component (\f$\phi_{ua}\f$)
 
-
   Real4 s1[num_component];
+
+  Voxel(){
+      std::memset (s1, 0, sizeof (Real4)*num_component);
+  }
 };
 
 struct ElectricField {

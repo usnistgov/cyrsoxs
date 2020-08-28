@@ -57,5 +57,6 @@ enum FFTWindowing:UINT{
   HANNING =1,
   NONE = 0
 };
+#define FEQUALS(x, y) fabs((x) - (y)) < 1E-10 ? true : false
 
 #endif

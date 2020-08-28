@@ -61,7 +61,7 @@ inline void getMatAllignment(const H5::H5File &file,
                              std::vector<std::vector<Real> > &inputData) {
   assert(numMaterial == NUM_MATERIAL);
   std::string groupName = "vector_morphology/";
-  BigUINT numVoxel = static_cast<BigUINT>(voxelSize[0] * voxelSize[1] * voxelSize[2]);
+  BigUINT numVoxel = static_cast<BigUINT>((BigUINT)voxelSize[0] * (BigUINT)voxelSize[1] * (BigUINT)voxelSize[2]);
   inputData.resize(numMaterial);
   for (UINT i = 0; i < numMaterial; i++) {
     inputData[i].resize(numVoxel * 3);
@@ -111,7 +111,7 @@ inline void getMatUnAlligned(const H5::H5File &file,
 
   assert(numMaterial == NUM_MATERIAL);
   std::string groupName = "vector_morphology/";
-  BigUINT numVoxel = static_cast<BigUINT>(voxelSize[0] * voxelSize[1] * voxelSize[2]);
+  BigUINT numVoxel = static_cast<BigUINT>((BigUINT)voxelSize[0] * (BigUINT)voxelSize[1] * (BigUINT)voxelSize[2]);
 
   inputData.resize(numMaterial);
   for (UINT i = 0; i < numMaterial; i++) {
@@ -159,11 +159,11 @@ inline void getMatUnAlligned(const H5::H5File &file,
  * @param isAllocated true if the size of voxelData is allocated
  */
 
-void readFile(const std::string hdf5file, const UINT *voxelSize, Voxel<NUM_MATERIAL> *& voxelData, bool isAllocated = false) {
+void readFile(const std::string& hdf5file, const UINT *voxelSize, Voxel<NUM_MATERIAL> *& voxelData, bool isAllocated = false) {
   H5::H5File file(hdf5file, H5F_ACC_RDONLY);
   const UINT numMaterial = getNumMaterial(file);
 
-  BigUINT numVoxel = static_cast<BigUINT>(voxelSize[0] * voxelSize[1] * voxelSize[2]);
+  BigUINT numVoxel = static_cast<BigUINT>((BigUINT)voxelSize[0] * (BigUINT)voxelSize[1] * (BigUINT)voxelSize[2]);
   if(not isAllocated){
     voxelData = new Voxel<NUM_MATERIAL>[numVoxel];
   }

@@ -249,7 +249,6 @@ class InputData {
           }
       }
       return(paramChecker_.all());
-
     }
 #endif
 
