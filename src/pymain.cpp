@@ -13,7 +13,7 @@
 #include <omp.h>
 #include <Input/readH5.h>
 #include <iomanip>
-
+#include <pybind11/iostream.h>
 
 namespace py = pybind11;
 
@@ -22,8 +22,6 @@ class EnergyData {
     const Real &energyEnd;
     const Real &incrementEnergy;
     std::vector<Material<NUM_MATERIAL> > materialInput;
-
-private:
     std::vector<bool> isValid;
 public:
     EnergyData(const InputData &inputData)
@@ -52,13 +50,14 @@ public:
             py::print("Wrong input for Energy. Number not matching with number of Materials");
             return;
         }
-        if (not(values[0].size() == 4)) {
-            py::print("Wrong number of input parameters. Parameters must be in the order of "
-                                     "(DeltaPara, DeltaPerp, BetaPara, BetaPerp)");
-            return;
+        for(auto & value:values) {
+            if ((value.size() != 4)) {
+                py::print("Wrong number of input parameters. Parameters must be in the order of "
+                          "(DeltaPara, DeltaPerp, BetaPara, BetaPerp)");
+                return;
+            }
         }
         UINT counter = std::round((Energy - energyStart)/incrementEnergy);
-        py::print("Counter = ",counter);
         for (UINT i = 0; i < NUM_MATERIAL; i++) {
             materialInput[counter].npara[i].x = 1 - values[i][EnergyValues::DeltaPara];
             materialInput[counter].npara[i].y = values[i][EnergyValues::BetaPara];
@@ -71,7 +70,6 @@ public:
     }
 
     void printEnergyData() const {
-        py::print(materialInput.size());
         UINT count = 0;
         for (auto &values : materialInput) {
             Real currEnegy = energyStart + count * incrementEnergy;
@@ -112,6 +110,9 @@ public:
     }
 
     void addMatAllignment(py::array_t<Real, py::array::c_style | py::array::forcecast> &array, const UINT matID) {
+        if(matID >= NUM_MATERIAL) {
+            throw std::logic_error("Number of material does not match with the compiled version");
+        }
         const BigUINT numVoxels = inputData.numX * inputData.numY * inputData.numZ;
         for (BigUINT i = 0; i < numVoxels; i++) {
             voxel[i].s1[matID].x = array.data()[i * 3 + 0];
@@ -122,6 +123,9 @@ public:
     }
 
     void addMatUnAlligned(py::array_t<Real, py::array::c_style | py::array::forcecast> &array, const UINT matID) {
+        if(matID >= NUM_MATERIAL) {
+            throw std::logic_error("Number of material does not match with the compiled version");
+        }
         const BigUINT numVoxels = inputData.numX * inputData.numY * inputData.numZ;
         for (BigUINT i = 0; i < numVoxels; i++) {
             voxel[i].s1[matID].w = array.data()[i];
@@ -133,7 +137,6 @@ public:
         const UINT voxelDim[3]{inputData.numX,inputData.numY,inputData.numZ};
         H5::readFile(fname,voxelDim,voxel,true);
         validData_.flip();
-
     }
 
     void writeToH5() const {
@@ -201,7 +204,8 @@ void launch(const VoxelData &voxelData, const EnergyData &energyData,
         return;
     }
 
-    py::print("The input parameters are Validated");
+    inputData.print();
+    energyData.printEnergyData();
 
     py::gil_scoped_release release;
     const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
@@ -232,8 +236,22 @@ void launch(const VoxelData &voxelData, const EnergyData &energyData,
     }
     delete[] oneEnergyData;
     delete [] projectionAveraged;
+    std::ofstream file("metadata.txt");
+    file << "---------------- Scaling Information--------------\n";
+    file << "Number of pixel = [" << inputData.numX << "," << inputData.numY << "]\n";
+    file << "Q range  = [" << -M_PI/inputData.physSize << "," << M_PI/inputData.physSize << "]\n";
+    file << "Electric field rotated through = [" << inputData.startAngle << "," << inputData.endAngle << "]\n";
+    file << "Increments in electric field rotation " << inputData.incrementEnergy << "\n";
+    file << "\n\n";
+
+    file << "-----------------Simulation information -----------------\n";
+    file << "Size of Real = " << sizeof(Real) << "\n";
+    file << "Number of materials =" << NUM_MATERIAL << "\n";
+    file << "Energies simulated from " << inputData.energyStart << " to " << inputData.energyEnd << " with increment of " << inputData.incrementEnergy << "\n";
+    file.close();
+#pragma omp barrier
+    std::cout << "Execution finished \n";
     py::gil_scoped_acquire acquire;
-    py::print("Finished Execution\n. Execute cleanup to free up memory from C++ code");
 }
 
 void cleanup(InputData & inputData,  EnergyData &energyData, VoxelData & voxelData){
@@ -244,6 +262,16 @@ void cleanup(InputData & inputData,  EnergyData &energyData, VoxelData & voxelDa
 
 PYBIND11_MODULE(CyRSoXS, module) {
     module.doc() = "pybind11  plugin for Cy-RSoXS";
+    py::print("----------------Compile time options-------------------");
+    py::print("Number of materials : ", NUM_MATERIAL);
+    py::print("Size of Real",sizeof(Real));
+
+#ifdef ENABLE_2D
+    py::print("Enable 2D : True"  );
+#else
+    py::print("Enable 2D : False"  );
+#endif
+
     py::class_<InputData>(module, "InputData")
             .def(py::init<>())
             .def("setEnergy", &InputData::setEnergy)
@@ -251,7 +279,9 @@ PYBIND11_MODULE(CyRSoXS, module) {
             .def("setRotationAngle", &InputData::setAngles)
             .def("physSize", &InputData::setPhysSize)
             .def("dimensions", &InputData::setDimension)
-            .def("Validate", &InputData::validate);
+            .def("validate", &InputData::validate)
+            .def_readwrite("interpolationType",&InputData::ewaldsInterpolation)
+            .def_readwrite("windowingType",&InputData::windowingType);
 
     py::class_<EnergyData>(module, "MaterialProperties")
             .def(py::init<const InputData &>())
@@ -263,11 +293,19 @@ PYBIND11_MODULE(CyRSoXS, module) {
             .def("addMatAllignment", &VoxelData::addMatAllignment)
             .def("addMatUnalligned", &VoxelData::addMatUnAlligned)
             .def("clear",&VoxelData::clear)
-            .def("writeToH5", &VoxelData::readFromH5)
+            .def("readFromH5", &VoxelData::readFromH5)
             .def("writeToH5", &VoxelData::writeToH5);
 
 
     module.def("launch", &launch, "GPU computation");
+//    module.def("launch", []() {
+//        py::scoped_ostream_redirect stream(
+//                std::cout,                               // std::ostream&
+//                py::module::import("sys").attr("stdout") // Python output
+//        );
+//        &launch;
+//    });
     module.def("cleanup", &cleanup, "Cleanup");
+    py::add_ostream_redirect(module, "ostream_redirect");
 
 }

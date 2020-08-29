@@ -41,8 +41,10 @@ inline const UINT getNumMaterial(const H5::H5File &file) {
   int numMaterial;
   DataSet dataSet = file.openDataSet("igor_parameters/igormaterialnum");
   dataSet.read(&numMaterial, PredType::NATIVE_INT32);
-  std::cout << "Number of material = " << numMaterial << "\n";
-  assert(numMaterial == NUM_MATERIAL);
+
+  if(numMaterial != NUM_MATERIAL) {
+      throw std::logic_error("Number of material does not match with the compiled version");
+  }
 
   return (static_cast<UINT>(numMaterial));
 }

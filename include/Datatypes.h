@@ -47,16 +47,30 @@ typedef uint64_t BigUINT;
 typedef uint32_t UINT;
 
 #define NUM_THREADS 128
+namespace Interpolation{
+    enum EwaldsInterpolation: UINT{
+        NEARESTNEIGHBOUR = 0,
+        LINEAR = 1,
+        MAX_SIZE=2
+    };
+    static const char *interpolationName[]{"Nearest Neighbour", "Trilinear interpolation"};
+    static_assert(sizeof(interpolationName) / sizeof(char*) == EwaldsInterpolation::MAX_SIZE,
+                  "sizes dont match");
+}
 
-enum EwaldsInterpolation: UINT{
-  NEARESTNEIGHBOUR = 0,
-  LINEAR = 1
-};
 
-enum FFTWindowing:UINT{
-  HANNING =1,
-  NONE = 0
-};
+namespace FFT {
+    enum FFTWindowing : UINT {
+        HANNING = 1,
+        NONE = 0,
+        MAX_SIZE = 2
+    };
+    static const char *windowingName[]{"NONE","HANNING"};
+    static_assert(sizeof(windowingName)/sizeof(char*) == FFTWindowing::MAX_SIZE,
+                  "sizes dont match");
+}
+
+
 #define FEQUALS(x, y) fabs((x) - (y)) < 1E-10 ? true : false
 
 #endif

@@ -125,9 +125,9 @@ class InputData {
   /// whether to do masking for rotation or not
   bool rotMask = false;
   /// Type of Ewalds interpolation
-  UINT ewaldsInterpolation = EwaldsInterpolation::LINEAR;
+  UINT ewaldsInterpolation = Interpolation::EwaldsInterpolation::LINEAR;
   /// Windowing Type
-  UINT windowingType = FFTWindowing::NONE;
+  UINT windowingType = FFT::FFTWindowing::NONE;
 
 #ifndef PYBIND
 
@@ -238,10 +238,23 @@ class InputData {
         pybind11::print("--------Optional options------------------");
         pybind11::print("Number of openMP threads : ",num_threads);
         pybind11::print("Write HDF5 : ",writeHDF5);
+        pybind11::print("Interpolation Type : ", Interpolation::interpolationName[ewaldsInterpolation]);
+        pybind11::print("Windowing Type : ", FFT::windowingName[windowingType]);
     }
 
     bool validate() const {
-      if(not(paramChecker_.all())) {
+#ifdef ENABLE_2D
+        if(numZ > 1) {
+            throw std::logic_error("Wrong Compilation. Compile with 2D = No");
+        }
+#else
+        if(numZ == 1) {
+            throw std::logic_error("Wrong Compilation. Compile with 2D = Yes");
+        }
+
+#endif
+
+        if(not(paramChecker_.all())) {
           for(int i = 0; i < paramChecker_.size(); i++) {
               if (not(paramChecker_.test(i))) {
                   pybind11::print("The value for ",ParamChecker::paramNames[i], "is not set");

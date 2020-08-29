@@ -106,6 +106,7 @@ int main(int argc, char **argv) {
   file << "Data set name = " << fname << "\n";
   file << "\n\n";
   file << "-----------------Simulation information -----------------\n";
+  file << "Size of Real = " << sizeof(Real) << "\n";
   file << "Number of materials =" << NUM_MATERIAL << "\n";
   file << "Energies simulated from " << inputData.energyStart << " to " << inputData.energyEnd << " with increment of " << inputData.incrementEnergy << "\n";
   file.close();

@@ -444,7 +444,7 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
                                           const uint3 voxel,
                                           const Real k,
                                           const Real physSize,
-                                          const EwaldsInterpolation interpolation) {
+                                          const Interpolation::EwaldsInterpolation interpolation) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const UINT totalSize = voxel.x * voxel.y;
   if (threadID >= totalSize) {
@@ -466,7 +466,7 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   pos.y = start + Y * dx.y;
   pos.x = start + X * dx.x;
   val = k * k - pos.x * pos.x - pos.y * pos.y;
-  if(interpolation == EwaldsInterpolation::NEARESTNEIGHBOUR) {
+  if(interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
     if (val >= 0) {
       pos.z = -k + sqrt(val);
       BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel);
@@ -475,7 +475,7 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
       projection[threadID] = NAN;
     }
   }
-  else if(interpolation == EwaldsInterpolation::LINEAR){
+  else if(interpolation == Interpolation::EwaldsInterpolation::LINEAR){
     if (val >= 0) {
       pos.z = -k + sqrt(val);
       UINT Z = static_cast<UINT >(round((pos.z - start) / (dx.z)));

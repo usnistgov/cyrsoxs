@@ -69,7 +69,7 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     Complex *polarizationX,
                                     Complex *polarizationY,
                                     Complex *polarizationZ,
-                                    FFTWindowing windowing
+                                    FFT::FFTWindowing windowing
 ) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const UINT voxelNum = voxel.x*voxel.y*voxel.z;
@@ -85,7 +85,7 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 #endif
 
 
-if(windowing == FFTWindowing::HANNING) {
+if(windowing == FFT::FFTWindowing::HANNING) {
   UINT Z = static_cast<UINT>(floorf(threadID / (voxel.y * voxel.x * 1.0)));
   UINT Y = static_cast<UINT>(floorf((threadID - Z * voxel.y * voxel.x) / (voxel.x * 1.0)));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
@@ -367,7 +367,7 @@ int cudaMain(const UINT *voxel,
 #endif
 
         computePolarization <<< BlockSize, NUM_THREADS >>> (materialInput[j], d_voxelInput, eleField, angle, vx, d_polarizationX, d_polarizationY, d_polarizationZ,
-                static_cast<FFTWindowing >(idata.windowingType));
+                static_cast<FFT::FFTWindowing >(idata.windowingType));
 
         gpuErrchk(cudaPeekAtLastError());
         cudaDeviceSynchronize();
@@ -538,7 +538,7 @@ int cudaMain(const UINT *voxel,
         cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
 
         computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>> (d_projection,d_rotProjection, d_scatter3D, vx,
-            eleField.k.z,idata.physSize, static_cast<EwaldsInterpolation>(idata.ewaldsInterpolation));
+            eleField.k.z,idata.physSize, static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation));
         cudaDeviceSynchronize();
         const double alpha = cos(angle);
         const double beta = sin(angle);
