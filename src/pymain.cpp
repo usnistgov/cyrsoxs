@@ -78,6 +78,7 @@ public:
                 py::print("Material = ", i, "npara = ", std::complex<Real>(values.npara[i].x, values.npara[i].y),
                           "nperp = ", std::complex<Real>(values.nperp[i].x, values.nperp[i].y));
             }
+            count++;
 
         }
     }
@@ -166,7 +167,9 @@ public:
     }
 
     void clear() {
-        delete[] voxel;
+        if (voxel != nullptr) {
+            delete[] voxel;
+        }
         voxel = nullptr;
     }
 
@@ -203,8 +206,10 @@ void launch(const VoxelData &voxelData, const EnergyData &energyData,
         py::print("Issues with Voxel Data input");
         return;
     }
-
+    py::print("--------------- Input Data ---------------------");
     inputData.print();
+
+    py::print("\n\n--------------- Energy Data ---------------------");
     energyData.printEnergyData();
 
     py::gil_scoped_release release;

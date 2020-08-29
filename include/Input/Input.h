@@ -40,6 +40,11 @@ struct Material {
 
   /** Perpendicular component of Refractive index **/
   Complex nperp[num_component];
+
+  Material(){
+      std::memset (npara, 0, sizeof (Complex)*num_component);
+      std::memset (nperp, 0, sizeof (Complex)*num_component);
+  }
 };
 
 #endif
