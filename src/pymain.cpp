@@ -42,8 +42,8 @@ public:
     void addData(const std::vector<std::vector<Real>> &values, const Real Energy) {
         enum EnergyValues : u_short {
             DeltaPara = 0,
-            DeltaPerp = 1,
-            BetaPara = 2,
+            BetaPara = 1,
+            DeltaPerp = 2,
             BetaPerp = 3
         };
         if (not(values.size() == NUM_MATERIAL)) {
@@ -53,7 +53,7 @@ public:
         for(auto & value:values) {
             if ((value.size() != 4)) {
                 py::print("Wrong number of input parameters. Parameters must be in the order of "
-                          "(DeltaPara, DeltaPerp, BetaPara, BetaPerp)");
+                          "(DeltaPara, BetaPara, DeltaPerp, , BetaPerp)");
                 return;
             }
         }
