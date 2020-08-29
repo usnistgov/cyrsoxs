@@ -120,7 +120,7 @@ public:
             voxel[i].s1[matID].y = array.data()[i * 3 + 1];
             voxel[i].s1[matID].z = array.data()[i * 3 + 2];
         }
-        validData_.set(matID*(VoxelStructure::MAX + VoxelStructure::AlignedData),true);
+        validData_.set(matID*(VoxelStructure::MAX) + VoxelStructure::AlignedData,true);
     }
 
     void addMatUnAlligned(py::array_t<Real, py::array::c_style | py::array::forcecast> &array, const UINT matID) {
@@ -131,7 +131,7 @@ public:
         for (BigUINT i = 0; i < numVoxels; i++) {
             voxel[i].s1[matID].w = array.data()[i];
         }
-        validData_.set(matID*(VoxelStructure::MAX + VoxelStructure::UnalignedData),true);
+        validData_.set(matID*(VoxelStructure::MAX) + VoxelStructure::UnalignedData,true);
     }
 
     void readFromH5(const std::string& fname){
@@ -212,6 +212,7 @@ void launch(const VoxelData &voxelData, const EnergyData &energyData,
     py::print("\n\n--------------- Energy Data ---------------------");
     energyData.printEnergyData();
 
+    py::print("\n\n--------------- Execution Begins ---------------------");
     py::gil_scoped_release release;
     const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
     Real *projectionAveraged;
@@ -303,13 +304,6 @@ PYBIND11_MODULE(CyRSoXS, module) {
 
 
     module.def("launch", &launch, "GPU computation");
-//    module.def("launch", []() {
-//        py::scoped_ostream_redirect stream(
-//                std::cout,                               // std::ostream&
-//                py::module::import("sys").attr("stdout") // Python output
-//        );
-//        &launch;
-//    });
     module.def("cleanup", &cleanup, "Cleanup");
     py::add_ostream_redirect(module, "ostream_redirect");
 
