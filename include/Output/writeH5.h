@@ -34,7 +34,7 @@ namespace H5 {
  * @param data the data
  * @param dim the dimension corresponding to the X and Y
  */
-    void writeFile2D(const std::string fname, const Real *data, const UINT *dim) {
+    void writeFile2D(const std::string& fname, const Real *data, const UINT *dim) {
         const std::string filename = fname + ".h5";
         H5::H5File file(filename.c_str(), H5F_ACC_TRUNC);
         try {
@@ -51,20 +51,20 @@ namespace H5 {
 #endif
             dataset.close();
         }
-        catch (H5::FileIException error) {
-            error.printErrorStack();
+        catch (H5::FileIException & error) {
+            H5::FileIException::printErrorStack();
         }
-        catch (H5::DataSetIException error) {
-            error.printErrorStack();
+        catch (H5::DataSetIException & error) {
+            H5::DataSetIException::printErrorStack();
 
         }
-        catch (H5::DataSpaceIException error) {
-            error.printErrorStack();
+        catch (H5::DataSpaceIException & error) {
+            H5::DataSpaceIException::printErrorStack();
 
         }
     }
 
-    void writeFile3DScalar(const std::string fname, const Real *data, const UINT *dim, std::string varName) {
+    void writeFile3DScalar(const std::string& fname, const Real *data, const UINT *dim, const std::string& varName) {
         const std::string filename = fname + ".h5";
         H5::H5File file(filename.c_str(), H5F_ACC_TRUNC);
         try {
@@ -81,20 +81,20 @@ namespace H5 {
 #endif
             dataset.close();
         }
-        catch (H5::FileIException error) {
-            error.printErrorStack();
+        catch (H5::FileIException & error) {
+            H5::FileIException::printErrorStack();
         }
-        catch (H5::DataSetIException error) {
-            error.printErrorStack();
+        catch (H5::DataSetIException & error) {
+            H5::DataSetIException::printErrorStack();
 
         }
-        catch (H5::DataSpaceIException error) {
-            error.printErrorStack();
+        catch (H5::DataSpaceIException & error) {
+            H5::DataSpaceIException::printErrorStack();
 
         }
     }
 
-    void writeFile3DVector(const std::string fname, const Real *data, const UINT *dim, const std::string& _varName) {
+    void writeFile3DVector(const std::string& fname, const Real *data, const UINT *dim, const std::string& _varName) {
 
         const std::string filename = fname + ".h5";
         H5::H5File file(filename.c_str(), H5F_ACC_TRUNC);
@@ -121,18 +121,15 @@ namespace H5 {
 #endif
                 dataset.close();
             }
-            catch (H5::FileIException
-                   error) {
-                error.printErrorStack();
+            catch (H5::FileIException & error) {
+                H5::FileIException::printErrorStack();
             }
-            catch (H5::DataSetIException
-                   error) {
-                error.printErrorStack();
+            catch (H5::DataSetIException & error) {
+                H5::DataSetIException::printErrorStack();
 
             }
-            catch (H5::DataSpaceIException
-                   error) {
-                error.printErrorStack();
+            catch (H5::DataSpaceIException & error) {
+                H5::DataSpaceIException::printErrorStack();
 
             }
         }
