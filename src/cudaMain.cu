@@ -343,9 +343,9 @@ int cudaMain(const UINT *voxel,
 #endif
 
       ElectricField eleField;
-      eleField.e.x = 0;
+      eleField.e.x = 1;
       eleField.e.y = 0;
-      eleField.e.z = 1;
+      eleField.e.z = 0;
       Real wavelength = static_cast<Real>(1239.84197 / energy);
       eleField.k.x = 0;
       eleField.k.y = 0;

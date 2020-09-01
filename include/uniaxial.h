@@ -72,8 +72,8 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
   Real temp;
   for (int i = 0; i < NUM_MATERIAL; i++) {
     s1[i] = voxelInput[threadID].s1[i];
-    temp = cos(angle) * voxelInput[threadID].s1[i].y - sin(angle) * voxelInput[threadID].s1[i].z;
-    s1[i].z = sin(angle) * s1[i].y + cos(angle) * s1[i].z;
+    temp = cos(angle) * voxelInput[threadID].s1[i].y - sin(angle) * voxelInput[threadID].s1[i].x;
+    s1[i].x = sin(angle) * s1[i].y + cos(angle) * s1[i].x;
     s1[i].y = temp;
     npar[i] = material->npara[i];
     nper[i] = material->nperp[i];
@@ -81,7 +81,12 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
 
   Complex nsum;
   for (int i = 0; i < NUM_MATERIAL; i++) {
-    Real phi = s1[i].w + s1[i].x * s1[i].x + s1[i].y * s1[i].y + s1[i].z * s1[i].z;
+    const Real & sx = s1[i].x;
+    const Real & sy = s1[i].y;
+    const Real & sz = s1[i].z;
+    const Real & phi_ui = s1[i].w;
+
+    Real phi = phi_ui + sx * sx + sy * sy + sz * sz;
 
     nsum.x = npar[i].x + 2 * nper[i].x;
     nsum.y = npar[i].y + 2 * nper[i].y;
@@ -102,18 +107,22 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
 //    pZ.y +=
 //        (s1[i].w * nsum.y) / 9.0 + npar[i].y * s1[i].z * s1[i].z + nper[i].y * (s1[i].x * s1[i].x + s1[i].y * s1[i].y);
 
-
-    pZ.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].x;
-    pZ.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].x;
-
-    pY.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].y;
-    pY.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].y;
-
+/**
+ *  npar^2*sx^2 + nper^2*sy^2 + nper^2*sz^2
+                 sx*sy*(npar^2 - nper^2)
+                 sx*sz*(npar^2 - nper^2)
+ */
     pX.x +=
-        (s1[i].w * nsum.x) / 9.0 + npar[i].x * s1[i].z * s1[i].z + nper[i].x * (s1[i].x * s1[i].x + s1[i].y * s1[i].y)
-        - phi;
+        (phi_ui * nsum.x) / (Real)9.0 + npar[i].x * sx * sx + nper[i].x * (sz * sz + sy * sy) - phi;
     pX.y +=
-        (s1[i].w * nsum.y) / 9.0 + npar[i].y * s1[i].z * s1[i].z + nper[i].y * (s1[i].x * s1[i].x + s1[i].y * s1[i].y);
+        (phi_ui * nsum.y) / (Real)9.0 + npar[i].y * sx * sx + nper[i].y * (sz * sz + sy * sy);
+
+    pY.x += (npar[i].x - nper[i].x) * sx * sy;
+    pY.y += (npar[i].y - nper[i].y) * sx * sy;
+
+    pZ.x += (npar[i].x - nper[i].x) * sz * sx;
+    pZ.y += (npar[i].y - nper[i].y) * sz * sx;
+
   }
 
   pX.x *= OneBy4Pi;
@@ -326,13 +335,19 @@ __global__ void computeScatter3D(Complex *polarizationX,
       - (q.x * q.x - elefield.k.z * elefield.k.z) * pZ.y;
   res += val.x * val.x + val.y * val.y;
   */
+  /**
+       px*(k^2 - q1^2) - py*q1*q2 + pz*q1*(k - q3)
+       py*(k^2 - q2^2) - px*q1*q2 + pz*q2*(k - q3)
+       pz*q3*(2*k - q3) + px*q1*(k - q3) + py*q2*(k - q3)
+ */
+
   const Real & k = elefield.k.z;
   const Real & q1 = q.x;
   const Real & q2 = q.y;
   const Real & q3 = q.z;
 
   val.x = pX.x * (k*k - q1*q1) - pY.x*q1*q2 + pZ.x*q1*(k - q3);
-  val.y = pX.y * (k*k - q1*q1) - pY.x*q1*q2 + pZ.x*q1*(k - q3);
+  val.y = pX.y * (k*k - q1*q1) - pY.y*q1*q2 + pZ.y*q1*(k - q3);
   res = val.x * val.x + val.y * val.y;
 
   val.x = pY.x*(k*k - q2*q2) - pX.x*q1*q2 + pZ.x*q2*(k - q3);
@@ -353,7 +368,7 @@ __global__ void computeScatter3D(Complex *polarizationX,
  * shift done in cufft calculation with respect to Igor.
  * @param [in] pos position of which the index is to be found.
  * @param [in] i corresponding X coordinate
- * @param [in] j correspondi    ng Y coordinate
+ * @param [in] j corresponding Y coordinate
  * @param [in] start start position
  * @param [in] dx the grid podition in each direction
  * @param [in] voxel voxel dimension
