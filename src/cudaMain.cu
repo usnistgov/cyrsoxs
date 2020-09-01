@@ -118,7 +118,7 @@ int cudaMain(const UINT *voxel,
 
   int num_gpu;
   cudaGetDeviceCount(&num_gpu);
-  printf("number of CUDA devices:\t%d\n", num_gpu);
+  std::cout << "Number of CUDA devices:" << num_gpu << "\n";
 
   if(num_gpu < 1){
     std::cout << "No GPU found. Exiting" << "\n";

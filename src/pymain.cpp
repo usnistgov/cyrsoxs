@@ -34,6 +34,7 @@
 #include <Input/readH5.h>
 #include <iomanip>
 #include <pybind11/iostream.h>
+#include <utils.h>
 
 namespace py = pybind11;
 
@@ -212,6 +213,8 @@ public:
 void launch(const VoxelData &voxelData, const EnergyData &energyData,
             const InputData &inputData) {
 
+    printCopyrightInfo();
+
     if(not(inputData.validate())){
         py::print("Issues with Input Data");
         return;
@@ -226,13 +229,21 @@ void launch(const VoxelData &voxelData, const EnergyData &energyData,
         py::print("Issues with Voxel Data input");
         return;
     }
-    py::print("--------------- Input Data ---------------------");
+    py::print("--------------- Input Data ----------------------");
     inputData.print();
 
-    py::print("\n\n--------------- Energy Data ---------------------");
+
+    py::print("\n\n------------ Energy Data ---------------------");
     energyData.printEnergyData();
 
-    py::print("\n\n--------------- Execution Begins ---------------------");
+
+    py::print("\n\n----------- Executing:  -----------------");
+
+
+
+
+
+
     py::gil_scoped_release release;
     const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
     Real *projectionAveraged;
@@ -288,11 +299,10 @@ void cleanup(InputData & inputData,  EnergyData &energyData, VoxelData & voxelDa
 
 PYBIND11_MODULE(CyRSoXS, module) {
     module.doc() = "pybind11  plugin for Cy-RSoXS";
-    py::print("Credits: ISU");
     py::print("----------------Compile time options-------------------");
     py::print("Number of materials : ", NUM_MATERIAL);
     py::print("Size of Real",sizeof(Real));
-
+//    py::add_ostream_redirect(module, "ostream_redirect");
 #ifdef ENABLE_2D
     py::print("Enable 2D : True"  );
 #else
@@ -326,6 +336,6 @@ PYBIND11_MODULE(CyRSoXS, module) {
 
     module.def("launch", &launch, "GPU computation");
     module.def("cleanup", &cleanup, "Cleanup");
-    py::add_ostream_redirect(module, "ostream_redirect");
+
 
 }

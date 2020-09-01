@@ -120,6 +120,7 @@ set(CyRSoXS_INC
         include/Input/InputData.h
         include/Input/Input.h
         include/Output/writeH5.h
+        include/utils.h
         )
 
 
