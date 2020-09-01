@@ -63,7 +63,7 @@
  * We thank ONR MURI Center for Self-Assembled Organic Electronics for providing the
  * support for this work.
  *
- * \copyright Copyright 2019 Iowa State University. All rights reserved.
+ * \copyright Copyright 2019-2020 Iowa State University. All rights reserved.
  * This project is released under the MIT licence.
  *
  */

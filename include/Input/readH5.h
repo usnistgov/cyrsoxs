@@ -37,7 +37,7 @@
 
 namespace H5 {
 
-inline const UINT getNumMaterial(const H5::H5File &file) {
+inline UINT getNumMaterial(const H5::H5File &file) {
   int numMaterial;
   DataSet dataSet = file.openDataSet("igor_parameters/igormaterialnum");
   dataSet.read(&numMaterial, PredType::NATIVE_INT32);

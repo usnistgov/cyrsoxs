@@ -90,16 +90,29 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
     computeComplexSquare(npar[i]);
     computeComplexSquare(nper[i]);
 
-    pX.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].x;
-    pX.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].x;
+//    pX.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].x;
+//    pX.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].x;
+//
+//    pY.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].y;
+//    pY.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].y;
+//
+//    pZ.x +=
+//        (s1[i].w * nsum.x) / 9.0 + npar[i].x * s1[i].z * s1[i].z + nper[i].x * (s1[i].x * s1[i].x + s1[i].y * s1[i].y)
+//            - phi;
+//    pZ.y +=
+//        (s1[i].w * nsum.y) / 9.0 + npar[i].y * s1[i].z * s1[i].z + nper[i].y * (s1[i].x * s1[i].x + s1[i].y * s1[i].y);
+
+
+    pZ.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].x;
+    pZ.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].x;
 
     pY.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].y;
     pY.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].y;
 
-    pZ.x +=
+    pX.x +=
         (s1[i].w * nsum.x) / 9.0 + npar[i].x * s1[i].z * s1[i].z + nper[i].x * (s1[i].x * s1[i].x + s1[i].y * s1[i].y)
-            - phi;
-    pZ.y +=
+        - phi;
+    pX.y +=
         (s1[i].w * nsum.y) / 9.0 + npar[i].y * s1[i].z * s1[i].z + nper[i].y * (s1[i].x * s1[i].x + s1[i].y * s1[i].y);
   }
 
@@ -293,26 +306,43 @@ __global__ void computeScatter3D(Complex *polarizationX,
 
   Complex val;
   Real res;
+/*
+  val.x = q.z * (2 * elefield.k.z - q.z) * pX.x
+      + q.y * (elefield.k.z - q.z) * pY.x + q.x * (elefield.k.z - q.z) * pZ.x;
 
-  val.x = q.z * (2 * elefield.k.z + q.z) * pX.x
-      + q.y * (elefield.k.z + q.z) * pY.x + q.x * (elefield.k.z + q.z) * pZ.x;
-
-  val.y = q.z * (2 * elefield.k.z + q.z) * pX.y
-      + q.y * (elefield.k.z + q.z) * pY.y + q.x * (elefield.k.z + q.z) * pZ.y;
+  val.y = q.z * (2 * elefield.k.z - q.z) * pX.y
+      + q.y * (elefield.k.z - q.z) * pY.y + q.x * (elefield.k.z - q.z) * pZ.y;
   res = val.x * val.x + val.y * val.y;
 
-  val.x = q.y * (elefield.k.z + q.z) * pX.x
-      + (q.y * q.y - elefield.k.z * elefield.k.z) * pY.x + q.y * q.x * pZ.x;
-  val.y = q.y * (elefield.k.z + q.z) * pX.y
-      + (q.y * q.y - elefield.k.z * elefield.k.z) * pY.y + q.y * q.x * pZ.y;
+  val.x = q.y * (elefield.k.z - q.z) * pX.x
+      - (q.y * q.y - elefield.k.z * elefield.k.z) * pY.x - q.y * q.x * pZ.x;
+  val.y = q.y * (elefield.k.z - q.z) * pX.y
+      - (q.y * q.y - elefield.k.z * elefield.k.z) * pY.y - q.y * q.x * pZ.y;
   res += val.x * val.x + val.y * val.y;
 
-  val.x = q.x * (elefield.k.z + q.z) * pX.x + (q.y * q.x) * pY.x
-      + (q.x * q.x - elefield.k.z * elefield.k.z) * pZ.x;
-  val.y = q.x * (elefield.k.z + q.z) * pX.y + (q.y * q.x) * pY.y
-      + (q.x * q.x - elefield.k.z * elefield.k.z) * pZ.y;
-
+  val.x = q.x * (elefield.k.z - q.z) * pX.x - (q.y * q.x) * pY.x
+      - (q.x * q.x - elefield.k.z * elefield.k.z) * pZ.x;
+  val.y = q.x * (elefield.k.z - q.z) * pX.y - (q.y * q.x) * pY.y
+      - (q.x * q.x - elefield.k.z * elefield.k.z) * pZ.y;
   res += val.x * val.x + val.y * val.y;
+  */
+  const Real & k = elefield.k.z;
+  const Real & q1 = q.x;
+  const Real & q2 = q.y;
+  const Real & q3 = q.z;
+
+  val.x = pX.x * (k*k - q1*q1) - pY.x*q1*q2 + pZ.x*q1*(k - q3);
+  val.y = pX.y * (k*k - q1*q1) - pY.x*q1*q2 + pZ.x*q1*(k - q3);
+  res = val.x * val.x + val.y * val.y;
+
+  val.x = pY.x*(k*k - q2*q2) - pX.x*q1*q2 + pZ.x*q2*(k - q3);
+  val.y = pY.y*(k*k - q2*q2) - pX.y*q1*q2 + pZ.y*q2*(k - q3);
+  res += val.x * val.x + val.y * val.y;
+
+  val.x = pZ.x*(2*k - q3) + pX.x*q1*(k - q3) + pY.x*q2*(k - q3);
+  val.y = pZ.y*(2*k - q3) + pX.y*q1*(k - q3) + pY.y*q2*(k - q3);
+  res += val.x * val.x + val.y * val.y;
+
   Scatter3D[threadID] = res;
 
 }

@@ -268,6 +268,7 @@ void cleanup(InputData & inputData,  EnergyData &energyData, VoxelData & voxelDa
 
 PYBIND11_MODULE(CyRSoXS, module) {
     module.doc() = "pybind11  plugin for Cy-RSoXS";
+    py::print("Credits: ISU");
     py::print("----------------Compile time options-------------------");
     py::print("Number of materials : ", NUM_MATERIAL);
     py::print("Size of Real",sizeof(Real));

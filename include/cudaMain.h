@@ -75,17 +75,25 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     const Voxel<NUM_MATERIAL> *voxelInput,
                                     const ElectricField elefield,
                                     const Real angle,
-                                    const BigUINT voxelNum,
+                                    const uint3 voxel,
                                     Complex *polarizationX,
                                     Complex *polarizationY,
-                                    Complex *polarizationZ
+                                    Complex *polarizationZ,
+                                    FFT::FFTWindowing windowing
 );
 
 /**
  * @brief Creates the directory.
  * @param dirname The name of the directory
  */
-void createDirectory(const std::string dirname);
+static void createDirectory(const std::string & dirName){
+
+  int ierr = mkdir(dirName.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+  if (ierr != 0 && errno != EEXIST) {
+    std::cout  << "Could not create folder for storing results (" <<  strerror(errno) << "\n";
+    exit(EXIT_FAILURE);
+  }
+}
 
 
 __host__ inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan) {
