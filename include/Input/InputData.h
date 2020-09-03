@@ -125,7 +125,7 @@ class InputData {
   /// whether to do masking for rotation or not
   bool rotMask = false;
   /// Type of Ewalds interpolation
-  UINT ewaldsInterpolation = Interpolation::EwaldsInterpolation::LINEAR;
+  int ewaldsInterpolation = Interpolation::EwaldsInterpolation::LINEAR;
   /// Windowing Type
   UINT windowingType = FFT::FFTWindowing::NONE;
 
