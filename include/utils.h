@@ -57,6 +57,7 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
 
       H5::writeFile2D(outputFname, oneEnergyData, voxelSize);
     }
+    delete [] oneEnergyData;
 };
 
 /**
