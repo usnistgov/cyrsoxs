@@ -76,6 +76,7 @@
 #include <cstring>
 #include <omp.h>
 #include <iomanip>
+#include <utils.h>
 
 /**
  * *
@@ -85,7 +86,7 @@
  */
 int main(int argc, char **argv) {
 
-    if(argc != 2){
+    if(argc <= 2){
         std::cout << "Usage : " << argv[0] << " "<< "HDF5 fileName";
         exit(EXIT_FAILURE);
     }
@@ -97,53 +98,11 @@ int main(int argc, char **argv) {
     Voxel<NUM_MATERIAL> *voxelData;
     H5::readFile(fname, voxelSize, voxelData);
     Real *projectionGPUAveraged;
+    printCopyrightInfo();
     cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, voxelData);
-
-    std::ofstream file("metadata.txt");
-    file << "---------------- Scaling Information--------------\n";
-    file << "Number of pixel = [" << inputData.numX << "," << inputData.numY << "]\n";
-    file << "Q range  = [" << -M_PI / inputData.physSize << "," << M_PI / inputData.physSize << "]\n";
-    file << "Electric field rotated through = [" << inputData.startAngle << "," << inputData.endAngle << "]\n";
-    file << "Increments in electric field rotation " << inputData.incrementEnergy << "\n";
-    file << "\n\n";
-    file << "-----------------Morphology information-----------------\n";
-    file << "Data set name = " << fname << "\n";
-    file << "\n\n";
-    file << "-----------------Simulation information -----------------\n";
-    file << "Size of Real = " << sizeof(Real) << "\n";
-    file << "Number of materials =" << NUM_MATERIAL << "\n";
-    file << "Energies simulated from " << inputData.energyStart << " to " << inputData.energyEnd
-         << " with increment of " << inputData.incrementEnergy << "\n";
-    file.close();
-
-
-    createDirectory("HDF5");
-    omp_set_num_threads(1);
-
-    const UINT
-            numEnergyLevel =
-            static_cast<UINT>(std::round(
-                    (inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
-    const UINT voxel2DSize = voxelSize[0] * voxelSize[1];
-    Real *oneEnergyData = new Real[voxel2DSize];
-    UINT chunkSize = static_cast<UINT>(std::ceil(numEnergyLevel * 1.0 / (omp_get_num_threads() * 1.0)));
-    UINT threadID = omp_get_thread_num();
-    UINT startID = threadID * chunkSize;
-    UINT endID = ((threadID + 1) * chunkSize);
-
-    for (UINT csize = startID; csize < std::min(endID, numEnergyLevel); csize++) {
-        std::stringstream stream;
-        Real energy = inputData.energyStart + csize * inputData.incrementEnergy;
-        stream << std::fixed << std::setprecision(2) << energy;
-        std::string s = stream.str();
-        std::memcpy(oneEnergyData, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
-        const std::string outputFname = "HDF5/Energy_" + s;
-
-        H5::writeFile2D(outputFname, oneEnergyData, voxelSize);
-    }
-    delete[] oneEnergyData;
-
-
+    writeH5(inputData,voxelSize,projectionGPUAveraged);
+    printMetaData(inputData);
+    delete[] projectionGPUAveraged;
     delete[] voxelData;
     std::cout << "Complete. Exiting \n";
 

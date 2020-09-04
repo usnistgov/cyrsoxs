@@ -27,9 +27,15 @@
 #include <iomanip>
 #include <Output/outputUtils.h>
 
-
+/**
+ * @brief writes to HDF5 file
+ * @param inputData Input data
+ * @param voxelSize Voxel Size
+ * @param projectionGPUAveraged The scattering pattern
+ */
 static void writeH5(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged){
     createDirectory("HDF5");
+    // TODO: Make it work in parallel.
     omp_set_num_threads(1);
 
     const UINT
@@ -53,6 +59,9 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
     }
 };
 
+/**
+ * Prints the copyRight Info
+ */
 static void printCopyrightInfo(){
 
   const char separator    = ' ';
@@ -72,11 +81,12 @@ static void printCopyrightInfo(){
   std::cout << "\n";
   std::cout << "\n";
   std::cout << "\n";
-
-//  int n = -77;
-//  std::cout.width(6); std::cout << std::right << n << '\n';
-//  std::cout.width(6); std::cout << std::right << n*100 << '\n';
 }
+
+/**
+ * @brief Writes meta data
+ * @param inputData Input data
+ */
 
 static void printMetaData(const InputData & inputData){
   std::ofstream file("metadata.txt");
