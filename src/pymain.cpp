@@ -118,6 +118,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def_readwrite("interpolationType", &InputData::ewaldsInterpolation, "Ewalds interpolation type")
       .def_readwrite("windowingType", &InputData::windowingType, "Windowing type")
       .def_readwrite("writeVTI", &InputData::writeVTI, "write VTI")
+      .def_readwrite("RotMask",&InputData::rotMask,"Rotation Mask")
       .def_readwrite("openMP", &InputData::num_threads, "number of OpenMP threads");
 
   py::class_<RefractiveIndexData>(module, "RefractiveIndex")

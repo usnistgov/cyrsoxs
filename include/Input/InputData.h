@@ -52,15 +52,9 @@ namespace ParamChecker{
 #endif
 /// This function reads the input data from the file.
 class InputData {
+private:
 
-
-#ifdef PYBIND
-
-    std::bitset<ParamChecker::Parameters::MAX_SIZE> paramChecker_;
-
-#else
-
- private:
+#ifndef PYBIND
   /**
    * This function reads the value that is compulsory to be read from
    * the input data file.
@@ -93,6 +87,9 @@ class InputData {
     }
     return res;
   }
+#else
+    /// Checks the input data parameter for the required parameters
+    std::bitset<ParamChecker::Parameters::MAX_SIZE> paramChecker_;
 #endif
 
  public:
@@ -109,7 +106,7 @@ class InputData {
   /// increment in Angle
   Real incrementAngle;
   /// number of threads
-  UINT num_threads=1;
+  UINT num_threads=4;
   /// Number of voxels in X direction.
   UINT numX;
   /// Number of voxels in Y direction.
@@ -266,9 +263,9 @@ class InputData {
 
         pybind11::print("--------Optional options------------------");
         pybind11::print("Number of openMP threads : ",num_threads);
-        pybind11::print("Write HDF5 : ",writeHDF5);
-        pybind11::print("Interpolation Type : ", Interpolation::interpolationName[ewaldsInterpolation]);
-        pybind11::print("Windowing Type : ", FFT::windowingName[windowingType]);
+        pybind11::print("Write HDF5               : ",writeHDF5);
+        pybind11::print("Interpolation Type       : ",Interpolation::interpolationName[ewaldsInterpolation]);
+        pybind11::print("Windowing Type           : ",FFT::windowingName[windowingType]);
     }
 
     /**
