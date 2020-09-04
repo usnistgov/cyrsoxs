@@ -354,8 +354,8 @@ __global__ void computeScatter3D(Complex *polarizationX,
   val.y = pY.y*(k*k - q2*q2) - pX.y*q1*q2 + pZ.y*q2*(k - q3);
   res += val.x * val.x + val.y * val.y;
 
-  val.x = pZ.x*(2*k - q3) + pX.x*q1*(k - q3) + pY.x*q2*(k - q3);
-  val.y = pZ.y*(2*k - q3) + pX.y*q1*(k - q3) + pY.y*q2*(k - q3);
+  val.x = pZ.x*q3*(2*k - q3) + pX.x*q1*(k - q3) + pY.x*q2*(k - q3);
+  val.y = pZ.y*q3*(2*k - q3) + pX.y*q1*(k - q3) + pY.y*q2*(k - q3);
   res += val.x * val.x + val.y * val.y;
 
   Scatter3D[threadID] = res;
@@ -738,7 +738,7 @@ __host__ void dump_files2D(const Real *data, const UINT numData, const UINT *eac
 
         std::string dirname = "VTI/";
         std::string fnameFP = dirname + "projectionAverage" + std::to_string(csize);
-        VTI::writeDataScalar2DFP(projectionLocal, eachDataSize, fnameFP.c_str(), "projection");
+        VTI::writeDataScalar2DFP(projectionLocal, eachDataSize, fnameFP, "projection");
 
       }
     }
