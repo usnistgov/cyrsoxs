@@ -117,6 +117,7 @@ set(CyRSoXS_INC
         include/uniaxial.h
         include/Output/writeVTI.h
         include/Output/cencode.h
+        include/Output/outputUtils.h
         include/Input/InputData.h
         include/Input/Input.h
         include/Output/writeH5.h
@@ -140,6 +141,10 @@ endif ()
 
 if(PYBIND)
 
+    set(PYBIND_INC
+            include/PyClass/RefractiveIndex.h
+            include/PyClass/VoxelData.h
+            )
     set(PYBIND_SRC
             src/pymain.cpp
             )

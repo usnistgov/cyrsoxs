@@ -202,25 +202,51 @@ class InputData {
     }
   }
 #else
+    /**
+    * @brief Constructor
+    */
     InputData() {
       paramChecker_.reset();
     }
+    /**
+     * @brief Adds the energy data
+     * @param _energyStart Start energy (in eV)
+     * @param _energyEnd   End energy (in eV)
+     * @param _energyIncrement Increment in energy from energy start and energy end (in eV)
+     */
     void setEnergy(const Real & _energyStart, const  Real & _energyEnd,const  Real & _energyIncrement){
         energyStart = _energyStart;
         energyEnd = _energyEnd;
         incrementEnergy = _energyIncrement;
         paramChecker_.set(ParamChecker::Parameters::ENERGY,true);
     }
+    /**
+     * @brief Set the dimensions. Note that HDF5 file dimensions are written in (Z,Y,X)
+     * @param _numX number of voxels in X dimensions
+     * @param _numY number of voxels in Y dimensions
+     * @param _numZ number of voxels in Z dimensions
+     */
     void setDimension(const UINT & _numX, const  UINT & _numY,const  UINT & _numZ) {
       numX = _numX;
       numY = _numY;
       numZ = _numZ;
       paramChecker_.set(ParamChecker::Parameters::DIMENSION,true);
     }
+    /**
+     * @brief set Physical size
+     * @param _physSize PhysSize (in nm)
+     */
     void setPhysSize(const Real & _physSize) {
       physSize = _physSize;
       paramChecker_.set(ParamChecker::Parameters::PHYSSIZE,true);
     }
+
+    /**
+     * @brief Set the angles for rotation for Electric field
+     * @param _startAngle start Angle (in degrees)
+     * @param _endAngle   end Angle (in degrees)
+     * @param _incrementAngle increment in Angle (in degrees)
+     */
     void setAngles(const Real & _startAngle, const Real & _endAngle, const Real & _incrementAngle) {
       startAngle = _startAngle;
       endAngle = _endAngle;
@@ -228,6 +254,9 @@ class InputData {
       paramChecker_.set(ParamChecker::Parameters::ANGLE,true);
     }
 
+    /**
+     * @brief prints the input data
+     */
     void print() const{
         pybind11::print("--------Required options------------------");
         pybind11::print("Dimensions           :  [",numX,",",numY,",",numZ,"]");
@@ -242,6 +271,10 @@ class InputData {
         pybind11::print("Windowing Type : ", FFT::windowingName[windowingType]);
     }
 
+    /**
+     * @brief validate the input data
+     * @return  True if the input data is correct. False otherwise.
+     */
     bool validate() const {
 #ifdef ENABLE_2D
         if(numZ > 1) {

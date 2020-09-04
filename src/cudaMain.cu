@@ -36,7 +36,7 @@
 #include <ctime>
 #include <chrono>
 #include <npp.h>
-
+#include <Output/outputUtils.h>
 
 int warmup(){
   double *d_warmup, *warmup;
