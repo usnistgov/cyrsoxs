@@ -133,10 +133,10 @@ class InputData {
 
   /**
    * Constructor to read input data
-   * @param materialInput material input
+   * @param refractiveIndex material input
    * @param filename filename, default is config.txt
    */
-  InputData(std::vector<Material<NUM_MATERIAL> > &materialInput, std::string filename = "config.txt") {
+  InputData(std::vector<Material<NUM_MATERIAL> > &refractiveIndex, std::string filename = "config.txt") {
     libconfig::Config cfg;
     cfg.readFile(filename.c_str());
     ReadValueRequired(cfg, "StartEnergy", energyStart);
@@ -170,7 +170,7 @@ class InputData {
 #endif
     UINT numEnergy = std::round((energyEnd - energyStart) / incrementEnergy + 1);
 
-    materialInput.resize(numEnergy);
+    refractiveIndex.resize(numEnergy);
 
     for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
       std::string fname = "Material" + std::to_string(numMaterial) + ".txt";
@@ -192,11 +192,11 @@ class InputData {
           Real deltaPerp = global["DeltaPerp"];
           Real betaPerp = global["BetaPerp"];
           /** Diagonal enteries **/
-          materialInput[i].npara[numMaterial].x = 1 - deltaPara;
-          materialInput[i].npara[numMaterial].y = betaPara;
+          refractiveIndex[i].npara[numMaterial].x = 1 - deltaPara;
+          refractiveIndex[i].npara[numMaterial].y = betaPara;
 
-          materialInput[i].nperp[numMaterial].x = 1 - deltaPerp;
-          materialInput[i].nperp[numMaterial].y = betaPerp;
+          refractiveIndex[i].nperp[numMaterial].x = 1 - deltaPerp;
+          refractiveIndex[i].nperp[numMaterial].y = betaPerp;
       }
 
     }

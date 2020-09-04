@@ -37,29 +37,45 @@
 #include <utils.h>
 
 namespace py = pybind11;
-
-class EnergyData {
-    const Real &energyStart;
-    const Real &energyEnd;
-    const Real &incrementEnergy;
-    std::vector<Material<NUM_MATERIAL> > materialInput;
-    std::vector<bool> isValid;
+/**
+ * @brief Class to store the refractive index data
+ */
+class RefractiveIndexData {
+    const Real &energyStart; /// Start of energy
+    const Real &energyEnd;  /// End of energy
+    const Real &incrementEnergy; /// Increment energy
+    std::vector<Material<NUM_MATERIAL> > refractiveIndex; /// Refractive index data at all energy level
+    std::vector<bool> isValid; /// A vector of bool to check if the optical constants is added at each energy level.
 public:
-    EnergyData(const InputData &inputData)
+    /**
+     * @brief Constructor
+     * @param inputData InputData
+     */
+    RefractiveIndexData(const InputData &inputData)
         : energyStart(inputData.energyStart), energyEnd(inputData.energyStart),
           incrementEnergy(inputData.incrementEnergy) {
       UINT numEnergyData = std::round(inputData.energyEnd - inputData.energyStart) / (inputData.incrementEnergy) + 1;
-      materialInput.resize(numEnergyData);
+      refractiveIndex.resize(numEnergyData);
       isValid.resize(numEnergyData);
       std::fill(isValid.begin(), isValid.end(), false);
     }
 
+    /**
+     * @brief Clears up the memory
+     */
     void clear() {
       std::vector<Material<NUM_MATERIAL> > _materialInput;
-      std::swap(_materialInput, materialInput);
+      std::swap(_materialInput, refractiveIndex);
     }
 
 
+    /**
+     * @brief Computes the refractive index based on the optical constants Data
+     * @param values The value for the material. Must be of the size (NUM_MATERIAL X 4).
+     *                Note the optical constant data must be in the order of :
+     *               [$\delta_{\parallel}$,$\beta_{\parallel}$, $\delta_{\perp}$, $\beta_{\perp}$]
+     * @param Energy The value of energy
+     */
     void addData(const std::vector<std::vector<Real>> &values, const Real Energy) {
       enum EnergyValues : u_short {
           DeltaPara = 0,
@@ -80,19 +96,22 @@ public:
       }
       UINT counter = std::round((Energy - energyStart) / incrementEnergy);
       for (UINT i = 0; i < NUM_MATERIAL; i++) {
-        materialInput[counter].npara[i].x = 1 - values[i][EnergyValues::DeltaPara];
-        materialInput[counter].npara[i].y = values[i][EnergyValues::BetaPara];
-        materialInput[counter].nperp[i].x = 1 - values[i][EnergyValues::DeltaPerp];
-        materialInput[counter].nperp[i].y = values[i][EnergyValues::BetaPerp];
+        refractiveIndex[counter].npara[i].x = 1 - values[i][EnergyValues::DeltaPara];
+        refractiveIndex[counter].npara[i].y = values[i][EnergyValues::BetaPara];
+        refractiveIndex[counter].nperp[i].x = 1 - values[i][EnergyValues::DeltaPerp];
+        refractiveIndex[counter].nperp[i].y = values[i][EnergyValues::BetaPerp];
       }
 
       isValid[counter] = true;
 
     }
 
+    /**
+     * @brief prints the energy Data
+     */
     void printEnergyData() const {
       UINT count = 0;
-      for (auto &values : materialInput) {
+      for (auto &values : refractiveIndex) {
         Real currEnegy = energyStart + count * incrementEnergy;
         py::print("Energy = ", currEnegy);
         for (int i = 0; i < NUM_MATERIAL; i++) {
@@ -104,10 +123,18 @@ public:
       }
     }
 
-    const std::vector<Material<NUM_MATERIAL>> &getEnergyData() const {
-      return materialInput;
+    /**
+     * @brief Getter function
+     * @return The refractive index data
+     */
+    const std::vector<Material<NUM_MATERIAL>> &getRefractiveIndexData() const {
+      return refractiveIndex;
     }
 
+    /**
+     * @brief Validates if the energy data is valid, i.e all the energy has been added to the energy data
+     * @return True if the energy data is valid. False otherwise
+     */
     bool validate() const {
       if(std::all_of(isValid.begin(), isValid.end(), [](bool x) { return (x == true); })){
         return true;
@@ -232,7 +259,7 @@ public:
 
 };
 
-void launch(const InputData  &inputData, const EnergyData &energyData,
+void launch(const InputData  &inputData, const RefractiveIndexData &energyData,
             const  VoxelData &voxelData) {
 
 
@@ -259,7 +286,7 @@ void launch(const InputData  &inputData, const EnergyData &energyData,
   std::cout << "\n\n----------- Executing:  -----------------\n\n";
   const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
   Real *projectionAveraged;
-  cudaMain(voxelDimensions, inputData, energyData.getEnergyData(), projectionAveraged, voxelData.data());
+  cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), projectionAveraged, voxelData.data());
 
   createDirectory("HDF5");
   omp_set_num_threads(1);
@@ -304,7 +331,7 @@ void launch(const InputData  &inputData, const EnergyData &energyData,
   py::gil_scoped_acquire acquire;
 }
 
-void cleanup(InputData &inputData, EnergyData &energyData, VoxelData &voxelData) {
+void cleanup(InputData &inputData, RefractiveIndexData &energyData, VoxelData &voxelData) {
   voxelData.clear();
   energyData.clear();
 
@@ -345,11 +372,11 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def_readwrite("writeVTI",&InputData::writeVTI)
       .def_readwrite("openMP",&InputData::num_threads);
 
-  py::class_<EnergyData>(module, "RefractiveIndex")
+  py::class_<RefractiveIndexData>(module, "RefractiveIndex")
       .def(py::init<const InputData &>())
-      .def("addData", &EnergyData::addData,py::arg("OpticalConstants"),py::arg("Energy"))
-      .def("validate",&EnergyData::validate)
-      .def("print", &EnergyData::printEnergyData);
+      .def("addData", &RefractiveIndexData::addData, py::arg("OpticalConstants"), py::arg("Energy"))
+      .def("validate",&RefractiveIndexData::validate)
+      .def("print", &RefractiveIndexData::printEnergyData);
 
   py::class_<VoxelData>(module, "VoxelData")
       .def(py::init<const InputData &>())
