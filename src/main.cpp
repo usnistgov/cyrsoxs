@@ -98,9 +98,17 @@ int main(int argc, char **argv) {
     Voxel<NUM_MATERIAL> *voxelData;
     H5::readFile(fname, voxelSize, voxelData);
     Real *projectionGPUAveraged;
+    const UINT
+      numEnergyLevel = static_cast<UINT>(std::round((inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
+    projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
     printCopyrightInfo();
     cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, voxelData);
-    writeH5(inputData,voxelSize,projectionGPUAveraged);
+    if(inputData.writeHDF5) {
+      writeH5(inputData, voxelSize, projectionGPUAveraged);
+    }
+    if(inputData.writeVTI) {
+      writeVTI(inputData, voxelSize, projectionGPUAveraged);
+    }
     printMetaData(inputData);
     delete[] projectionGPUAveraged;
     delete[] voxelData;

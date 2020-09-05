@@ -111,7 +111,7 @@ if(windowing == FFT::FFTWindowing::HANNING) {
 int cudaMain(const UINT *voxel,
              const InputData &idata,
              const std::vector<Material<NUM_MATERIAL> > &materialInput,
-             Real *& projectionGPUAveraged,
+             Real * projectionGPUAveraged,
              const Voxel<NUM_MATERIAL> *voxelInput) {
 
   const BigUINT voxelSize = voxel[0] * voxel[1] * voxel[2]; /// Voxel size
@@ -185,7 +185,6 @@ int cudaMain(const UINT *voxel,
   VTI::writeVoxelDataVector(voxelInput, voxel, "S1", varnameVector);
   VTI::writeVoxelDataScalar(voxelInput, voxel, "Phi", varnameScalar);
 #endif
-  projectionGPUAveraged = new Real[numEnergyLevel * voxel[0] * voxel[1]];
 
   omp_set_num_threads(num_gpu);
 #pragma omp parallel

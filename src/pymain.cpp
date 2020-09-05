@@ -30,15 +30,16 @@
 #include <cudaMain.h>
 #include <complex>
 
-#include <omp.h>
+
 #include <Input/readH5.h>
 #include <iomanip>
 #include <pybind11/iostream.h>
 #include <utils.h>
 #include <PyClass/VoxelData.h>
 #include <PyClass/RefractiveIndex.h>
-
+#include <PyClass/ScatteringPattern.h>
 namespace py = pybind11;
+
 
 /**
  * @brief Launch the GPU kernel for CyRSoXS.
@@ -46,35 +47,33 @@ namespace py = pybind11;
  * @param energyData Energy data
  * @param voxelData Voxel data
  */
-void launch(const InputData &inputData, const RefractiveIndexData &energyData,
-            const VoxelData &voxelData) {
+void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
+            const VoxelData &voxelData,ScatteringPattern & scatteringPattern) {
   if (not(inputData.validate())) {
     py::print("Issues with Input Data");
-    return;
+    return ;
   }
 
   if (not(energyData.validate())) {
     py::print("Issues with Energy data");
-    return;
+    return ;
   }
 
   if (not(voxelData.validate())) {
     py::print("Issues with Voxel Data input");
-    return;
+    return ;
   }
 
   py::gil_scoped_release release;
   printCopyrightInfo();
   std::cout << "\n Executing: \n\n";
   const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
-  Real *projectionAveraged;
-  cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), projectionAveraged, voxelData.data());
-  writeH5(inputData, voxelDimensions, projectionAveraged);
-  delete[] projectionAveraged;
+  cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(), voxelData.data());
   printMetaData(inputData);
   std::cout << "Execution finished \n";
 
   py::gil_scoped_acquire acquire;
+
 }
 
 void cleanup(InputData &inputData, RefractiveIndexData &energyData, VoxelData &voxelData) {
@@ -140,9 +139,17 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("reset", &VoxelData::reset,"Resets the voxel data")
       .def("writeToH5", &VoxelData::writeToH5,"Writes voxel data to HDF5 file");
 
+  py::class_<ScatteringPattern>(module,"ScatteringPattern")
+      .def(py::init<const InputData &>(), "Constructor")
+      .def("allocate",&ScatteringPattern::allocate,"Allocates the memory")
+      .def("clear",&ScatteringPattern::clear,"Clears the memory")
+      .def("writeToHDF5",&ScatteringPattern::writeToHDF5,"Dumps data in  HDF5 file format")
+      .def("writeToVTI",&ScatteringPattern::writeToVTI,"Dumps data in  VTI file format")
+      .def("initialize",&ScatteringPattern::initialize,"Dumps data in  VTI file format")
+      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Retruns data in numpy array");
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
-             py::arg("VoxelData"));
+             py::arg("VoxelData"),py::arg("ScatteringPattern"));
   module.def("cleanup", &cleanup, "Cleanup", py::arg("InputData"), py::arg("RefractiveIndex"), py::arg("VoxelData"));
 
 

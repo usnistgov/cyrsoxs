@@ -36,7 +36,6 @@
  * @param projectionGPUAveraged The scattering pattern
  */
 static void writeH5(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged){
-  if(inputData.writeHDF5) {
     createDirectory("HDF5");
     // TODO: Make it work in parallel.
     omp_set_num_threads(1);
@@ -62,10 +61,14 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
       H5::writeFile2D(outputFname, oneEnergyData, voxelSize);
     }
     delete[] oneEnergyData;
-  }
 }
+/**
+ * @brief writes to VTI file in parallel
+ * @param inputData Input data
+ * @param voxelSize Voxel Size
+ * @param projectionGPUAveraged The scattering pattern
+ */
 static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged){
-  if(inputData.writeVTI) {
     omp_set_num_threads(inputData.num_threads);
     const UINT
         numEnergyLevel = static_cast<UINT>(std::round(
@@ -92,7 +95,6 @@ static void writeVTI(const InputData & inputData, const UINT * voxelSize,const R
       }
       delete[] projectionLocal;
     }
-  }
 }
 
 /**

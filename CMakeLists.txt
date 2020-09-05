@@ -132,6 +132,7 @@ if(PYBIND)
     set(PYBIND_INC
             include/PyClass/RefractiveIndex.h
             include/PyClass/VoxelData.h
+            include/PyClass/ScatteringPattern.h
             )
     set(PYBIND_SRC
             src/pymain.cpp
