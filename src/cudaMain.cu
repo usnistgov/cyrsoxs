@@ -36,7 +36,7 @@
 #include <ctime>
 #include <chrono>
 #include <npp.h>
-#include <Output/outputUtils.h>
+
 
 int warmup(){
   double *d_warmup, *warmup;
@@ -160,7 +160,6 @@ int cudaMain(const UINT *voxel,
 #endif
 
 #ifdef DUMP_FILES
-
   createDirectory("Polarize");
   createDirectory("FFT");
   createDirectory("Scatter");
@@ -181,12 +180,7 @@ int cudaMain(const UINT *voxel,
   VTI::writeVoxelDataVector(voxelInput, voxel, "S1", varnameVector);
   VTI::writeVoxelDataScalar(voxelInput, voxel, "Phi", varnameScalar);
 #endif
-#ifdef DLEVEL2
-  if(idata.writeVTI) {
-    createDirectory("VTI");
-  }
   projectionGPUAveraged = new Real[numEnergyLevel * voxel[0] * voxel[1]];
-#endif
 
   omp_set_num_threads(num_gpu);
 #pragma omp parallel
@@ -256,9 +250,6 @@ int cudaMain(const UINT *voxel,
 #ifdef EOC
     Real *projectionCPU = new Real[BATCH * voxel[0] * voxel[1]];
 #else
-#ifdef DLEVEL1
-    Real *projectionGPU = new Real[numAnglesRotation * voxel[0] * voxel[1]];
-#endif
 
 #endif
 
@@ -289,10 +280,8 @@ int cudaMain(const UINT *voxel,
       gpuErrchk(cudaPeekAtLastError());
     }
 
-#ifdef DLEVEL2
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_projectionAverage, sizeof(Real) * (voxel[0] * voxel[1])));
     gpuErrchk(cudaPeekAtLastError());
-#endif
 
 #endif
 
@@ -330,13 +319,11 @@ int cudaMain(const UINT *voxel,
       Real energy = (idata.energyStart + j * idata.incrementEnergy);
       std::cout << "Energy = " << energy << " starting "  << "\n";
 
-#ifdef DLEVEL2
       CUDA_CHECK_RETURN(cudaMemset(d_projectionAverage, 0, voxel[0] * voxel[1] * sizeof(Real)));
       gpuErrchk(cudaPeekAtLastError());
       if(idata.rotMask) {
         cudaMemset(d_mask, 0, sizeof(UINT) * voxel[0] * voxel[1]);
       }
-#endif
 
 #ifdef  PROFILING
       tstartEnergy = std::chrono::high_resolution_clock::now();
@@ -575,7 +562,6 @@ int cudaMain(const UINT *voxel,
           cudaDeviceSynchronize();
         }
 
-#ifdef DLEVEL2
         const Real factor = static_cast<Real>(1.0);
 #ifdef DOUBLE_PRECISION
         stat = cublasDaxpy(handle, voxel[0] * voxel[1], &factor, d_rotProjection, 1, d_projectionAverage, 1);
@@ -587,22 +573,12 @@ int cudaMain(const UINT *voxel,
           exit(EXIT_FAILURE);
         }
 
-
-#endif
-
 #ifdef PROFILING
         {
           t7 = std::chrono::high_resolution_clock::now();
           std::chrono::duration<double, std::milli> time_span = t7 - t6;
           time_span5 += time_span.count();
         }
-#endif
-#ifdef DLEVEL1
-        CUDA_CHECK_RETURN(cudaMemcpy(&projectionGPU[i*voxel[0] * voxel[1]],
-                                     d_rotProjection,
-                                     sizeof(Real) * (voxel[0] * voxel[1]),
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
 #endif
 #endif
 
@@ -616,8 +592,6 @@ int cudaMain(const UINT *voxel,
         }
 #endif
       }
-
-#ifdef DLEVEL2
 
       if(idata.rotMask){
         averageRotation<<<BlockSize2,NUM_THREADS>>>(d_projectionAverage,d_mask,vx);
@@ -642,46 +616,10 @@ int cudaMain(const UINT *voxel,
                                    sizeof(Real) * (voxel[0] * voxel[1]),
                                    cudaMemcpyDeviceToHost));
       gpuErrchk(cudaPeekAtLastError());
-#endif
 
 #ifdef PROFILING
       {
         t9 = std::chrono::high_resolution_clock::now();
-      }
-#endif
-
-#ifdef DLEVEL1
-#pragma omp parallel
-      {
-
-        UINT threadID = omp_get_thread_num();
-        UINT chunkSize = static_cast<UINT>(std::ceil(numAnglesRotation * 1.0/ omp_get_num_threads()));
-        UINT voxelSize2D = voxel[0] * voxel[1];
-        Real *projectionLocal = new Real[voxelSize2D];
-        UINT startID = threadID * chunkSize;
-        UINT endID = ((threadID + 1) * chunkSize);
-        if (startID < numAnglesRotation) {
-
-          for (UINT csize = startID; csize < std::min(endID, numAnglesRotation); csize++) {
-
-#ifdef EOC
-            Real rotAngle = csize*idata.incrementAngle;
-            std::memcpy(projectionLocal,&projectionCPU[threadID], sizeof(Real)*voxel[0]*voxel[1]);
-            rotateImage(projectionLocal, vx, rotAngle);
-#else
-            std::memcpy(projectionLocal, &projectionGPU[csize * voxelSize2D], sizeof(Real) * voxelSize2D);
-#endif
-
-
-            std::string dirname = "Projection/";
-  //          std::string fname = dirname + "projection" + std::to_string(j) + "_" + std::to_string(csize);
-  //          VTI::writeDataScalar2D(projectionLocal, voxel, fname.c_str(), "projection");
-            std::string fnameFP = dirname + "projectionFP" + std::to_string(j) + "_" + std::to_string(csize);
-            VTI::writeDataScalar2DFP(projectionLocal, voxel, fnameFP.c_str(), "projection");
-
-          }
-        }
-        delete[] projectionLocal;
       }
 #endif
 
@@ -732,26 +670,6 @@ int cudaMain(const UINT *voxel,
 
   }
 
-#ifdef DLEVEL2
-
-#ifdef PROFILING
-  {
-    tDumpLevel2Start = std::chrono::high_resolution_clock::now();
-  }
-#endif
-  if(idata.writeVTI) {
-    omp_set_num_threads(idata.num_threads);
-    dump_files2D(projectionGPUAveraged, numEnergyLevel, voxel);
-  }
-
-#ifdef PROFILING
-  {
-    tDumpLevel2End = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> time_span = tDumpLevel2End - tDumpLevel2Start;
-    time_spanDumpLevel2 += time_span.count();
-  }
-#endif
-#endif
 
 
 #ifdef PROFILING
@@ -768,13 +686,6 @@ int cudaMain(const UINT *voxel,
   std::cout << "[TIMER] Memcopy GPU -> CPU (2D) =" << time_span6 << "\n";
 #endif
   std::cout << "[TIMER] Rotation of image (CPU)= " << time_span7 << "\n";
-#ifdef DLEVEL1
-  std::cout << "[TIMER] File Writing (CPU)= " << time_span8 << "\n";
-#endif
-#ifdef DLEVEL2
-  std::cout << "[TIMER] File Writing (CPU)= " << time_spanDumpLevel2 << "\n";
-#endif
-
   std::cout << "[TIMER] Total time for all Energy calculation = " << time_spanEnergy << "\n";
 
 
@@ -784,13 +695,6 @@ int cudaMain(const UINT *voxel,
 #ifdef EOC
   delete[] projectionCPU;
 #else
-#ifdef DLEVEL1
-  delete[] projectionGPU;
-#endif
-#ifdef DLEVEL2
-//  delete[] projectionGPUAveraged;
-#endif
-
 #endif
 
   return (EXIT_SUCCESS);

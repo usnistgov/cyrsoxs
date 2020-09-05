@@ -710,39 +710,4 @@ __global__ void radialIntegrate(Real *integrate,
     integrate[threadID] = 0;
   }
 }
-
-
-/**
- * This function dumps the 2D files in parallel.
- * This function is tested with dumping the file for DLEVEL2
- * @param data data to be dumped. The data is in the format [ Energy1 ; Energy2; ..... :Energyn]
- * @param numData number of data
- * @param eachDataSize The size of each data in 2D.
- */
-
-__host__ void dump_files2D(const Real *data, const UINT numData, const UINT *eachDataSize) {
-#pragma omp parallel
-  {
-
-    UINT threadID = omp_get_thread_num();
-    UINT chunkSize = static_cast<UINT>(std::ceil(numData * 1.0 / (omp_get_num_threads() * 1.0)));
-    const UINT totalSize = eachDataSize[0] * eachDataSize[1];
-    Real *projectionLocal = new Real[totalSize];
-    UINT startID = threadID * chunkSize;
-    UINT endID = ((threadID + 1) * chunkSize);
-    if (startID < numData) {
-
-      for (UINT csize = startID; csize < std::min(endID, numData); csize++) {
-
-        std::memcpy(projectionLocal, &data[csize * totalSize], sizeof(Real) * totalSize);
-
-        std::string dirname = "VTI/";
-        std::string fnameFP = dirname + "projectionAverage" + std::to_string(csize);
-        VTI::writeDataScalar2DFP(projectionLocal, eachDataSize, fnameFP, "projection");
-
-      }
-    }
-    delete[] projectionLocal;
-  }
-}
 #endif //WRITER_UNIAXIAL_H

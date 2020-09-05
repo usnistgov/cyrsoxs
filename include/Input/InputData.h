@@ -203,6 +203,7 @@ private:
     * @brief Constructor
     */
     InputData() {
+      writeHDF5 = false;
       paramChecker_.reset();
     }
     /**

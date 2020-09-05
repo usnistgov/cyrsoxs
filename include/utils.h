@@ -26,7 +26,7 @@
 #include <Input/InputData.h>
 #include <iomanip>
 #include <Output/outputUtils.h>
-
+#include <Output/writeVTI.h>
 
 
 /**
@@ -36,12 +36,14 @@
  * @param projectionGPUAveraged The scattering pattern
  */
 static void writeH5(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged){
+  if(inputData.writeHDF5) {
     createDirectory("HDF5");
     // TODO: Make it work in parallel.
     omp_set_num_threads(1);
 
     const UINT
-    numEnergyLevel = static_cast<UINT>(std::round((inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
+        numEnergyLevel = static_cast<UINT>(std::round(
+        (inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
     const UINT voxel2DSize = voxelSize[0] * voxelSize[1];
     Real *oneEnergyData = new Real[voxel2DSize];
     UINT chunkSize = static_cast<UINT>(std::ceil(numEnergyLevel * 1.0 / (omp_get_num_threads() * 1.0)));
@@ -59,8 +61,39 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
 
       H5::writeFile2D(outputFname, oneEnergyData, voxelSize);
     }
-    delete [] oneEnergyData;
-};
+    delete[] oneEnergyData;
+  }
+}
+static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged){
+  if(inputData.writeVTI) {
+    omp_set_num_threads(inputData.num_threads);
+    const UINT
+        numEnergyLevel = static_cast<UINT>(std::round(
+        (inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
+#pragma omp parallel
+    {
+      UINT threadID = omp_get_thread_num();
+      UINT chunkSize = static_cast<UINT>(std::ceil(numEnergyLevel * 1.0 / (omp_get_num_threads() * 1.0)));
+      const UINT voxel2DSize = voxelSize[0] * voxelSize[1];
+      Real *projectionLocal = new Real[voxel2DSize];
+      UINT startID = threadID * chunkSize;
+      UINT endID = ((threadID + 1) * chunkSize);
+      if (startID < numEnergyLevel) {
+
+        for (UINT csize = startID; csize < std::min(endID, numEnergyLevel); csize++) {
+
+          std::memcpy(projectionLocal, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
+
+          std::string dirname = "VTI/";
+          std::string fnameFP = dirname + "projectionAverage" + std::to_string(csize);
+          VTI::writeDataScalar2DFP(projectionLocal, voxelSize, fnameFP, "projection");
+
+        }
+      }
+      delete[] projectionLocal;
+    }
+  }
+}
 
 /**
  * Prints the copyRight Info

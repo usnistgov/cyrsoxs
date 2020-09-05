@@ -306,7 +306,7 @@ static int vtk_write_binary (FILE * fp, char *numeric_data, size_t byte_length)
  * @param VoxelSize
  * @param out fstream object
  */
-void writeFileHeader(const UINT *VoxelSize, std::ofstream &out) {
+static void writeFileHeader(const UINT *VoxelSize, std::ofstream &out) {
 
   // The header
   out << "<?xml version=\"1.0\"?>" << std::endl;
@@ -330,7 +330,7 @@ void writeFileHeader(const UINT *VoxelSize, std::ofstream &out) {
  * @param out fstream object
  */
 
-void writeFileHeader2D(const UINT *VoxelSize, std::ofstream &out) {
+static void writeFileHeader2D(const UINT *VoxelSize, std::ofstream &out) {
 
   // The header
   out << "<?xml version=\"1.0\"?>" << std::endl;
@@ -353,7 +353,7 @@ void writeFileHeader2D(const UINT *VoxelSize, std::ofstream &out) {
  * @param fp file pointer
  */
 
-void writeFileHeader2D(const UINT *VoxelSize, FILE * fp) {
+static void writeFileHeader2D(const UINT *VoxelSize, FILE * fp) {
 
   fprintf(fp,"<?xml version=\"1.0\"?>\n");
   fprintf(fp,"<VTKFile type=\"ImageData\" version=\"0.1\" byte_order=\"LittleEndian\">\n");
@@ -369,7 +369,7 @@ void writeFileHeader2D(const UINT *VoxelSize, FILE * fp) {
  * @param var_name variable name
  * @param isComplex if the input is a complex or real
  */
-void writeVariableHeaderScalar(std::ofstream &out, const char * var_name, const bool isComplex = false){
+static void writeVariableHeaderScalar(std::ofstream &out, const char * var_name, const bool isComplex = false){
   if(isComplex){
   //  out << " <CellData Vectors=\"" << var_name << "\">\n";
 #if VTI_BINARY
@@ -399,7 +399,7 @@ void writeVariableHeaderScalar(std::ofstream &out, const char * var_name, const 
  * @param isComplex if the input is a complex or real
  */
 
-void writeVariableHeaderScalar(FILE * fp, const char * var_name, const bool isComplex = false){
+static void writeVariableHeaderScalar(FILE * fp, const char * var_name, const bool isComplex = false){
   if(isComplex){
     //  out << " <CellData Vectors=\"" << var_name << "\">\n";
 #if VTI_BINARY
@@ -428,7 +428,7 @@ void writeVariableHeaderScalar(FILE * fp, const char * var_name, const bool isCo
  * @param var_name  variable name
  * @param isInitial if the function is called for the first time.
  */
-void writeVariableHeaderVector(std::ofstream &out, const char * var_name, bool isInitial = true){
+static void writeVariableHeaderVector(std::ofstream &out, const char * var_name, bool isInitial = true){
   if(isInitial) {
 
   }
@@ -443,7 +443,7 @@ void writeVariableHeaderVector(std::ofstream &out, const char * var_name, bool i
  * This function writes the footer to the file
  * @param out fstream object
  */
-void writeFileFooter(std::ofstream &out) {
+static void writeFileFooter(std::ofstream &out) {
   out << "</Piece>\n"
          "</ImageData>\n"
          "</VTKFile>";
@@ -453,7 +453,7 @@ void writeFileFooter(std::ofstream &out) {
  * This function writes the footer to the file
  * @param fp file pointer object
  */
-void writeFileFooter(FILE * fp) {
+static void writeFileFooter(FILE * fp) {
   fprintf(fp, "</Piece>\n"
          "</ImageData>\n"
          "</VTKFile>\n");
@@ -462,7 +462,7 @@ void writeFileFooter(FILE * fp) {
  * This function writes the variable footer to the file
  * @param out fstream object
  */
-void writeVariableFooter(std::ofstream &out) {
+static void writeVariableFooter(std::ofstream &out) {
   out << "</DataArray>\n";
 }
 
@@ -470,7 +470,7 @@ void writeVariableFooter(std::ofstream &out) {
  * This function writes the variable footer to the file
  * @param fp file pointer
  */
-void writeVariableFooter(FILE * fp) {
+static void writeVariableFooter(FILE * fp) {
   fprintf(fp,"</DataArray>\n");
 }
 
@@ -481,7 +481,7 @@ void writeVariableFooter(FILE * fp) {
  * @param fname name of files
  * @param varname variable name
  */
-void writeVoxelDataScalar(const Voxel<NUM_MATERIAL> *data,
+static void writeVoxelDataScalar(const Voxel<NUM_MATERIAL> *data,
                           const UINT *voxelSize,
                           const std::string &fname,
                           const char **varname){
@@ -524,7 +524,7 @@ void writeVoxelDataScalar(const Voxel<NUM_MATERIAL> *data,
  * @param fname name of files
  * @param varname variable name
  */
-void writeVoxelDataVector(const Voxel<NUM_MATERIAL> *data,
+static void writeVoxelDataVector(const Voxel<NUM_MATERIAL> *data,
                           const UINT *voxelSize,
                           const std::string &fname,
                           const char **varname){
@@ -570,7 +570,7 @@ void writeVoxelDataVector(const Voxel<NUM_MATERIAL> *data,
  * @param fname name of files
  * @param varName variable name
  */
-void writeDataScalar(Real * data,const UINT *voxelSize,
+static void writeDataScalar(Real * data,const UINT *voxelSize,
                      const std::string &fname, const char * varName){
   std::string filename = fname+".vti";
   std::ofstream fout(filename.c_str());
@@ -600,7 +600,7 @@ void writeDataScalar(Real * data,const UINT *voxelSize,
  * @param fname name of files
  * @param varName variable name
  */
-void writeDataScalar2D(Real * data,const UINT *voxelSize,
+static void writeDataScalar2D(Real * data,const UINT *voxelSize,
                        const std::string &fname, const char * varName){
 
   std::string filename = fname+".vti";
@@ -634,7 +634,7 @@ void writeDataScalar2D(Real * data,const UINT *voxelSize,
  * @param fname name of files
  * @param varName variable name
  */
-void writeDataScalar(Complex * data,const UINT *voxelSize,
+static void writeDataScalar(Complex * data,const UINT *voxelSize,
                      const std::string &fname, const char * varName){
   std::string filename = fname+".vti";
   std::ofstream fout(filename.c_str());
@@ -674,7 +674,7 @@ void writeDataScalar(Complex * data,const UINT *voxelSize,
  * @param fname name of files
  * @param varName variable name
  */
-void writeDataScalar2DFP(Real * data,const UINT *voxelSize,
+static void writeDataScalar2DFP(Real * data,const UINT *voxelSize,
                        const std::string &fname, const char * varName){
 #ifdef PROFILING
   std::chrono::high_resolution_clock::time_point fileTimerStart=std::chrono::high_resolution_clock::now();
