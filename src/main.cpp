@@ -79,7 +79,7 @@
 #include <utils.h>
 
 /**
- * *
+ * main function
  * @param argc
  * @param argv
  * @return EXIT_SUCCESS on successful completion.

@@ -212,9 +212,22 @@ private:
      * @param _energyIncrement Increment in energy from energy start and energy end (in eV)
      */
     void setEnergy(const Real & _energyStart, const  Real & _energyEnd,const  Real & _energyIncrement){
+        if(FEQUALS(_energyIncrement,0.0)) {
+          if(FEQUALS(_energyStart,_energyEnd)) {
+            pybind11::print("INFO : Adjusting increment Energy to 0.1 for preventing 0/0 error.");
+            incrementEnergy = 0.1;
+          }
+          else {
+            pybind11::print("ERROR: Cannot add 0 increment Energy");
+            return;
+          }
+        }
+        else {
+          incrementEnergy = _energyIncrement;
+        }
         energyStart = _energyStart;
         energyEnd = _energyEnd;
-        incrementEnergy = _energyIncrement;
+
         paramChecker_.set(ParamChecker::Parameters::ENERGY,true);
     }
     /**

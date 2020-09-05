@@ -27,6 +27,8 @@
 #include <iomanip>
 #include <Output/outputUtils.h>
 
+
+
 /**
  * @brief writes to HDF5 file
  * @param inputData Input data
@@ -65,22 +67,19 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
  */
 static void printCopyrightInfo(){
 
-  const char separator    = ' ';
-  const int charWidth     = 80;
-  std::cout << std::left << std::setw(charWidth) << std::setfill('_') << "\n";
-  std::cout << "\n";
-  std::cout << std::left << std::setw(charWidth) << "|_____________________________Thanks for using Cy-RSoXS"  << std::setfill(separator) << "|\n";
-  std::cout << std::left << std::setw(charWidth) << "|Copyright @ Iowa State." << std::setfill(separator )  << "|\n";
-  std::cout << std::left << std::setw(charWidth) << "|Developed at Iowa State in collaboration with NIST" << std::setfill(separator )  << "|\n";
-  std::cout << std::left << std::setw(charWidth) << "|Distributed freely under MIT Licence." << std::setfill(separator) << "|\n";;
-  std::cout << std::left << std::setw(charWidth) << "|Cite the publication for using this: ----" << std::setfill(separator) << "|\n";;
-  std::cout << std::left << std::setw(charWidth) << "|Comments/Questions:" << std::setfill(separator) << "|\n";
-  std::cout << std::left << std::setw(charWidth) << "|    Dr. Baskar Ganapathysubramanian (baskarg@iastate.edu)"<< std::setfill(separator) << "|\n";
-  std::cout << std::left << std::setw(charWidth) << "|    Dr. Adarsh Krishnamurthy (adarsh@iastate.edu)" << std::setfill(separator) << "|\n";
-  std::cout << std::left << std::setw(charWidth) << "|" << std::setfill('-') << "|\n";
-  std::cout << "\n";
-  std::cout << "\n";
-  std::cout << "\n";
+  std::cout << " __________________________________________________________________________________________________\n";
+  std::cout << "|                                 Thanks for using Cy-RSoXS                                        |\n";
+  std::cout << "|--------------------------------------------------------------------------------------------------|\n";
+  std::cout << "|  Copyright          : Iowa State University                                                      |\n";
+  std::cout << "|  Licence            : MIT                                                                        |\n";
+  std::cout << "|  Acknowledgement    : ONR MURI                                                                   |\n";
+  std::cout << "|  Developed at Iowa State University in collaboration with NIST                                   |\n";
+  std::cout << "|  Please cite the following publication :                                                         |\n";
+  std::cout << "|  Comments/Questions :                                                                            |\n";
+  std::cout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
+  std::cout << "|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
+  std::cout << " -------------------------------------------------------------------------------------------------- \n";
+
   std::cout << "\n";
 }
 

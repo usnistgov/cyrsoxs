@@ -65,7 +65,7 @@ void launch(const InputData &inputData, const RefractiveIndexData &energyData,
 
   py::gil_scoped_release release;
   printCopyrightInfo();
-  std::cout << "\n\n----------- Executing:  -----------------\n\n";
+  std::cout << "\n Executing: \n\n";
   const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
   Real *projectionAveraged;
   cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), projectionAveraged, voxelData.data());

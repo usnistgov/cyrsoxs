@@ -11,12 +11,13 @@
 #include <Input/readH5.h>
 
 namespace py = pybind11;
-/**
- * @brief Stores the voxel data when passed through the Python.\n
+/*
+ * Stores the voxel data when passed through the Python.
  *
- * There are two ways of passing the voxel data: \n
- * 1. Pass directly through HDF5 file. \n
- * 2. Pass through numpy arrays. \n
+ * There are two ways of passing the voxel data:
+ *
+ * 1. Pass directly through HDF5 file.
+ * 2. Pass through numpy arrays.
  *
  * Note: The above two options are mutually exclusive. They can not be mixed.
  */
