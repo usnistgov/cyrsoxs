@@ -36,6 +36,11 @@
 #include <ctime>
 #include <chrono>
 #include <npp.h>
+#include <Output/outputUtils.h>
+
+#define START_TIMER(X) timerArrayStart[X] = std::chrono::high_resolution_clock::now();
+#define END_TIMER(X) timerArrayEnd[X] = std::chrono::high_resolution_clock::now(); \
+                     timings[X] +=  (static_cast<std::chrono::duration<Real>>(timerArrayEnd[X] - timerArrayStart[X])).count();
 
 
 int warmup(){
@@ -129,33 +134,33 @@ int cudaMain(const UINT *voxel,
 
 
 #ifdef PROFILING
-  std::chrono::high_resolution_clock::time_point t0;
-  std::chrono::high_resolution_clock::time_point t1;
-  std::chrono::high_resolution_clock::time_point t2;
-  std::chrono::high_resolution_clock::time_point t3;
-  std::chrono::high_resolution_clock::time_point t4;
-  std::chrono::high_resolution_clock::time_point t5;
-  std::chrono::high_resolution_clock::time_point t6;
-  std::chrono::high_resolution_clock::time_point t7;
-  std::chrono::high_resolution_clock::time_point t8;
-  std::chrono::high_resolution_clock::time_point t9;
-  std::chrono::high_resolution_clock::time_point t10;
-  std::chrono::high_resolution_clock::time_point tstartEnergy;
-  std::chrono::high_resolution_clock::time_point tendEnergy;
-  std::chrono::high_resolution_clock::time_point tDumpLevel2Start;
-  std::chrono::high_resolution_clock::time_point tDumpLevel2End;
-
-  Real time_span0 = 0;
-  Real time_span1 = 0;
-  Real time_span2 = 0;
-  Real time_span3 = 0;
-  Real time_span4 = 0;
-  Real time_span5 = 0;
-  Real time_span6 = 0;
-  Real time_span7 = 0;
-  Real time_span8 = 0;
-  Real time_spanEnergy = 0;
-  Real time_spanDumpLevel2 = 0;
+  enum TIMERS:UINT{
+    MALLOC = 0,
+    MEMCOPY_CPU_GPU = 1,
+    POLARIZATION = 2,
+    FFT = 3,
+    SCATTER3D = 4,
+    EWALDS = 5,
+    ROTATION=6,
+    MEMCOPY_GPU_CPU = 7,
+    ENERGY=8,
+    MAX = 9
+  };
+  static const char *timersName[]{"Malloc on CPU + GPU",
+                                  "Memcopy CPU -> GPU",
+                                  "Polarization",
+                                  "FFT",
+                                  "Scatter3D",
+                                  "Ewalds",
+                                  "Rotation",
+                                  "Memcopy GPU -> CPU",
+                                  "Total time "};
+  static_assert(sizeof(timersName) / sizeof(char*) == TIMERS::MAX,
+                "sizes dont match");
+  std::array<std::chrono::high_resolution_clock::time_point,TIMERS::MAX> timerArrayStart;
+  std::array<std::chrono::high_resolution_clock::time_point,TIMERS::MAX> timerArrayEnd;
+  std::array<Real,TIMERS::MAX> timings{};
+  timings.fill(0.0);
 
 #endif
 
@@ -229,11 +234,11 @@ int cudaMain(const UINT *voxel,
     numEnd = std::min(numEnd,numEnergyLevel);
 
     std::cout << "[GPU = " << dprop.name  << " " << "]" << " = " << " Energy = [ " << (idata.energyStart + numStart*idata.incrementEnergy)
-                << " - > " << (idata.energyStart + numEnd*idata.incrementEnergy) <<"]\n";
+                << " - > " << (idata.energyStart + (numEnd - 1)*idata.incrementEnergy) <<"]\n";
 
 #ifdef PROFILING
     {
-      t0 = std::chrono::high_resolution_clock::now();
+      START_TIMER(TIMERS::MALLOC);
     }
 #endif
     uint3 vx;
@@ -291,9 +296,8 @@ int cudaMain(const UINT *voxel,
 
 #ifdef PROFILING
     {
-      t1 = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double, std::milli> time_span = t1 - t0;
-      time_span0 += time_span.count();
+      END_TIMER(TIMERS::MALLOC)
+      START_TIMER(TIMERS::MEMCOPY_CPU_GPU)
     }
 #endif
 
@@ -305,9 +309,7 @@ int cudaMain(const UINT *voxel,
 
 #ifdef PROFILING
     {
-      t2 = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double, std::milli> time_span = t2 - t1;
-      time_span1 += time_span.count();
+      END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
     }
 #endif
 
@@ -326,7 +328,7 @@ int cudaMain(const UINT *voxel,
       }
 
 #ifdef  PROFILING
-      tstartEnergy = std::chrono::high_resolution_clock::now();
+      START_TIMER(TIMERS::ENERGY)
 #endif
 
       ElectricField eleField;
@@ -342,7 +344,7 @@ int cudaMain(const UINT *voxel,
         angle = static_cast<Real>((idata.startAngle + i*idata.incrementAngle) * M_PI / 180.0);
 #ifdef PROFILING
         {
-          t3 = std::chrono::high_resolution_clock::now();
+          START_TIMER(TIMERS::POLARIZATION)
         }
 #endif
 
@@ -351,15 +353,6 @@ int cudaMain(const UINT *voxel,
 
         gpuErrchk(cudaPeekAtLastError());
         cudaDeviceSynchronize();
-
-#ifdef PROFILING
-        {
-          t4 = std::chrono::high_resolution_clock::now();
-          std::chrono::duration<double, std::milli> time_span = t4 - t3;
-          time_span2 += time_span.count();
-        }
-#endif
-
 #ifdef DUMP_FILES
 
         CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
@@ -387,6 +380,15 @@ int cudaMain(const UINT *voxel,
           VTI::writeDataScalar(polarizationZ, voxel, fname.c_str(), "polarizeZ");
         }
 #endif
+
+#ifdef PROFILING
+        {
+          END_TIMER(TIMERS::POLARIZATION)
+          START_TIMER(TIMERS::FFT)
+        }
+#endif
+
+
 
         /** FFT Computation **/
         result = performFFT(d_polarizationX,plan);
@@ -441,16 +443,6 @@ int cudaMain(const UINT *voxel,
         cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
-
-
-#ifdef PROFILING
-        {
-          t5 = std::chrono::high_resolution_clock::now();
-          std::chrono::duration<double, std::milli> time_span = t5 - t4;
-          time_span3 += time_span.count();
-        }
-#endif
-
 #ifdef DUMP_FILES
         CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
                                      d_polarizationX,
@@ -478,6 +470,15 @@ int cudaMain(const UINT *voxel,
         }
 #endif
 
+#ifdef PROFILING
+        {
+          END_TIMER(TIMERS::FFT)
+          START_TIMER(TIMERS::SCATTER3D)
+        }
+#endif
+
+
+
         /** Scatter 3D computation **/
         computeScatter3D <<< BlockSize, NUM_THREADS >>> (d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, voxelSize, vx, idata.physSize);
         cudaDeviceSynchronize();
@@ -496,9 +497,8 @@ int cudaMain(const UINT *voxel,
 
 #ifdef PROFILING
         {
-          t6 = std::chrono::high_resolution_clock::now();
-          std::chrono::duration<double, std::milli> time_span = t6 - t5;
-          time_span4 += time_span.count();
+          END_TIMER(TIMERS::SCATTER3D)
+          START_TIMER(TIMERS::EWALDS)
         }
 #endif
 
@@ -508,9 +508,7 @@ int cudaMain(const UINT *voxel,
 
 #ifdef PROFILING
         {
-          t7 = std::chrono::high_resolution_clock::now();
-          std::chrono::duration<double, std::milli> time_span =  t7 - t6;
-          time_span5 += time_span.count();
+
         }
 #endif
         computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
@@ -520,6 +518,12 @@ int cudaMain(const UINT *voxel,
         computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>> (d_projection,d_rotProjection, d_scatter3D, vx,
             eleField.k.z,idata.physSize, static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation));
         cudaDeviceSynchronize();
+#ifdef PROFILING
+        {
+          END_TIMER(TIMERS::EWALDS)
+          START_TIMER(TIMERS::ROTATION)
+        }
+#endif
         const double alpha = cos(angle);
         const double beta = sin(angle);
 
@@ -575,21 +579,9 @@ int cudaMain(const UINT *voxel,
 
 #ifdef PROFILING
         {
-          t7 = std::chrono::high_resolution_clock::now();
-          std::chrono::duration<double, std::milli> time_span = t7 - t6;
-          time_span5 += time_span.count();
+          END_TIMER(TIMERS::ROTATION)
         }
 #endif
-#endif
-
-
-
-#ifdef PROFILING
-        {
-          t8 = std::chrono::high_resolution_clock::now();
-          std::chrono::duration<double, std::milli> time_span = t8 - t7;
-          time_span6 += time_span.count();
-        }
 #endif
       }
 
@@ -611,6 +603,11 @@ int cudaMain(const UINT *voxel,
           exit(EXIT_FAILURE);
         }
       }
+#ifdef PROFILING
+      {
+        START_TIMER(TIMERS::MEMCOPY_GPU_CPU)
+      }
+#endif
       CUDA_CHECK_RETURN(cudaMemcpy(&projectionGPUAveraged[j * voxel[0] * voxel[1]],
                                    d_projectionAverage,
                                    sizeof(Real) * (voxel[0] * voxel[1]),
@@ -619,18 +616,8 @@ int cudaMain(const UINT *voxel,
 
 #ifdef PROFILING
       {
-        t9 = std::chrono::high_resolution_clock::now();
-      }
-#endif
-
-#ifdef PROFILING
-      {
-        t10 = std::chrono::high_resolution_clock::now();
-        tendEnergy = t10;
-        std::chrono::duration<double, std::milli> time_span = t10 - t9;
-        time_span8 += time_span.count();
-        time_span = tendEnergy - tstartEnergy;
-        time_spanEnergy += time_span.count();
+        END_TIMER(TIMERS::MEMCOPY_GPU_CPU)
+        END_TIMER(TIMERS::ENERGY)
       }
 #endif
     }
@@ -673,23 +660,11 @@ int cudaMain(const UINT *voxel,
 
 
 #ifdef PROFILING
-  std::cout << "[TIMER] Malloc on CPU + GPU = " << time_span0 << "\n";
-  std::cout << "[TIMER] Memcopy CPU -> GPU = " << time_span1 << "\n";
-  std::cout << "[TIMER] Polarization computation (GPU) = " << time_span2 << "\n";
-  std::cout << "[TIMER] FFT computation (GPU) = " << time_span3 << "\n";
-  std::cout << "[TIMER] computeScatter3D = " << time_span4 << "\n";
-#ifdef EOC
-  std::cout << "[TIMER] Memcopy GPU -> CPU = " << time_span5 << "\n";
-  std::cout << "[TIMER] Ewald Projection (CPU)= " << time_span6 << "\n";
-#else
-  std::cout << "[TIMER] Ewald Projection (GPU)=  " << time_span5 << "\n";
-  std::cout << "[TIMER] Memcopy GPU -> CPU (2D) =" << time_span6 << "\n";
-#endif
-  std::cout << "[TIMER] Rotation of image (CPU)= " << time_span7 << "\n";
-  std::cout << "[TIMER] Total time for all Energy calculation = " << time_spanEnergy << "\n";
-
-
-
+  std::cout << "\n\n[INFO]Timings Info\n";
+  for(int i = 0; i < TIMERS::MAX; i++){
+    std::cout << "[TIMERS] " << std::left << std::setw(20) << timersName[i] << ":" << timings[i] << " s\n";
+  }
+  std::cout << "\n\n";
 #endif
 
 #ifdef EOC
