@@ -47,6 +47,7 @@ Export the path for HDF5:
 ```bash
 cd build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5;
 echo "export HDF5_DIR=`pwd`" >> ~/.bashrc
+source ~/.bashrc
 ```
 
 
