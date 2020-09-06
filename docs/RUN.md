@@ -1,5 +1,8 @@
 GPU enabled RSoXS simulation (Release 1.0 - Beta version)
 ====================================
+
+# Without Pybind
+
 ## Generating config and constant files
 
 In order to run RSoXs, first we need to generate the confiig file.
@@ -83,3 +86,7 @@ from the run directory.
 The output will be generated in the folder named `Projection`that will be
 created in the run directory. The output are generated in `.vti` / `.hdf5` format which
 can be visualized using [Paraview](https://www.paraview.org/) or [Visit](https://wci.llnl.gov/simulation/computer-codes/visit/).
+
+#With Pybind
+
+Refer to the [Jupyer-notebook ](../notebook/CyRSoXS.ipynb) for the instructions

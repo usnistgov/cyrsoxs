@@ -8,14 +8,14 @@ This guide recommends passing ```--prefix=`pwd`/install``` to `./configure`, whi
 
 ```bash
 # Download and extract
-wget http://www.hyperrealm.com/packages/libconfig-1.4.10.tar.gz
-tar xvf libconfig-1.4.10.tar.gz
-rm libconfig-1.4.10.tar.gz
+wget http://hyperrealm.github.io/libconfig/dist/libconfig-1.7.2.tar.gz
+tar xvf libconfig-1.7.2.tar.gz
+rm libconfig-1.7.2.tar.gz
 
-# Compile and copy output files to libconfig-1.4.10/install
-cd libconfig-1.4.10
+# Compile and copy output files to libconfig-1.7.2/install
+cd libconfig-1.7.2
 ./configure --prefix=`pwd`/install
-make -j4  # compile with 4 threads
+make -j8  # compile with 8 threads
 make install
 
 # Permanently set $LIBCONFIG_DIR environment variable, which is what TalyFEM uses
@@ -43,6 +43,12 @@ cd CMake-hdf5-1.10.5.tar.gz
 This step might take some time. Do not cancel until all the tests have passed.
 This step will create a cmake files in location `$HFD5_DIR/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5`
 
+Export the path for HDF5:
+```bash
+cd build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5;
+echo "export HDF5_DIR=`pwd`" >> ~/.bashrc
+```
+
 
 Building Cy-RSoXS 
 ==================
@@ -57,6 +63,13 @@ git clone https://bitbucket.org/baskargroup/cy-rsoxs.git
 
 It will ask for your username and password.
 
+**Building with Pybind**
+
+```bash
+git submodule update --init
+```
+ 
+
 **Cmake options**
 
 One should have a valid C/C++ compiler and CUDA-toolkit in addition to above modules installed to 
@@ -65,12 +78,17 @@ compile Cy-RSoXS.
 cd $Cy-RSoXS_DIR
 mkdir build; 
 cd build;
-cmake .. -DCMAKE_BUILD_TYPE=Release -DHDF5_DIR=$HFD5_DIR/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5 -DDLEVEL2=Yes -DNUM_MATERIAL=4 
+cmake .. -DCMAKE_BUILD_TYPE=Release  -DNUM_MATERIAL=4 
 ```
 
 **Compiling with intel compiler**
 
-If you are compiling with intel compiler:
+Building with Pybind
+```bash
+-DPYBIND = Yes
+```
+
+If you are compiling with intel compiler (Does not work with Pybind):
 ```bash
  -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc
 ``` 
@@ -108,18 +126,12 @@ Optional Cmake Flags can be added:
 ```bash
 -DVTI_BINARY=No
 ```
-**For dumping all scattering pattern at all energy level and all angle of rotation**
-```bash
--DDLEVEL1=Yes
-```
+
 **To dump all intermediate files**
 ```bash
 -DUMP_FILES=Yes
 ```
-**Perform Ewald's projection on CPU (Not recommended)**
-```bash
--DEOC=Yes
-```
+
 **Build Documentation**
 ```bash
 -DBUILD_DOCS=Yes
