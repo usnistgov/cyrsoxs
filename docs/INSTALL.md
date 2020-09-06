@@ -81,12 +81,12 @@ cd build;
 cmake .. -DCMAKE_BUILD_TYPE=Release  -DNUM_MATERIAL=4 
 ```
 
-**Compiling with intel compiler**
-
-Building with Pybind
+**Building with Pybind**
 ```bash
 -DPYBIND = Yes
 ```
+
+**Compiling with intel compiler**
 
 If you are compiling with intel compiler (Does not work with Pybind):
 ```bash
