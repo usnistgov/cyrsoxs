@@ -76,9 +76,10 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
 
 }
 
-void cleanup(InputData &inputData, RefractiveIndexData &energyData, VoxelData &voxelData) {
+void cleanup(RefractiveIndexData &energyData, VoxelData &voxelData, ScatteringPattern & scatteringPattern) {
   voxelData.clear();
   energyData.clear();
+  scatteringPattern.clear();
 
 }
 
@@ -147,7 +148,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"));
-  module.def("cleanup", &cleanup, "Cleanup", py::arg("InputData"), py::arg("RefractiveIndex"), py::arg("VoxelData"));
+  module.def("cleanup", &cleanup, "Cleanup",  py::arg("RefractiveIndex"), py::arg("VoxelData"),py::arg("ScatteringPattern"));
 
 
 }
