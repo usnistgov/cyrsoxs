@@ -92,9 +92,6 @@ void cleanup(RefractiveIndexData &energyData, VoxelData &voxelData, ScatteringPa
 PYBIND11_MODULE(CyRSoXS, module) {
   module.doc() = "pybind11  plugin for Cy-RSoXS";
 
-  py::print("Version =  ", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
-  py::print("Configure-time Git hash: ", GIT_HASH);
-
   py::print("----------------Compile time options-------------------");
   py::print("Number of materials : ", NUM_MATERIAL);
   py::print("Size of Real", sizeof(Real));
