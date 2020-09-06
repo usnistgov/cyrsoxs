@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 project(Cy-RSOXS  LANGUAGES CXX CUDA)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 ")
-
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
 option(VTI_BINARY "Write VTI in binary with 64 base encoding" ON)
 option(ENABLE_2D "Set to ON if only 1 id in Z direction" OFF)
@@ -91,11 +89,9 @@ endif ()
 
 endif()
 find_package(HDF5 COMPONENTS CXX HL REQUIRED)
-#link_directories(${HDF5_LIBRARY_DIRS})
-#include_directories(${HDF5_INCLUDE_DIR})
-#set(LINK_LIBS ${LINK_LIBS} ${HDF5_C_${LIB_TYPE}_LIBRARY})
 
-set(CMAKE_CXX_STANDARD 11)
+
+set(CMAKE_CXX_STANDARD 14)
 set(CyRSoXS_SRC
         src/cudaMain.cu)
 
@@ -115,11 +111,14 @@ set(CyRSoXS_INC
         )
 
 
-#cuda_add_library(cuda_base SHARED ${CUDAINCLUDE} ${CUDASRC})
+
 find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 
 
-string(TOUPPER ${CMAKE_BUILD_TYPE} CMAKE_BUILD_TYPE_UPPER)
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING
+            "Choose the type of build, options are: Debug Release " FORCE)
+endif ()
 
 
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp -DNDEBUG --use_fast_math")

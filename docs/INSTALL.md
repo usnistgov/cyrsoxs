@@ -64,16 +64,20 @@ It will ask for your username and password.
 
 **With Pybind**
 
+If you want to use the Python support for Cy-RSoXS, add the submodule by
+
 ```bash
 git submodule update --init
 ```
+
 Building Cy-RSoXS 
 ==================
 
 **Cmake options**
 
-One should have a valid C/C++ compiler and CUDA-toolkit in addition to above modules installed to 
+One should have a valid C/C++ compiler and CUDA-toolkit in addition to above modules installed, in order to 
 compile Cy-RSoXS.
+
 ```bash
 cd $Cy-RSoXS_DIR
 mkdir build; 
