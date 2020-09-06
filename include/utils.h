@@ -109,7 +109,7 @@ static void printCopyrightInfo(){
   std::cout << "|                                 Thanks for using Cy-RSoXS                                        |\n";
   std::cout << "|--------------------------------------------------------------------------------------------------|\n";
   std::cout << "|  Copyright          : Iowa State University                                                      |\n";
-  std::cout << "|  Licence            : MIT                                                                        |\n";
+  std::cout << "|  License            : MIT                                                                        |\n";
   std::cout << "|  Acknowledgement    : ONR MURI                                                                   |\n";
   std::cout << "|  Developed at Iowa State University in collaboration with NIST                                   |\n";
   std::cout << "|  Please cite the following publication :                                                         |\n";

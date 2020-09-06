@@ -64,7 +64,7 @@
  * support for this work.
  *
  * \copyright Copyright 2019-2020 Iowa State University. All rights reserved.
- * This project is released under the MIT licence.
+ * This project is released under the MIT license.
  *
  */
 
