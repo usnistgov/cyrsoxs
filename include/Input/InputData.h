@@ -106,7 +106,7 @@ private:
   /// increment in Angle
   Real incrementAngle;
   /// number of threads
-  UINT num_threads=4;
+  UINT num_threads = 4;
   /// Number of voxels in X direction.
   UINT numX;
   /// Number of voxels in Y direction.
@@ -270,16 +270,16 @@ private:
      */
     void print() const{
         pybind11::print("--------Required options------------------");
-        pybind11::print("Dimensions           :  [",numX,",",numY,",",numZ,"]");
+        pybind11::print("Dimensions           : [",numX,",",numY,",",numZ,"]");
         pybind11::print("PhysSize             : ", physSize);
         pybind11::print("Energy from          : ",energyStart , "to",energyEnd,"with increment of",incrementEnergy);
         pybind11::print("Rotation Angle  from : ",startAngle , "to",endAngle,"with increment of",incrementAngle);
 
         pybind11::print("--------Optional options------------------");
         pybind11::print("Number of openMP threads : ",num_threads);
-        pybind11::print("Write HDF5               : ",writeHDF5);
         pybind11::print("Interpolation Type       : ",Interpolation::interpolationName[ewaldsInterpolation]);
         pybind11::print("Windowing Type           : ",FFT::windowingName[windowingType]);
+        pybind11::print("Rotation Mask            : ",rotMask);
     }
 
     /**

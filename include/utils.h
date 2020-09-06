@@ -69,6 +69,7 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
  * @param projectionGPUAveraged The scattering pattern
  */
 static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged){
+    createDirectory("VTI");
     omp_set_num_threads(inputData.num_threads);
     const UINT
         numEnergyLevel = static_cast<UINT>(std::round(
@@ -86,10 +87,12 @@ static void writeVTI(const InputData & inputData, const UINT * voxelSize,const R
         for (UINT csize = startID; csize < std::min(endID, numEnergyLevel); csize++) {
 
           std::memcpy(projectionLocal, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
-
-          std::string dirname = "VTI/";
-          std::string fnameFP = dirname + "projectionAverage" + std::to_string(csize);
-          VTI::writeDataScalar2DFP(projectionLocal, voxelSize, fnameFP, "projection");
+          std::stringstream stream;
+          Real energy = inputData.energyStart + csize * inputData.incrementEnergy;
+          stream << std::fixed << std::setprecision(2) << energy;
+          std::string s = stream.str();
+          const std::string outputFname = "VTI/Energy_" + s;
+          VTI::writeDataScalar2DFP(projectionLocal, voxelSize, outputFname, "projection");
 
         }
       }

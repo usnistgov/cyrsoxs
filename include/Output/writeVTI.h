@@ -54,16 +54,6 @@ namespace VTI{
 static int vtk_write_binary (std::ofstream & fout, char *numeric_data, size_t byte_length)
 {
 
-#if PROFILING
-  std::chrono::high_resolution_clock::time_point encodeTimeStart;
-  std::chrono::high_resolution_clock::time_point encodeTimeEnd;
-  std::chrono::high_resolution_clock::time_point fileWritingTimeStart;
-  std::chrono::high_resolution_clock::time_point fileWritingTimeEnd;
-  std::chrono::high_resolution_clock::time_point totalTimeStart = std::chrono::high_resolution_clock::now();
-  std::chrono::high_resolution_clock::time_point totalTimeEnd;
-  double encodeDuration, fileWritingDuration, totalDuration;
-
-#endif
 
   size_t              chunks, chunksize, remaining, writenow;
   size_t              code_length, base_length;
@@ -84,72 +74,27 @@ static int vtk_write_binary (std::ofstream & fout, char *numeric_data, size_t by
   base_data = (char*)calloc(code_length,sizeof(char));// (code_length*sizeof(char));
 
   base64_init_encodestate (&encode_state);
-#ifdef PROFILING
-  if(omp_get_thread_num()==0){
-    encodeTimeStart = std::chrono::high_resolution_clock::now();
-  }
-#endif
+
   base_length =base64_encode_block ((char *) &int_header, sizeof (int_header), base_data,&encode_state);
 
-#ifdef PROFILING
-  if(omp_get_thread_num()==0){
-    encodeTimeEnd = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> time_span = encodeTimeEnd - encodeTimeStart;
-    encodeDuration = time_span.count();
-  }
-#endif
   assert (base_length < code_length);
   base_data[base_length] = '\0';
-#ifdef PROFILING
-  if(omp_get_thread_num()==0){
-    fileWritingTimeStart = std::chrono::high_resolution_clock::now();
-  }
-#endif
   for(int i = 0; i < base_length;i++){
     fout << base_data[i] ;
   }
-#ifdef PROFILING
-  if(omp_get_thread_num()==0){
-    fileWritingTimeEnd = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> time_span = fileWritingTimeEnd - fileWritingTimeStart;
-    fileWritingDuration = time_span.count();
-  }
-#endif
   chunks = 0;
   remaining = byte_length;
   while (remaining > 0) {
     writenow = std::min (remaining, chunksize);
-#ifdef PROFILING
-    if(omp_get_thread_num()==0){
-      encodeTimeStart = std::chrono::high_resolution_clock::now();
-    }
-#endif
+
     base_length = base64_encode_block (numeric_data + chunks * chunksize,writenow, base_data, &encode_state);
-#ifdef PROFILING
-    if(omp_get_thread_num()==0){
-      encodeTimeEnd = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double, std::milli> time_span = encodeTimeEnd - encodeTimeStart;
-      encodeDuration += time_span.count();
-    }
-#endif
+
     assert (base_length < code_length);
     base_data[base_length] = '\0';
 
-#ifdef PROFILING
-    if(omp_get_thread_num()==0){
-      fileWritingTimeStart = std::chrono::high_resolution_clock::now();
-    }
-#endif
     for(int i = 0; i < base_length;i++){
       fout << base_data[i] ;
     }
-#ifdef PROFILING
-    if(omp_get_thread_num()==0){
-      fileWritingTimeEnd = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double, std::milli> time_span = fileWritingTimeEnd - fileWritingTimeStart;
-      fileWritingDuration+= time_span.count();
-    }
-#endif
     remaining -= writenow;
     ++chunks;
   }
@@ -158,16 +103,7 @@ static int vtk_write_binary (std::ofstream & fout, char *numeric_data, size_t by
   assert (base_length < code_length);
   base_data[base_length] = '\0';
   free(base_data);
-#if PROFILING
-  if(omp_get_thread_num()==0) {
-    totalTimeEnd = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> time_span = totalTimeEnd - totalTimeStart;
-    totalDuration = time_span.count();
-    std::cout << "[TIMER]: Time for encoding  " << encodeDuration << "\n";
-    std::cout << "[TIMER]: Time for file Writing  " << fileWritingDuration << "\n";
-    std::cout << "[TIMER]: Total I/O time for execution of  " << totalDuration << "\n";
-  }
-#endif
+
   if(not(fout.good())){
     return -1;
   }
@@ -184,16 +120,6 @@ static int vtk_write_binary (std::ofstream & fout, char *numeric_data, size_t by
 static int vtk_write_binary (FILE * fp, char *numeric_data, size_t byte_length)
 {
 
-#if PROFILING
-  std::chrono::high_resolution_clock::time_point encodeTimeStart;
-  std::chrono::high_resolution_clock::time_point encodeTimeEnd;
-  std::chrono::high_resolution_clock::time_point fileWritingTimeStart;
-  std::chrono::high_resolution_clock::time_point fileWritingTimeEnd;
-  std::chrono::high_resolution_clock::time_point totalTimeStart = std::chrono::high_resolution_clock::now();
-  std::chrono::high_resolution_clock::time_point totalTimeEnd;
-  double encodeDuration, fileWritingDuration, totalDuration;
-
-#endif
 
   size_t              chunks, chunksize, remaining, writenow;
   size_t              code_length, base_length;
@@ -214,68 +140,26 @@ static int vtk_write_binary (FILE * fp, char *numeric_data, size_t byte_length)
   base_data = (char*)calloc(code_length,sizeof(char));// (code_length*sizeof(char));
 
   base64_init_encodestate (&encode_state);
-#ifdef PROFILING
-  if(omp_get_thread_num()==0){
-    encodeTimeStart = std::chrono::high_resolution_clock::now();
-  }
-#endif
+
   base_length =base64_encode_block ((char *) &int_header, sizeof (int_header), base_data,&encode_state);
 
-#ifdef PROFILING
-  if(omp_get_thread_num()==0){
-    encodeTimeEnd = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> time_span = encodeTimeEnd - encodeTimeStart;
-    encodeDuration = time_span.count();
-  }
-#endif
+
   assert (base_length < code_length);
   base_data[base_length] = '\0';
-#ifdef PROFILING
-  if(omp_get_thread_num()==0){
-    fileWritingTimeStart = std::chrono::high_resolution_clock::now();
-  }
-#endif
+
   (void) fwrite (base_data, 1, base_length, fp);
-#ifdef PROFILING
-  if(omp_get_thread_num()==0){
-    fileWritingTimeEnd = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> time_span = fileWritingTimeEnd - fileWritingTimeStart;
-    fileWritingDuration = time_span.count();
-  }
-#endif
+
   chunks = 0;
   remaining = byte_length;
   while (remaining > 0) {
     writenow = std::min (remaining, chunksize);
-#ifdef PROFILING
-    if(omp_get_thread_num()==0){
-      encodeTimeStart = std::chrono::high_resolution_clock::now();
-    }
-#endif
+
     base_length = base64_encode_block (numeric_data + chunks * chunksize,writenow, base_data, &encode_state);
-#ifdef PROFILING
-    if(omp_get_thread_num()==0){
-      encodeTimeEnd = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double, std::milli> time_span = encodeTimeEnd - encodeTimeStart;
-      encodeDuration += time_span.count();
-    }
-#endif
+
     assert (base_length < code_length);
     base_data[base_length] = '\0';
 
-#ifdef PROFILING
-    if(omp_get_thread_num()==0){
-      fileWritingTimeStart = std::chrono::high_resolution_clock::now();
-    }
-#endif
     (void) fwrite (base_data, 1, base_length, fp);
-#ifdef PROFILING
-    if(omp_get_thread_num()==0){
-      fileWritingTimeEnd = std::chrono::high_resolution_clock::now();
-      std::chrono::duration<double, std::milli> time_span = fileWritingTimeEnd - fileWritingTimeStart;
-      fileWritingDuration+= time_span.count();
-    }
-#endif
     remaining -= writenow;
     ++chunks;
   }
@@ -285,16 +169,6 @@ static int vtk_write_binary (FILE * fp, char *numeric_data, size_t byte_length)
   base_data[base_length] = '\0';
   (void) fwrite (base_data, 1, base_length, fp);
   free(base_data);
-#if PROFILING
-  if(omp_get_thread_num()==0) {
-    totalTimeEnd = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double, std::milli> time_span = totalTimeEnd - totalTimeStart;
-    totalDuration = time_span.count();
-    std::cout << "[TIMER]: Time for encoding [C] " << encodeDuration << "\n";
-    std::cout << "[TIMER]: Time for file Writing [C] " << fileWritingDuration << "\n";
-    std::cout << "[TIMER]: Total I/O time for execution of  [C]" << totalDuration << "\n";
-  }
-#endif
   if (ferror (fp)) {
     return -1;
   }
@@ -676,14 +550,10 @@ static void writeDataScalar(Complex * data,const UINT *voxelSize,
  */
 static void writeDataScalar2DFP(Real * data,const UINT *voxelSize,
                        const std::string &fname, const char * varName){
-#ifdef PROFILING
-  std::chrono::high_resolution_clock::time_point fileTimerStart=std::chrono::high_resolution_clock::now();
-#endif
+
   std::string filename = fname+".vti";
   FILE * fp = fopen(filename.c_str(),"w");
-#ifdef PROFILING
-  std::chrono::high_resolution_clock::time_point fileTimerOpen=std::chrono::high_resolution_clock::now();
-#endif
+
   BigUINT totalSize = voxelSize[0]*voxelSize[1];
 
 
@@ -693,10 +563,6 @@ static void writeDataScalar2DFP(Real * data,const UINT *voxelSize,
 
 #if VTI_BINARY
   int retVal = vtk_write_binary(fp,(char *)data, sizeof(Real)*totalSize);
-
-#ifdef PROFILING
-  std::chrono::high_resolution_clock::time_point fileTimerCompression=std::chrono::high_resolution_clock::now();
-#endif
 
   if(retVal == -1){
     std::cerr << "[I/O] error in file writing\n";
@@ -710,11 +576,6 @@ static void writeDataScalar2DFP(Real * data,const UINT *voxelSize,
   fprintf(fp,"</CellData>\n");
   writeFileFooter(fp);
   fclose(fp);
-
-#ifdef  PROFILING
-  std::chrono::high_resolution_clock::time_point fileTimerEnd =std::chrono::high_resolution_clock::now();
-  std::chrono::duration<double, std::milli> time_span = fileTimerEnd - fileTimerStart;
-#endif
 }
 
 }

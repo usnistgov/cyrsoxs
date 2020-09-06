@@ -116,8 +116,6 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("validate", &InputData::validate, "Validate the input data")
       .def_readwrite("interpolationType", &InputData::ewaldsInterpolation, "Ewalds interpolation type")
       .def_readwrite("windowingType", &InputData::windowingType, "Windowing type")
-      .def_readwrite("writeVTI", &InputData::writeVTI, "write VTI")
-      .def_readwrite("writeHDF", &InputData::writeHDF5, "write HDF5")
       .def_readwrite("rotMask",&InputData::rotMask,"Rotation Mask")
       .def_readwrite("openMP", &InputData::num_threads, "number of OpenMP threads");
 
@@ -140,13 +138,12 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("writeToH5", &VoxelData::writeToH5,"Writes voxel data to HDF5 file");
 
   py::class_<ScatteringPattern>(module,"ScatteringPattern")
-      .def(py::init<const InputData &>(), "Constructor")
+      .def(py::init<const InputData &>(), "Constructor",py::arg("InputData"))
       .def("allocate",&ScatteringPattern::allocate,"Allocates the memory")
       .def("clear",&ScatteringPattern::clear,"Clears the memory")
       .def("writeToHDF5",&ScatteringPattern::writeToHDF5,"Dumps data in  HDF5 file format")
       .def("writeToVTI",&ScatteringPattern::writeToVTI,"Dumps data in  VTI file format")
-      .def("initialize",&ScatteringPattern::initialize,"Dumps data in  VTI file format")
-      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Retruns data in numpy array");
+      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Retruns data in numpy array",py::arg("Energy"));
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"));
