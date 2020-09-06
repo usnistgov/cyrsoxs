@@ -565,9 +565,12 @@ int cudaMain(const UINT *voxel,
                                                   NPPI_INTER_LINEAR);
 #endif
 
-        if (status != NPP_SUCCESS) {
+        if (status < 0) {
           std::cout << "Image rotation failed with error = " << status << "\n";
           exit(-1);
+        }
+        if(status != NPP_SUCCESS){
+          std::cout << "[WARNING] Image rotation warning = " << status << "\n";
         }
 
         if(idata.rotMask){
