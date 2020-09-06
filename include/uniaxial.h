@@ -395,7 +395,7 @@ __host__ __device__ inline Real computeBilinearInterpolation(const Real *data,
 ) {
 
   static constexpr unsigned short num_neigbour = 4;
-  Real3 diffX;
+  Real2 diffX;
   diffX.x = (pos.x - (start + X * dx.x)) / dx.x;
   diffX.y = (pos.y - (start + Y * dx.y)) / dx.y;
 
@@ -500,29 +500,27 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   }
   UINT Y = static_cast<UINT>(floorf(threadID) / (voxel.x * 1.0));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x);
+
   pos.y = start + Y * dx.y;
   pos.x = start + X * dx.x;
   val = k * k - pos.x * pos.x - pos.y * pos.y;
-  if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
-    if (val >= 0) {
-      pos.z = -k + sqrt(val);
+  if((val < 0) or (X == (voxel.x - 1)) or (Y == (voxel.y - 1))) {
+    projection[threadID] = NAN;
+  }
+  else
+  {
+    pos.z = -k + sqrt(val);
+    if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
       BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
       projection[threadID] = scatter3D[id];
-    } else {
-      projection[threadID] = NAN;
     }
-  } else if (interpolation == Interpolation::EwaldsInterpolation::LINEAR) {
-    if (val >= 0) {
-      pos.z = -k + sqrt(val);
-      UINT Z = static_cast<UINT >(round((pos.z - start) / (dx.z)));
+    else {
       if (enable2D) {
         projection[threadID] = computeBilinearInterpolation(scatter3D, pos, start, dx, X, Y, voxel);
       } else {
+        UINT Z = static_cast<UINT >(round((pos.z - start) / (dx.z)));
         projection[threadID] = computeTrilinearInterpolation(scatter3D, pos, start, dx, X, Y, Z, voxel);
       }
-
-    } else {
-      projection[threadID] = NAN;
     }
   }
   d_rotprojection[threadID] = NAN;
