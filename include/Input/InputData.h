@@ -91,6 +91,9 @@ private:
     /// Checks the input data parameter for the required parameters
     std::bitset<ParamChecker::Parameters::MAX_SIZE> paramChecker_;
 #endif
+  /**
+   * @brief sets the flag for 2D computataion.
+   */
   inline void check2D() {
     if (numZ != 1) {
       enable2D_ = false;
@@ -133,6 +136,10 @@ private:
   /// Windowing Type
   UINT windowingType = FFT::FFTWindowing::NONE;
 
+  /**
+   *
+   * @return gets the 2D computation flags
+   */
   inline bool if2DComputation() const {
      return enable2D_;
   }
