@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020Iowa State University
+//Copyright (c) 2019 - 2020 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -97,8 +97,8 @@ private:
   inline void check2D() {
     if (numZ != 1) {
       enable2D_ = false;
-      std::cout << "[INFO] 2D computation enabled\n";
     } else {
+      std::cout << "[INFO] 2D computation enabled\n";
       enable2D_ = true;
     }
   }
@@ -176,7 +176,6 @@ private:
       }
       else {
         throw std::logic_error("ERROR: Cannot add 0 increment Energy");
-        return;
       }
     }
     UINT numEnergy = std::round((energyEnd - energyStart) / incrementEnergy + 1);
