@@ -527,6 +527,7 @@ int cudaMain(const UINT *voxel,
             eleField.k.z,idata.physSize, static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
                                                                    idata.if2DComputation());
         cudaDeviceSynchronize();
+        gpuErrchk(cudaPeekAtLastError());
 #ifdef PROFILING
         {
           END_TIMER(TIMERS::EWALDS)
