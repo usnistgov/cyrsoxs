@@ -232,8 +232,16 @@ int cudaMain(const UINT *voxel,
     UINT numEnd   = (numEnergyPerGPU*(omp_get_thread_num() + 1));
     numEnd = std::min(numEnd,numEnergyLevel);
 
-    std::cout << "[GPU = " << dprop.name  << " " << "]" << " = " << " Energy = [ " << (idata.energyStart + numStart*idata.incrementEnergy)
-                << " - > " << (idata.energyStart + (numEnd - 1)*idata.incrementEnergy) <<"]\n";
+    Real energyStart = idata.energyStart + numStart*idata.incrementEnergy;
+    Real energyEnd   = idata.energyStart + (numEnd - 1)*idata.incrementEnergy;
+
+    if(energyStart > idata.energyEnd){
+      std::cout << "[INFO] [GPU = " << dprop.name  << "] -> No computation. Idle\n";
+    }
+    else{
+      std::cout << "[INFO] [GPU = " << dprop.name  << "] : " << energyStart << "eV -> " << energyEnd << "eV\n" ;
+    }
+
 
 #ifdef PROFILING
     {
@@ -318,7 +326,7 @@ int cudaMain(const UINT *voxel,
     for (UINT j = numStart; j < numEnd; j++) {
 
       Real energy = (idata.energyStart + j * idata.incrementEnergy);
-      std::cout << "Energy = " << energy << " starting "  << "\n";
+      std::cout << " [STAT] Energy = " << energy << " starting "  << "\n";
 
       CUDA_CHECK_RETURN(cudaMemset(d_projectionAverage, 0, voxel[0] * voxel[1] * sizeof(Real)));
       gpuErrchk(cudaPeekAtLastError());
