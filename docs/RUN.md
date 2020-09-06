@@ -80,7 +80,7 @@ Copy all the generated files to run directory.
 from the run directory.
 
 ```
-./$(PATH_TO_CY-RSoXS_BUILD_DIR)/Cy-RSoXS  $(PATH_TO_HDF5_FILE)
+./$(PATH_TO_CyRSoXS_BUILD_DIR)/CyRSoXS  $(PATH_TO_HDF5_FILE)
 ```
 
 The output will be generated in the folder named `Projection`that will be

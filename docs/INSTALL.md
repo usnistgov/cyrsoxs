@@ -50,10 +50,8 @@ echo "export HDF5_DIR=`pwd`" >> ~/.bashrc
 ```
 
 
-Building Cy-RSoXS 
+Downloading Cy-RSoXS 
 ==================
-
-**Downloading Cy-RSoXS**
 
 You can download Cy-RSoXS by cloning into the repository
 
@@ -63,12 +61,13 @@ git clone https://bitbucket.org/baskargroup/cy-rsoxs.git
 
 It will ask for your username and password.
 
-**Building with Pybind**
+**With Pybind**
 
 ```bash
 git submodule update --init
 ```
- 
+Building Cy-RSoXS 
+==================
 
 **Cmake options**
 
