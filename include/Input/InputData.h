@@ -165,6 +165,16 @@ private:
       exit(EXIT_FAILURE);
     }
 #endif
+    if(FEQUALS(incrementEnergy,0.0)) {
+      if(FEQUALS(energyStart,energyEnd)) {
+        std::cout << "[INFO] : Adjusting increment Energy to 0.1 for preventing 0/0 error.\n";
+        incrementEnergy = 0.1;
+      }
+      else {
+        throw std::logic_error("ERROR: Cannot add 0 increment Energy");
+        return;
+      }
+    }
     UINT numEnergy = std::round((energyEnd - energyStart) / incrementEnergy + 1);
 
     refractiveIndex.resize(numEnergy);

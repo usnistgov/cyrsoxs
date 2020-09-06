@@ -659,7 +659,7 @@ int cudaMain(const UINT *voxel,
 
 
 #ifdef PROFILING
-  std::cout << "\n\n[INFO]Timings Info\n";
+  std::cout << "\n\n[INFO] Timings Info\n";
   for(int i = 0; i < TIMERS::MAX; i++){
     std::cout << "[TIMERS] " << std::left << std::setw(20) << timersName[i] << ":" << timings[i] << " s\n";
   }

@@ -30,7 +30,7 @@
 #include <cudaMain.h>
 #include <complex>
 
-
+#include "version.h"
 #include <Input/readH5.h>
 #include <iomanip>
 #include <pybind11/iostream.h>
@@ -66,11 +66,17 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
 
   py::gil_scoped_release release;
   printCopyrightInfo();
-  std::cout << "\n Executing: \n\n";
+
+
+  std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
+  std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
+
+  std::cout << "\n [STAT] Executing: \n\n";
   const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
   cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(), voxelData.data());
   printMetaData(inputData);
-  std::cout << "Execution finished \n";
+  std::cout << "\n[STAT] Execution finished \n";
 
   py::gil_scoped_acquire acquire;
 
@@ -85,6 +91,10 @@ void cleanup(RefractiveIndexData &energyData, VoxelData &voxelData, ScatteringPa
 
 PYBIND11_MODULE(CyRSoXS, module) {
   module.doc() = "pybind11  plugin for Cy-RSoXS";
+
+  py::print("Version =  ", VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH);
+  py::print("Configure-time Git hash: ", GIT_HASH);
+
   py::print("----------------Compile time options-------------------");
   py::print("Number of materials : ", NUM_MATERIAL);
   py::print("Size of Real", sizeof(Real));

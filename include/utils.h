@@ -27,7 +27,7 @@
 #include <iomanip>
 #include <Output/outputUtils.h>
 #include <Output/writeVTI.h>
-
+#include "version.h"
 
 /**
  * @brief writes to HDF5 file
@@ -122,13 +122,39 @@ static void printCopyrightInfo(){
 }
 
 /**
+ * Prints the copyRight Info to file
+ */
+static void printCopyrightInfo(std::ofstream & fout){
+
+  fout << " __________________________________________________________________________________________________\n";
+  fout << "|                                 Thanks for using Cy-RSoXS                                        |\n";
+  fout << "|--------------------------------------------------------------------------------------------------|\n";
+  fout << "|  Copyright          : Iowa State University                                                      |\n";
+  fout << "|  License            : MIT                                                                        |\n";
+  fout << "|  Acknowledgement    : ONR MURI                                                                   |\n";
+  fout << "|  Developed at Iowa State University in collaboration with NIST                                   |\n";
+  fout << "|  Please cite the following publication :                                                         |\n";
+  fout << "|  Comments/Questions :                                                                            |\n";
+  fout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
+  fout << "|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
+  fout << " -------------------------------------------------------------------------------------------------- \n";
+
+  fout << "\n";
+}
+/**
  * @brief Writes meta data
  * @param inputData Input data
  */
 
 static void printMetaData(const InputData & inputData){
   std::ofstream file("metadata.txt");
-  file << "---------------- Scaling Information--------------\n";
+  printCopyrightInfo(file);
+
+  file << "\n\n---------------- Cy-RSoXS Details--------------\n";
+  file << "Version = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  file << "Git patch = " << GIT_HASH << "\n";
+
+  file << "\n---------------- Scaling Information--------------\n";
   file << "Number of pixel = [" << inputData.numX << "," << inputData.numY << "]\n";
   file << "Q range  = [" << -M_PI / inputData.physSize << "," << M_PI / inputData.physSize << "]\n";
   file << "Electric field rotated through = [" << inputData.startAngle << "," << inputData.endAngle << "]\n";
