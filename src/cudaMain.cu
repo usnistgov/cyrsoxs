@@ -67,7 +67,8 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     Complex *polarizationX,
                                     Complex *polarizationY,
                                     Complex *polarizationZ,
-                                    FFT::FFTWindowing windowing
+                                    FFT::FFTWindowing windowing,
+                                    const bool enable2D
 ) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const UINT voxelNum = voxel.x*voxel.y*voxel.z;
@@ -90,11 +91,10 @@ if(windowing == FFT::FFTWindowing::HANNING) {
   Real3 hanningWeight;
   hanningWeight.x = static_cast<Real> (0.5 * (1 - cos(2 * M_PI * X / (voxel.x))));
   hanningWeight.y = static_cast<Real> (0.5 * (1 - cos(2 * M_PI * Y / (voxel.y))));
-#ifdef ENABLE_2D
   hanningWeight.z = static_cast<Real>(1.0);
-#else
-  hanningWeight.z = static_cast<Real>(0.5 * (1 - cos(2 * M_PI * Z / (voxel.z))));
-#endif
+  if(not(enable2D)){
+    hanningWeight.z = static_cast<Real>(0.5 * (1 - cos(2 * M_PI * Z / (voxel.z))));
+  }
   Real totalHanningWeight = hanningWeight.x * hanningWeight.y * hanningWeight.z;
   polarizationX[threadID].x *= totalHanningWeight;
   polarizationX[threadID].y *= totalHanningWeight;
@@ -348,7 +348,7 @@ int cudaMain(const UINT *voxel,
 #endif
 
         computePolarization <<< BlockSize, NUM_THREADS >>> (materialInput[j], d_voxelInput, eleField, angle, vx, d_polarizationX, d_polarizationY, d_polarizationZ,
-                static_cast<FFT::FFTWindowing >(idata.windowingType));
+                static_cast<FFT::FFTWindowing >(idata.windowingType), idata.if2DComputation());
 
         gpuErrchk(cudaPeekAtLastError());
         cudaDeviceSynchronize();
@@ -479,7 +479,8 @@ int cudaMain(const UINT *voxel,
 
 
         /** Scatter 3D computation **/
-        computeScatter3D <<< BlockSize, NUM_THREADS >>> (d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, voxelSize, vx, idata.physSize);
+        computeScatter3D <<< BlockSize, NUM_THREADS >>> (d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, voxelSize, vx, idata.physSize,
+                                                         idata.if2DComputation());
         cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
@@ -515,7 +516,8 @@ int cudaMain(const UINT *voxel,
         cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
 
         computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>> (d_projection,d_rotProjection, d_scatter3D, vx,
-            eleField.k.z,idata.physSize, static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation));
+            eleField.k.z,idata.physSize, static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
+                                                                   idata.if2DComputation());
         cudaDeviceSynchronize();
 #ifdef PROFILING
         {

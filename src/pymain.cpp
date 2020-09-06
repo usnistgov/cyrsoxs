@@ -96,11 +96,6 @@ PYBIND11_MODULE(CyRSoXS, module) {
   py::print("Number of materials : ", NUM_MATERIAL);
   py::print("Size of Real", sizeof(Real));
   py::add_ostream_redirect(module, "ostream_redirect");
-#ifdef ENABLE_2D
-  py::print("Enable 2D : True"  );
-#else
-  py::print("Enable 2D : False");
-#endif
   py::enum_<Interpolation::EwaldsInterpolation>(module, "InterpolationType")
       .value("Linear", Interpolation::EwaldsInterpolation::LINEAR)
       .value("NearestNeighour", Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR)

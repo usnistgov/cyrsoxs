@@ -53,7 +53,7 @@ namespace ParamChecker{
 /// This function reads the input data from the file.
 class InputData {
 private:
-
+    bool enable2D_;
 #ifndef PYBIND
   /**
    * This function reads the value that is compulsory to be read from
@@ -91,7 +91,14 @@ private:
     /// Checks the input data parameter for the required parameters
     std::bitset<ParamChecker::Parameters::MAX_SIZE> paramChecker_;
 #endif
-
+  inline void check2D() {
+    if (numZ != 1) {
+      enable2D_ = false;
+      std::cout << "[INFO] 2D computation enabled\n";
+    } else {
+      enable2D_ = true;
+    }
+  }
  public:
   /// start of energy
   Real energyStart;
@@ -126,6 +133,9 @@ private:
   /// Windowing Type
   UINT windowingType = FFT::FFTWindowing::NONE;
 
+  inline bool if2DComputation() const {
+     return enable2D_;
+  }
 #ifndef PYBIND
 
   /**
@@ -151,20 +161,7 @@ private:
     if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
     if(ReadValue(cfg, "WriteVTI",writeVTI)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
-#if ENABLE_2D
-
-    if(numZ != 1){
-      std::cout << "Number of elements in Z - direction is more than 1" << "\n";
-      std::cout << "Please re-compile the code by switching DENBLE_2D to No" << "\n";
-      exit(EXIT_FAILURE);
-    }
-#else
-    if(numZ == 1){
-      std::cout << "Number of elements in Z - direction is  1" << "\n";
-      std::cout << "Please re-compile the code by switching DENBLE_2D to Yes" << "\n";
-      exit(EXIT_FAILURE);
-    }
-#endif
+    check2D();
     if(FEQUALS(incrementEnergy,0.0)) {
       if(FEQUALS(energyStart,energyEnd)) {
         std::cout << "[INFO] : Adjusting increment Energy to 0.1 for preventing 0/0 error.\n";
@@ -208,6 +205,7 @@ private:
 
     }
   }
+
 #else
     /**
     * @brief Constructor
@@ -251,6 +249,7 @@ private:
       numX = _numX;
       numY = _numY;
       numZ = _numZ;
+      check2D();
       paramChecker_.set(ParamChecker::Parameters::DIMENSION,true);
     }
     /**
@@ -297,16 +296,8 @@ private:
      * @return  True if the input data is correct. False otherwise.
      */
     bool validate() const {
-#ifdef ENABLE_2D
-        if(numZ > 1) {
-            throw std::logic_error("Wrong Compilation. Compile with 2D = No");
-        }
-#else
-        if(numZ == 1) {
-            throw std::logic_error("Wrong Compilation. Compile with 2D = Yes");
-        }
-
-#endif
+      assert((numZ == 1) and (enable2D_));
+      assert((numZ > 1) and not(enable2D_));
 
         if(not(paramChecker_.all())) {
           for(int i = 0; i < paramChecker_.size(); i++) {

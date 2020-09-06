@@ -105,15 +105,6 @@ Number of material is specified during the compile time by the flag:
 ```  
 The above flag will set the number of material to 4.
 
-**2D computation**
-
-If you are running the case with 1 element in the thickness direction
-
-```bash
--DENABLE_2D=Yes
-``` 
-
-
 Optional Cmake Flags can be added:
 
 **For compiling in double precision mode:**

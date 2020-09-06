@@ -30,7 +30,6 @@
 #include <string.h>
 #include <cstring>
 
-
 #ifndef BIAXIAL
 template<int num_component>
 struct Material {

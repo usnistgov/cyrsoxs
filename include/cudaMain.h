@@ -74,7 +74,8 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     Complex *polarizationX,
                                     Complex *polarizationY,
                                     Complex *polarizationZ,
-                                    FFT::FFTWindowing windowing
+                                    FFT::FFTWindowing windowing,
+                                    const bool enable2D
 );
 
 

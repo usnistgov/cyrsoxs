@@ -5,7 +5,6 @@ project(Cy-RSoXS VERSION 0.8.0 LANGUAGES CXX CUDA)
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
 option(VTI_BINARY "Write VTI in binary with 64 base encoding" ON)
-option(ENABLE_2D "Set to ON if only 1 id in Z direction" OFF)
 option(DUMP_FILES "Dump files for debugging " OFF)
 option(Profiling "Enable Profiling " OFF)
 option(EOC "Ewald projection on CPU" OFF)
@@ -18,12 +17,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_mo
 if (DOUBLE_PRECISION)
     add_definitions(-DDOUBLE_PRECISION)
     message(Configuring with Double precision)
-endif ()
-
-
-if (ENABLE_2D)
-    add_definitions(-DENABLE_2D)
-    message(Enabling 2D computation)
 endif ()
 
 if (DUMP_FILES)

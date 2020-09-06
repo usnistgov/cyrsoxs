@@ -24,6 +24,7 @@
 
 #ifndef UNIAXIAL_H
 #define UNIAXIAL_H
+
 #include <Datatypes.h>
 #include "cudaHeaders.h"
 #include "cudaUtils.h"
@@ -81,10 +82,10 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
 
   Complex nsum;
   for (int i = 0; i < NUM_MATERIAL; i++) {
-    const Real & sx = s1[i].x;
-    const Real & sy = s1[i].y;
-    const Real & sz = s1[i].z;
-    const Real & phi_ui = s1[i].w;
+    const Real &sx = s1[i].x;
+    const Real &sy = s1[i].y;
+    const Real &sz = s1[i].z;
+    const Real &phi_ui = s1[i].w;
 
     Real phi = phi_ui + sx * sx + sy * sy + sz * sz;
 
@@ -113,9 +114,9 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
                  sx*sz*(npar^2 - nper^2)
  */
     pX.x +=
-        (phi_ui * nsum.x) / (Real)9.0 + npar[i].x * sx * sx + nper[i].x * (sz * sz + sy * sy) - phi;
+        (phi_ui * nsum.x) / (Real) 9.0 + npar[i].x * sx * sx + nper[i].x * (sz * sz + sy * sy) - phi;
     pX.y +=
-        (phi_ui * nsum.y) / (Real)9.0 + npar[i].y * sx * sx + nper[i].y * (sz * sz + sy * sy);
+        (phi_ui * nsum.y) / (Real) 9.0 + npar[i].y * sx * sx + nper[i].y * (sz * sz + sy * sy);
 
     pY.x += (npar[i].x - nper[i].x) * sx * sy;
     pY.y += (npar[i].y - nper[i].y) * sx * sy;
@@ -144,7 +145,7 @@ __host__ __device__ inline BigUINT reshape3Dto1D(UINT i, UINT j, UINT k, uint3 v
   return ((i) + (j) * voxel.x + (k) * voxel.x * voxel.y);
 }
 
-__host__ __device__ inline void reshape1Dto3D(BigUINT id, UINT & X, UINT & Y, UINT & Z, uint3 voxel) {
+__host__ __device__ inline void reshape1Dto3D(BigUINT id, UINT &X, UINT &Y, UINT &Z, uint3 voxel) {
   Z = static_cast<UINT>(floorf(id / (voxel.y * voxel.x * 1.0)));
   Y = static_cast<UINT>(floorf(id - Z * voxel.y * voxel.x) / (voxel.x * 1.0));
   X = static_cast<UINT>(id - Y * voxel.x - Z * voxel.y * voxel.x);
@@ -160,8 +161,8 @@ __device__ inline void swap(T &var1, T &var2) {
 
 #pragma  message "FiX Me. Make me inplace"
 
-template <typename T>
-__global__ void FFTIgor(T* polarization, T *array,  uint3 voxel){
+template<typename T>
+__global__ void FFTIgor(T *polarization, T *array, uint3 voxel) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   BigUINT totalSize = (voxel.x * voxel.y * voxel.z);
   if (threadID >= totalSize) {
@@ -169,43 +170,40 @@ __global__ void FFTIgor(T* polarization, T *array,  uint3 voxel){
   }
 
 
-  UINT X,Y,Z;
-  reshape1Dto3D(threadID,X,Y,Z,voxel);
+  UINT X, Y, Z;
+  reshape1Dto3D(threadID, X, Y, Z, voxel);
 
   uint3 midX;
-  midX.x = voxel.x/2;
-  midX.y = voxel.y/2;
-  midX.z = voxel.z/2;
+  midX.x = voxel.x / 2;
+  midX.y = voxel.y / 2;
+  midX.z = voxel.z / 2;
 
   uint3 id;
-  if(X <= midX.x){
-      id.x = midX.x - X;
-  }
-  else{
+  if (X <= midX.x) {
+    id.x = midX.x - X;
+  } else {
     id.x = voxel.x + (midX.x - X);
   }
 
-  if(Y <= midX.y){
+  if (Y <= midX.y) {
     id.y = midX.y - Y;
-  }
-  else{
+  } else {
     id.y = voxel.y + (midX.y - Y);
   }
 
-  if(Z <= midX.z){
+  if (Z <= midX.z) {
     id.z = midX.z - Z;
-  }
-  else{
+  } else {
     id.z = voxel.z + (midX.z - Z);
   }
 
-  BigUINT copyID = reshape3Dto1D(id.x,id.y,id.z,voxel);
+  BigUINT copyID = reshape3Dto1D(id.x, id.y, id.z, voxel);
   polarization[threadID] = array[copyID];
 
 }
 
 template<typename T>
-__device__ void FFTShift(T *array,  uint3 voxel) {
+__device__ void FFTShift(T *array, uint3 voxel) {
   uint3 mid;
   mid.x = voxel.x / 2;
   mid.y = voxel.y / 2;
@@ -216,10 +214,10 @@ __device__ void FFTShift(T *array,  uint3 voxel) {
     return;
   }
 
-  UINT X,Y,Z;
-  reshape1Dto3D(threadID,X,Y,Z,voxel);
-  if(voxel.z == 1){
-    if ((X < mid.x) and (Y < mid.y)){
+  UINT X, Y, Z;
+  reshape1Dto3D(threadID, X, Y, Z, voxel);
+  if (voxel.z == 1) {
+    if ((X < mid.x) and (Y < mid.y)) {
       BigUINT copyID = reshape3Dto1D(X + mid.x, Y + mid.y, Z + mid.z, voxel);
       BigUINT currID = threadID;
       swap(array[currID], array[copyID]);
@@ -279,8 +277,8 @@ __global__ void computeScatter3D(Complex *polarizationX,
                                  const ElectricField elefield,
                                  const BigUINT voxelNum,
                                  const uint3 voxel,
-                                 const Real physSize) {
-
+                                 const Real physSize,
+                                 const bool enable2D) {
 
 
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
@@ -292,27 +290,23 @@ __global__ void computeScatter3D(Complex *polarizationX,
   const Complex pY = polarizationY[threadID];
   const Complex pZ = polarizationZ[threadID];
 
-  UINT X,Y,Z;
-  reshape1Dto3D(threadID,X,Y,Z,voxel);
+  UINT X, Y, Z;
+  reshape1Dto3D(threadID, X, Y, Z, voxel);
 
   Real3 dx;
   dx.x = static_cast<Real>((2 * M_PI / physSize) / ((voxel.x - 1) * 1.0));
   dx.y = static_cast<Real>((2 * M_PI / physSize) / ((voxel.y - 1) * 1.0));
-
-#if ENABLE_2D
   dx.z = 0;
-#else
-  dx.z = static_cast<Real>((2 * M_PI / physSize) / ((voxel.z - 1) * 1.0));
-#endif
+  if (not(enable2D)) {
+    dx.z = static_cast<Real>((2 * M_PI / physSize) / ((voxel.z - 1) * 1.0));
+  }
   Real3 q;
   q.x = static_cast<Real>((-M_PI / physSize) + X * dx.x);
   q.y = static_cast<Real>((-M_PI / physSize) + Y * dx.y);
-#if ENABLE_2D
   q.z = 0;
-#else
-  q.z = static_cast<Real>((-M_PI / physSize) + Z * dx.z);
-#endif
-
+  if (not(enable2D)) {
+    q.z = static_cast<Real>((-M_PI / physSize) + Z * dx.z);
+  }
   Complex val;
   Real res;
 /*
@@ -341,21 +335,21 @@ __global__ void computeScatter3D(Complex *polarizationX,
        pz*q3*(2*k - q3) + px*q1*(k - q3) + py*q2*(k - q3)
  */
 
-  const Real & k = elefield.k.z;
-  const Real & q1 = q.x;
-  const Real & q2 = q.y;
-  const Real & q3 = q.z;
+  const Real &k = elefield.k.z;
+  const Real &q1 = q.x;
+  const Real &q2 = q.y;
+  const Real &q3 = q.z;
 
-  val.x = pX.x * (k*k - q1*q1) - pY.x*q1*q2 + pZ.x*q1*(k - q3);
-  val.y = pX.y * (k*k - q1*q1) - pY.y*q1*q2 + pZ.y*q1*(k - q3);
+  val.x = pX.x * (k * k - q1 * q1) - pY.x * q1 * q2 + pZ.x * q1 * (k - q3);
+  val.y = pX.y * (k * k - q1 * q1) - pY.y * q1 * q2 + pZ.y * q1 * (k - q3);
   res = val.x * val.x + val.y * val.y;
 
-  val.x = pY.x*(k*k - q2*q2) - pX.x*q1*q2 + pZ.x*q2*(k - q3);
-  val.y = pY.y*(k*k - q2*q2) - pX.y*q1*q2 + pZ.y*q2*(k - q3);
+  val.x = pY.x * (k * k - q2 * q2) - pX.x * q1 * q2 + pZ.x * q2 * (k - q3);
+  val.y = pY.y * (k * k - q2 * q2) - pX.y * q1 * q2 + pZ.y * q2 * (k - q3);
   res += val.x * val.x + val.y * val.y;
 
-  val.x = pZ.x*q3*(2*k - q3) + pX.x*q1*(k - q3) + pY.x*q2*(k - q3);
-  val.y = pZ.y*q3*(2*k - q3) + pX.y*q1*(k - q3) + pY.y*q2*(k - q3);
+  val.x = pZ.x * q3 * (2 * k - q3) + pX.x * q1 * (k - q3) + pY.x * q2 * (k - q3);
+  val.y = pZ.y * q3 * (2 * k - q3) + pX.y * q1 * (k - q3) + pY.y * q2 * (k - q3);
   res += val.x * val.x + val.y * val.y;
 
   Scatter3D[threadID] = res;
@@ -379,92 +373,90 @@ __host__ __device__ BigUINT computeEquivalentID(const Real3 pos,
                                                 const UINT j,
                                                 const Real start,
                                                 const Real3 dx,
-                                                const uint3 voxel) {
+                                                const uint3 voxel,
+                                                const bool enable2D) {
 
-  UINT k;
-#if (ENABLE_2D)
-  k = 0;
-#else
-  k = static_cast<UINT >(round((pos.z - start) / (dx.z)));
-#endif
+  UINT k = 0;
+  if (not(enable2D)) {
+    k = static_cast<UINT >(round((pos.z - start) / (dx.z)));
+  }
   BigUINT id = k * voxel.x * voxel.y + j * voxel.x + i;
   return id;
-
 }
 
 
-__host__ __device__ inline Real  computeBilinearInterpolation(const Real * data,
-                                                       const Real3 pos,
-                                                       const Real  start,
-                                                       const Real3 dx,
-                                                       const UINT X,
-                                                       const UINT Y,
-                                                       const uint3 voxel
-                                                       ){
+__host__ __device__ inline Real computeBilinearInterpolation(const Real *data,
+                                                             const Real3 pos,
+                                                             const Real start,
+                                                             const Real3 dx,
+                                                             const UINT X,
+                                                             const UINT Y,
+                                                             const uint3 voxel
+) {
 
   static constexpr unsigned short num_neigbour = 4;
   Real3 diffX;
-  diffX.x = (pos.x - (start + X * dx.x))/dx.x;
-  diffX.y = (pos.y - (start + Y * dx.y))/dx.y;
+  diffX.x = (pos.x - (start + X * dx.x)) / dx.x;
+  diffX.y = (pos.y - (start + Y * dx.y)) / dx.y;
 
   Real _data[num_neigbour];
 
-  _data[0] = data[reshape3Dto1D(X,Y,0,voxel)];                /// (X,Y)
-  _data[1] = data[reshape3Dto1D(X + 1,Y,0,voxel)];            /// (X + 1,Y)
-  _data[2] = data[reshape3Dto1D(X ,Y + 1,0,voxel)];           /// (X,Y + 1)
-  _data[3] = data[reshape3Dto1D(X + 1,Y + 1,0,voxel)];        /// (X + 1,Y + 1)
+  _data[0] = data[reshape3Dto1D(X, Y, 0, voxel)];                /// (X,Y)
+  _data[1] = data[reshape3Dto1D(X + 1, Y, 0, voxel)];            /// (X + 1,Y)
+  _data[2] = data[reshape3Dto1D(X, Y + 1, 0, voxel)];           /// (X,Y + 1)
+  _data[3] = data[reshape3Dto1D(X + 1, Y + 1, 0, voxel)];        /// (X + 1,Y + 1)
 
-  Real valx1  = ((1 - diffX.x)*(_data[0]) + (diffX.x)*(_data[1])); /// Interpolate along X1
-  Real valx2  = ((1 - diffX.x)*(_data[2]) + (diffX.x)*(_data[3])); /// Interpolate along X2
+  Real valx1 = ((1 - diffX.x) * (_data[0]) + (diffX.x) * (_data[1])); /// Interpolate along X1
+  Real valx2 = ((1 - diffX.x) * (_data[2]) + (diffX.x) * (_data[3])); /// Interpolate along X2
 
-  Real valy   = (( 1 - diffX.y)*valx1 + (diffX.y)*valx2);
+  Real valy = ((1 - diffX.y) * valx1 + (diffX.y) * valx2);
   return (valy);
 
 
 }
 
-__host__ __device__ inline Real  computeTrilinearInterpolation(const Real * data,
-                                                       const Real3 pos,
-                                                       const Real start,
-                                                       const Real3 dx,
-                                                       const UINT X,
-                                                       const UINT Y,
-                                                       const UINT Z,
-                                                       const uint3 voxel
-){
+__host__ __device__ inline Real computeTrilinearInterpolation(const Real *data,
+                                                              const Real3 pos,
+                                                              const Real start,
+                                                              const Real3 dx,
+                                                              const UINT X,
+                                                              const UINT Y,
+                                                              const UINT Z,
+                                                              const uint3 voxel
+) {
   static constexpr unsigned short num_neigbour = 8;
   Real3 diffX;
-  diffX.x = (pos.x - (start + X * dx.x))/dx.x;
-  diffX.y = (pos.y - (start + Y * dx.y))/dx.y;
-  diffX.z = (pos.z - (start + Z * dx.z))/dx.z;
+  diffX.x = (pos.x - (start + X * dx.x)) / dx.x;
+  diffX.y = (pos.y - (start + Y * dx.y)) / dx.y;
+  diffX.z = (pos.z - (start + Z * dx.z)) / dx.z;
 
 
   Real _data[num_neigbour];
 
-  if((Z + 1) >= voxel.z){
+  if ((Z + 1) >= voxel.z) {
     return NAN;
   }
 
-  _data[0] = data[reshape3Dto1D(X,Y,Z,voxel)];                /// (X,Y,Z)
-  _data[1] = data[reshape3Dto1D(X + 1,Y,Z,voxel)];            /// (X + 1,Y,Z)
-  _data[2] = data[reshape3Dto1D(X ,Y + 1,Z,voxel)];           /// (X,Y + 1,Z)
-  _data[3] = data[reshape3Dto1D(X + 1,Y + 1,Z,voxel)];        /// (X + 1,Y + 1,Z)
+  _data[0] = data[reshape3Dto1D(X, Y, Z, voxel)];                /// (X,Y,Z)
+  _data[1] = data[reshape3Dto1D(X + 1, Y, Z, voxel)];            /// (X + 1,Y,Z)
+  _data[2] = data[reshape3Dto1D(X, Y + 1, Z, voxel)];           /// (X,Y + 1,Z)
+  _data[3] = data[reshape3Dto1D(X + 1, Y + 1, Z, voxel)];        /// (X + 1,Y + 1,Z)
 
-  _data[4] = data[reshape3Dto1D(X,Y,Z + 1,voxel)];             /// (X,Y,Z + 1)
-  _data[5] = data[reshape3Dto1D(X + 1,Y,Z+1,voxel)];           /// (X + 1,Y,Z + 1)
-  _data[6] = data[reshape3Dto1D(X ,Y + 1,Z+1,voxel)];          /// (X,Y + 1,Z + 1)
-  _data[7] = data[reshape3Dto1D(X + 1,Y + 1,Z+1,voxel)];       /// (X + 1,Y + 1,Z + 1)
+  _data[4] = data[reshape3Dto1D(X, Y, Z + 1, voxel)];             /// (X,Y,Z + 1)
+  _data[5] = data[reshape3Dto1D(X + 1, Y, Z + 1, voxel)];           /// (X + 1,Y,Z + 1)
+  _data[6] = data[reshape3Dto1D(X, Y + 1, Z + 1, voxel)];          /// (X,Y + 1,Z + 1)
+  _data[7] = data[reshape3Dto1D(X + 1, Y + 1, Z + 1, voxel)];       /// (X + 1,Y + 1,Z + 1)
 
   /*** https://en.wikipedia.org/wiki/Trilinear_interpolation **/
-  Real c00  = ((1 - diffX.x)*(_data[0]) + (diffX.x)*(_data[1])); /// Interpolate along X1
-  Real c01  = ((1 - diffX.x)*(_data[2]) + (diffX.x)*(_data[3])); /// Interpolate along X2
-  Real c10  = ((1 - diffX.x)*(_data[4]) + (diffX.x)*(_data[5])); /// Interpolate along X3 Z is changed
-  Real c11  = ((1 - diffX.x)*(_data[6]) + (diffX.x)*(_data[7])); /// Interpolate along X4  Z is chaged
+  Real c00 = ((1 - diffX.x) * (_data[0]) + (diffX.x) * (_data[1])); /// Interpolate along X1
+  Real c01 = ((1 - diffX.x) * (_data[2]) + (diffX.x) * (_data[3])); /// Interpolate along X2
+  Real c10 = ((1 - diffX.x) * (_data[4]) + (diffX.x) * (_data[5])); /// Interpolate along X3 Z is changed
+  Real c11 = ((1 - diffX.x) * (_data[6]) + (diffX.x) * (_data[7])); /// Interpolate along X4  Z is chaged
 
-  Real c0  = ((1 - diffX.y)*(c00) + (diffX.y)*(c01)); /// Interpolate along Y1
-  Real c1  = ((1 - diffX.y)*(c10) + (diffX.y)*(c11)); /// Interpolate along Y2
+  Real c0 = ((1 - diffX.y) * (c00) + (diffX.y) * (c01)); /// Interpolate along Y1
+  Real c1 = ((1 - diffX.y) * (c10) + (diffX.y) * (c11)); /// Interpolate along Y2
 
-  Real c = (( 1 - diffX.z)*c0 + (diffX.z)*c1); /// Interpolate along Z
+  Real c = ((1 - diffX.z) * c0 + (diffX.z) * c1); /// Interpolate along Z
 
   return (c);
 
@@ -482,14 +474,15 @@ __host__ __device__ inline Real  computeTrilinearInterpolation(const Real * data
  * @param [in] k Electric field k.
  * @param [in] physSize Physical Size.
  */
-
+/// TODO: template it
 __global__ void computeEwaldProjectionGPU(Real *projection,
                                           Real *d_rotprojection,
                                           const Real *scatter3D,
                                           const uint3 voxel,
                                           const Real k,
                                           const Real physSize,
-                                          const Interpolation::EwaldsInterpolation interpolation) {
+                                          const Interpolation::EwaldsInterpolation interpolation,
+                                          const bool enable2D) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const UINT totalSize = voxel.x * voxel.y;
   if (threadID >= totalSize) {
@@ -501,36 +494,34 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
 
   dx.x = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.x - 1) * 1.0));
   dx.y = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.y - 1) * 1.0));
-#if (ENABLE_2D)
   dx.z = 0;
-#else
-  dx.z = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.z - 1) * 1.0));
-#endif
+  if (not(enable2D)) {
+    dx.z = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.z - 1) * 1.0));
+  }
   UINT Y = static_cast<UINT>(floorf(threadID) / (voxel.x * 1.0));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x);
   pos.y = start + Y * dx.y;
   pos.x = start + X * dx.x;
   val = k * k - pos.x * pos.x - pos.y * pos.y;
-  if(interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
+  if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
     if (val >= 0) {
       pos.z = -k + sqrt(val);
-      BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel);
+      BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
       projection[threadID] = scatter3D[id];
     } else {
       projection[threadID] = NAN;
     }
-  }
-  else if(interpolation == Interpolation::EwaldsInterpolation::LINEAR){
+  } else if (interpolation == Interpolation::EwaldsInterpolation::LINEAR) {
     if (val >= 0) {
       pos.z = -k + sqrt(val);
       UINT Z = static_cast<UINT >(round((pos.z - start) / (dx.z)));
-#if (ENABLE_2D)
-      projection[threadID] = computeBilinearInterpolation(scatter3D,pos,start,dx,X,Y,voxel);
-#else
-      projection[threadID] = computeTrilinearInterpolation(scatter3D,pos,start,dx,X,Y,Z,voxel);
-#endif
-    }
-    else{
+      if (enable2D) {
+        projection[threadID] = computeBilinearInterpolation(scatter3D, pos, start, dx, X, Y, voxel);
+      } else {
+        projection[threadID] = computeTrilinearInterpolation(scatter3D, pos, start, dx, X, Y, Z, voxel);
+      }
+
+    } else {
       projection[threadID] = NAN;
     }
   }
@@ -547,16 +538,15 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
  * @param [out] mask the mask vector
  * @param [in] Number of voxel in each direction
  */
-__global__ void computeRotationMask(Real * rotProjection, UINT * mask, const uint3 voxel){
+__global__ void computeRotationMask(Real *rotProjection, UINT *mask, const uint3 voxel) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const UINT totalSize = voxel.x * voxel.y;
   if (threadID >= totalSize) {
     return;
   }
-  if(isnan(rotProjection[threadID])){
+  if (isnan(rotProjection[threadID])) {
     rotProjection[threadID] = 0.0;
-  }
-  else{
+  } else {
     mask[threadID]++;
   }
 
@@ -569,13 +559,13 @@ __global__ void computeRotationMask(Real * rotProjection, UINT * mask, const uin
  * @param mask mask vector
  * @param voxel Number of voxel in each direction
  */
-__global__ void averageRotation(Real * rotProjection,const  UINT * mask, const uint3 voxel){
+__global__ void averageRotation(Real *rotProjection, const UINT *mask, const uint3 voxel) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const UINT totalSize = voxel.x * voxel.y;
   if (threadID >= totalSize) {
     return;
   }
-  rotProjection[threadID] = rotProjection[threadID] * static_cast<Real>(1.0/(mask[threadID]*1.0));
+  rotProjection[threadID] = rotProjection[threadID] * static_cast<Real>(1.0 / (mask[threadID] * 1.0));
 
 }
 
@@ -710,4 +700,5 @@ __global__ void radialIntegrate(Real *integrate,
     integrate[threadID] = 0;
   }
 }
+
 #endif //WRITER_UNIAXIAL_H
