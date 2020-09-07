@@ -76,7 +76,7 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
   const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
   cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(), voxelData.data());
   printMetaData(inputData);
-  std::cout << "\n[STAT] Execution finished \n";
+  std::cout << "\n [STAT] Execution finished \n";
 
   py::gil_scoped_acquire acquire;
 
@@ -127,6 +127,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("addData", &RefractiveIndexData::addData, "Add Optical constants data ", py::arg("OpticalConstants"),
            py::arg("Energy"))
       .def("validate", &RefractiveIndexData::validate, "Validate the refractive Index data")
+      .def("clear",&RefractiveIndexData::clear,"Clears the memory")
       .def("print", &RefractiveIndexData::printEnergyData, "Prints the refractive index data");
 
   py::class_<VoxelData>(module, "VoxelData")
@@ -146,7 +147,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("clear",&ScatteringPattern::clear,"Clears the memory")
       .def("writeToHDF5",&ScatteringPattern::writeToHDF5,"Dumps data in  HDF5 file format")
       .def("writeToVTI",&ScatteringPattern::writeToVTI,"Dumps data in  VTI file format")
-      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Retruns data in numpy array",py::arg("Energy"));
+      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"));
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"));

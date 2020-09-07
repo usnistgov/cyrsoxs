@@ -95,7 +95,7 @@ public:
     /**
      * @brief Writes Scattering pattern data to HDF5 file
      */
-    void writeToHDF5(){
+    void writeToHDF5() const {
       const UINT voxelDimensions[3]{inputData_.numX,inputData_.numY,inputData_.numZ};
       writeH5(inputData_, voxelDimensions, data_);
     }
@@ -103,7 +103,7 @@ public:
     /**
      * @brief Writes scattering pattern data to VTI paraview format
      */
-    void writeToVTI(){
+    void writeToVTI() const {
       const UINT voxelDimensions[3]{inputData_.numX,inputData_.numY,inputData_.numZ};
       writeVTI(inputData_, voxelDimensions, data_);
     }
@@ -115,7 +115,7 @@ public:
      * @param energy Energy for which the numpy array is needed
      * @return numpy numpy array with the scattering pattern data of the energy
      */
-    py::array_t<Real> writeToNumpy(const Real energy){
+    py::array_t<Real> writeToNumpy(const Real energy) const {
       if((energy < inputData_.energyStart) or (energy > inputData_.energyEnd)){
         py::print("[LOG]: Wrong EnergyID");
         return py::array_t<Real>{};

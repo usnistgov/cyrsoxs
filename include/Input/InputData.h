@@ -302,8 +302,8 @@ private:
      * @return  True if the input data is correct. False otherwise.
      */
     bool validate() const {
-      assert((numZ == 1) and (enable2D_));
-      assert((numZ > 1) and not(enable2D_));
+      if(numZ == 1) {assert(enable2D_);}
+      if(numZ != 1) {assert(not(enable2D_));}
 
         if(not(paramChecker_.all())) {
           for(int i = 0; i < paramChecker_.size(); i++) {
