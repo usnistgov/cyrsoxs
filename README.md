@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (Release 1.0 - Beta version)
+Cy-RSoXS: GPU enabled RSoXS simulation
 ====================================
 * This code solves the X-ray scattering on Graphical processing units (GPU).
 Currently it supports the operation with 32 bit / 64 bit float datatypes. 
@@ -6,6 +6,9 @@ Currently it supports the operation with 32 bit / 64 bit float datatypes.
 * The code can be executed through the Python interface (enabled through [Pybind11](https://github.com/pybind/pybind11)) 
 or directly through the executable.
 
+
+Version  : 0.8.0
+=========
 
 Dependencies
 =============
