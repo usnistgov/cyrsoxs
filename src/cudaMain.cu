@@ -196,6 +196,7 @@ int cudaMain(const UINT *voxel,
     cudaDeviceProp dprop;
     cudaGetDeviceProperties(&dprop, omp_get_thread_num());
     cudaGetDeviceCount(&device_gpu);
+#ifdef PROFILING
     if(warmup() == EXIT_SUCCESS){
       std::cout << "Warmup completed on GPU " << dprop.name << "\n";
     }
@@ -204,6 +205,7 @@ int cudaMain(const UINT *voxel,
 #pragma omp cancel parallel
       exit (EXIT_FAILURE);
     }
+#endif
 
     cufftResult result;
     cufftHandle plan;
