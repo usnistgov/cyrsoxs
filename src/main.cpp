@@ -110,7 +110,9 @@ int main(int argc, char **argv) {
 
 
   if(inputData.writeHDF5) {
-    createDirectory("HDF5");
+    const std::string hdf5name = "HDF5_";
+    std::string  dirname = hdf5name + argv[2];
+    createDirectory(dirname.c_str());
     omp_set_num_threads(1);
 
 #pragma omp parallel
@@ -131,7 +133,7 @@ int main(int argc, char **argv) {
         stream << std::fixed << std::setprecision(2) << energy;
         std::string s = stream.str();
         std::memcpy(oneEnergyData, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
-        const std::string fname = "HDF5/Energy_" + s;
+        const std::string fname = dirname + "/Energy_" +  s;
 
         H5::writeFile2D(fname, oneEnergyData, voxelSize);
       }
