@@ -13,7 +13,6 @@ option(BUILD_DOCS "Build Documentation" OFF)
 option(PYBIND "Pybind support for Cy-RSOXS " OFF)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
-
 if (DOUBLE_PRECISION)
     add_definitions(-DDOUBLE_PRECISION)
     message(Configuring with Double precision)
@@ -69,7 +68,7 @@ endif ()
 if(PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
-    find_package(Python COMPONENTS Interpreter Development REQUIRED)
+    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
     set(PYBIND_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11)
     add_subdirectory(${PYBIND_LOCATION})
