@@ -37,7 +37,7 @@ cd $HDF5_INSTALL_DIRECTORY
 wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.5/src/CMake-hdf5-1.10.5.tar.gz
 tar -xzvf CMake-hdf5-1.10.5.tar.gz
 rm CMake-hdf5-1.10.5.tar.gz
-cd CMake-hdf5-1.10.5.tar.gz 
+cd CMake-hdf5-1.10.5
 ./build-unix.sh
 ```
 This step might take some time. Do not cancel until all the tests have passed.
