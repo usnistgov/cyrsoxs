@@ -11,3 +11,4 @@ timestep_*.vtk
 IO/*.vti
 *.pyc
 __pycache__
+.ipynb*
