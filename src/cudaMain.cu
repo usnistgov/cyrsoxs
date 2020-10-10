@@ -259,8 +259,6 @@ int cudaMain(const UINT *voxel,
     Complex *polarizationY = new Complex[voxelSize];
     Real *scatter3D = new Real[voxelSize];
 
-#pragma message "Remove me. I am not needed if doing inplace swap"
-    Complex * d_temporarySwapVariable;
 #ifdef EOC
     Real *projectionCPU = new Real[BATCH * voxel[0] * voxel[1]];
 #else
@@ -277,8 +275,6 @@ int cudaMain(const UINT *voxel,
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_polarizationY, sizeof(Complex) * voxelSize));
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_scatter3D, sizeof(Real) * voxelSize));
-    gpuErrchk(cudaPeekAtLastError());
-    CUDA_CHECK_RETURN(cudaMalloc((void **) &d_temporarySwapVariable, sizeof(Complex) * voxelSize));
     gpuErrchk(cudaPeekAtLastError());
 
 
@@ -420,35 +416,15 @@ int cudaMain(const UINT *voxel,
           exit(EXIT_FAILURE);
         }
 
-#pragma message "Fix me! Remove me for inplace transofrmation. Not needed and make me as a callback"
-
-        CUDA_CHECK_RETURN(cudaMemcpy(d_temporarySwapVariable,
-                                     d_polarizationX,
-                                     sizeof(Complex) * voxelSize,
-                                     cudaMemcpyDeviceToDevice));
-        gpuErrchk(cudaPeekAtLastError());
-
-        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationX,d_temporarySwapVariable,vx);
+        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationX, vx);
         cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
-        CUDA_CHECK_RETURN(cudaMemcpy(d_temporarySwapVariable,
-                                     d_polarizationY,
-                                     sizeof(Complex) * voxelSize,
-                                     cudaMemcpyDeviceToDevice));
-        gpuErrchk(cudaPeekAtLastError());
-
-        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationY,d_temporarySwapVariable,vx);
+        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationY, vx);
         cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
-        CUDA_CHECK_RETURN(cudaMemcpy(d_temporarySwapVariable,
-                                     d_polarizationZ,
-                                     sizeof(Complex) * voxelSize,
-                                     cudaMemcpyDeviceToDevice));
-        gpuErrchk(cudaPeekAtLastError());
-
-        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationZ,d_temporarySwapVariable,vx);
+        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationZ, vx);
         cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
 
@@ -645,9 +621,6 @@ int cudaMain(const UINT *voxel,
     CUDA_CHECK_RETURN(cudaFree(d_polarizationX));
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaFree(d_voxelInput));
-    gpuErrchk(cudaPeekAtLastError());
-#pragma message "Fix Me! You have not allocated me. No need to delete me"
-    CUDA_CHECK_RETURN(cudaFree(d_temporarySwapVariable));
     gpuErrchk(cudaPeekAtLastError());
 
 #ifndef EOC

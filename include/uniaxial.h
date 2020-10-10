@@ -159,10 +159,9 @@ __device__ inline void swap(T &var1, T &var2) {
   var2 = temp;
 }
 
-#pragma  message "FiX Me. Make me inplace"
 
 template<typename T>
-__global__ void FFTIgor(T *polarization, T *array, uint3 voxel) {
+__global__ void FFTIgor(T *polarization, uint3 voxel) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   BigUINT totalSize = (voxel.x * voxel.y * voxel.z);
   if (threadID >= totalSize) {
@@ -198,7 +197,12 @@ __global__ void FFTIgor(T *polarization, T *array, uint3 voxel) {
   }
 
   BigUINT copyID = reshape3Dto1D(id.x, id.y, id.z, voxel);
-  polarization[threadID] = array[copyID];
+
+  if (threadID > copyID) {
+    auto tmp = polarization[threadID];
+    polarization[threadID] = polarization[copyID];
+    polarization[copyID] = tmp;
+  }
 
 }
 
