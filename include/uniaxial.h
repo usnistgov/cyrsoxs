@@ -146,8 +146,8 @@ __host__ __device__ inline BigUINT reshape3Dto1D(UINT i, UINT j, UINT k, uint3 v
 }
 
 __host__ __device__ inline void reshape1Dto3D(BigUINT id, UINT &X, UINT &Y, UINT &Z, uint3 voxel) {
-  Z = static_cast<UINT>(floorf(id / (voxel.y * voxel.x * 1.0)));
-  Y = static_cast<UINT>(floorf(id - Z * voxel.y * voxel.x) / (voxel.x * 1.0));
+  Z = static_cast<UINT>(id / (voxel.y * voxel.x));
+  Y = static_cast<UINT>((id - Z * voxel.y * voxel.x) / voxel.x);
   X = static_cast<UINT>(id - Y * voxel.x - Z * voxel.y * voxel.x);
 }
 
