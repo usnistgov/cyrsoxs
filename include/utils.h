@@ -158,7 +158,7 @@ static void printMetaData(const InputData & inputData){
   file << "Number of pixel = [" << inputData.numX << "," << inputData.numY << "]\n";
   file << "Q range  = [" << -M_PI / inputData.physSize << "," << M_PI / inputData.physSize << "]\n";
   file << "Electric field rotated through = [" << inputData.startAngle << "," << inputData.endAngle << "]\n";
-  file << "Increments in electric field rotation " << inputData.incrementEnergy << "\n";
+  file << "Increments in electric field rotation " << inputData.incrementAngle << "\n";
   file << "\n\n";
 
   file << "-----------------Simulation information -----------------\n";
