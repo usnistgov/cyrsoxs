@@ -10,6 +10,8 @@
 #include <omp.h>
 #include <Input/readH5.h>
 #include <Input/InputData.h>
+#include <vector>
+
 
 namespace py = pybind11;
 
@@ -17,9 +19,7 @@ namespace py = pybind11;
  * @brief Class to store the refractive index data
  */
 class RefractiveIndexData {
-    const Real &energyStart; /// Start of energy
-    const Real &energyEnd;  /// End of energy
-    const Real &incrementEnergy; /// Increment energy
+    const std::vector<Real> energies; /// List of energies
     std::vector<Material<NUM_MATERIAL> > refractiveIndex; /// Refractive index data at all energy level
     std::vector<bool> isValid; /// A vector of bool to check if the optical constants is added at each energy level.
 public:
@@ -28,12 +28,9 @@ public:
      * @param inputData InputData
      */
     RefractiveIndexData(const InputData &inputData)
-        : energyStart(inputData.energyStart), energyEnd(inputData.energyStart),
-          incrementEnergy(inputData.incrementEnergy) {
-      UINT numEnergyData = std::round(inputData.energyEnd - inputData.energyStart) / (inputData.incrementEnergy) + 1;
-      refractiveIndex.resize(numEnergyData);
-      isValid.resize(numEnergyData);
-      std::fill(isValid.begin(), isValid.end(), false);
+        : energies(inputData.energies),
+          refractiveIndex(inputData.energies.size()),
+          isValid(inputData.energies.size(), false) {
     }
 
     /**
@@ -70,7 +67,20 @@ public:
           return;
         }
       }
-      UINT counter = std::round((Energy - energyStart) / incrementEnergy);
+
+      int counter = -1;
+      for (int i = 0; i < energies.size(); i++) {
+        if (FEQUALS(energies[i], Energy)) {  // found it
+          counter = i;
+          break;
+        }
+      }
+
+      if (counter == -1) {  // didn't find the energy
+        py::print("Bad Energy. Trying to add parameters for non-existant energy.");
+        return;
+      }
+
       for (UINT i = 0; i < NUM_MATERIAL; i++) {
         refractiveIndex[counter].npara[i].x = 1 - values[i][EnergyValues::DeltaPara];
         refractiveIndex[counter].npara[i].y = values[i][EnergyValues::BetaPara];
@@ -88,7 +98,7 @@ public:
     void printEnergyData() const {
       UINT count = 0;
       for (auto &values : refractiveIndex) {
-        Real currEnegy = energyStart + count * incrementEnergy;
+        Real currEnegy = energies[count];
         py::print("Energy = ", currEnegy);
         for (int i = 0; i < NUM_MATERIAL; i++) {
           py::print("Material = ", i, "npara = ", std::complex<Real>(values.npara[i].x, values.npara[i].y),
@@ -118,8 +128,7 @@ public:
       else{
         for(UINT i = 0; i < isValid.size(); i++){
           if(not(isValid[i])){
-            Real energy = energyStart + i * incrementEnergy;
-            py::print("Optical constants data missing for energy = ",energy,"eV");
+            py::print("Optical constants data missing for energy = ",energies[i],"eV");
           }
         }
       }

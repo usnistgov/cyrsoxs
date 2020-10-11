@@ -40,9 +40,7 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
     // TODO: Make it work in parallel.
     omp_set_num_threads(1);
 
-    const UINT
-        numEnergyLevel = static_cast<UINT>(std::round(
-        (inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
+    const UINT numEnergyLevel = inputData.energies.size();
     const UINT voxel2DSize = voxelSize[0] * voxelSize[1];
     Real *oneEnergyData = new Real[voxel2DSize];
     UINT chunkSize = static_cast<UINT>(std::ceil(numEnergyLevel * 1.0 / (omp_get_num_threads() * 1.0)));
@@ -52,7 +50,7 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
 
     for (UINT csize = startID; csize < std::min(endID, numEnergyLevel); csize++) {
       std::stringstream stream;
-      Real energy = inputData.energyStart + csize * inputData.incrementEnergy;
+      Real energy = inputData.energies[csize];
       stream << std::fixed << std::setprecision(2) << energy;
       std::string s = stream.str();
       std::memcpy(oneEnergyData, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
@@ -71,9 +69,7 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
 static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged){
     createDirectory("VTI");
     omp_set_num_threads(inputData.num_threads);
-    const UINT
-        numEnergyLevel = static_cast<UINT>(std::round(
-        (inputData.energyEnd - inputData.energyStart) / inputData.incrementEnergy + 1));
+    const UINT numEnergyLevel = inputData.energies.size();
 #pragma omp parallel
     {
       UINT threadID = omp_get_thread_num();
@@ -88,7 +84,7 @@ static void writeVTI(const InputData & inputData, const UINT * voxelSize,const R
 
           std::memcpy(projectionLocal, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
           std::stringstream stream;
-          Real energy = inputData.energyStart + csize * inputData.incrementEnergy;
+          Real energy = inputData.energies[csize];
           stream << std::fixed << std::setprecision(2) << energy;
           std::string s = stream.str();
           const std::string outputFname = "VTI/Energy_" + s;
@@ -164,8 +160,11 @@ static void printMetaData(const InputData & inputData){
   file << "-----------------Simulation information -----------------\n";
   file << "Size of Real = " << sizeof(Real) << "\n";
   file << "Number of materials =" << NUM_MATERIAL << "\n";
-  file << "Energies simulated from " << inputData.energyStart << " to " << inputData.energyEnd << " with increment of "
-       << inputData.incrementEnergy << "\n";
+  file << "Energies simulated: ";
+  for (const auto energy: inputData.energies) {
+    file << energy << ' ';
+  }
+  file << "\n";
   file.close();
 }
 

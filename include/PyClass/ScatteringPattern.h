@@ -58,8 +58,7 @@ public:
       }
       isAllocated_ = true;
 
-      const UINT
-          numEnergyLevel = static_cast<UINT>(std::round((inputData_.energyEnd - inputData_.energyStart) / inputData_.incrementEnergy + 1));
+      const UINT numEnergyLevel = inputData_.energies.size();
       data_ = new Real[numEnergyLevel * inputData_.numX * inputData_.numY];
     }
 
@@ -116,28 +115,24 @@ public:
      * @return numpy numpy array with the scattering pattern data of the energy
      */
     py::array_t<Real> writeToNumpy(const Real energy) const {
-      if((energy < inputData_.energyStart) or (energy > inputData_.energyEnd)){
-        py::print("[LOG]: Wrong EnergyID");
-        return py::array_t<Real>{};
+      // find index of energy in the list
+      int idx = -1;
+      for (int i = 0; i < inputData_.energies.size(); i++) {
+        if (FEQUALS(inputData_.energies[i], energy)) {  // found it
+          py::capsule free_when_done(this->data_, [](void *f) {
+          });
+
+          return (py::array_t<Real>(
+          {(int)inputData_.numX,(int)inputData_.numY},
+          {sizeof(Real)*inputData_.numY,sizeof(Real)},
+          &this->data_[i*(inputData_.numY*inputData_.numX)],
+              free_when_done)); 
+        }
       }
 
-      const UINT
-      energyID = static_cast<UINT>(std::round( (energy - inputData_.energyStart)/ inputData_.incrementEnergy));
-
-      if(not(FEQUALS(inputData_.energyStart + energyID*inputData_.incrementEnergy,energy))){
-        py::print("[LOG]: Wrong EnergyID");
-        return py::array_t<Real>{};
-      }
-      py::capsule free_when_done(this->data_, [](void *f) {
-      });
-
-      return (py::array_t<Real>(
-      {(int)inputData_.numX,(int)inputData_.numY},
-      {sizeof(Real)*inputData_.numY,sizeof(Real)},
-      &this->data_[energyID*(inputData_.numY*inputData_.numX)],
-          free_when_done));
-
-
+      // didn't find the energy in the list
+      py::print("[LOG]: Wrong EnergyID");
+      return py::array_t<Real>{};
     }
 
 
