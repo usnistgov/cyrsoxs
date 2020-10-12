@@ -677,6 +677,10 @@ int cudaMain(const UINT *voxel,
     delete[] polarizationZ;
     delete[] scatter3D;
 
+#ifdef EOC
+    delete[] projectionCPU;
+#endif
+
 
     cufftDestroy(plan);
     cublasDestroy(handle);
@@ -691,11 +695,6 @@ int cudaMain(const UINT *voxel,
     std::cout << "[TIMERS] " << std::left << std::setw(20) << timersName[i] << ":" << timings[i] << " s\n";
   }
   std::cout << "\n\n";
-#endif
-
-#ifdef EOC
-  delete[] projectionCPU;
-#else
 #endif
 
   return (EXIT_SUCCESS);
