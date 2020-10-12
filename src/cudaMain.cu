@@ -654,6 +654,8 @@ int cudaMain(const UINT *voxel,
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaFree(d_polarizationX));
     gpuErrchk(cudaPeekAtLastError());
+    CUDA_CHECK_RETURN(cudaFree(d_scatter3D));
+    gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaFree(d_voxelInput));
     gpuErrchk(cudaPeekAtLastError());
 
@@ -666,6 +668,8 @@ int cudaMain(const UINT *voxel,
       CUDA_CHECK_RETURN(cudaFree(d_mask));
       gpuErrchk(cudaPeekAtLastError());
     }
+    CUDA_CHECK_RETURN(cudaFree(d_projectionAverage));
+    gpuErrchk(cudaPeekAtLastError());
 #endif
 
     delete[] polarizationX;
