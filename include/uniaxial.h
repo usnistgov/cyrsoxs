@@ -71,10 +71,13 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
 
   static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
   Real temp;
+
+  const Real cos_a = cos(angle);
+  const Real sin_a = sin(angle);  
   for (int i = 0; i < NUM_MATERIAL; i++) {
     s1[i] = voxelInput[threadID].s1[i];
-    temp = cos(angle) * voxelInput[threadID].s1[i].y - sin(angle) * voxelInput[threadID].s1[i].x;
-    s1[i].x = sin(angle) * s1[i].y + cos(angle) * s1[i].x;
+    temp = cos_a * s1[i].y - sin_a * s1[i].x;
+    s1[i].x = sin_a * s1[i].y + cos_a * s1[i].x;
     s1[i].y = temp;
     npar[i] = material->npara[i];
     nper[i] = material->nperp[i];
