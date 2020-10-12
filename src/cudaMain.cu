@@ -653,6 +653,11 @@ int cudaMain(const UINT *voxel,
 #ifndef EOC
     CUDA_CHECK_RETURN(cudaFree(d_projection));
     gpuErrchk(cudaPeekAtLastError());
+    CUDA_CHECK_RETURN(cudaFree(d_projectionAverage));
+    gpuErrchk(cudaPeekAtLastError());
+    CUDA_CHECK_RETURN(cudaFree(d_scatter3D));
+    gpuErrchk(cudaPeekAtLastError());
+
     CUDA_CHECK_RETURN(cudaFree(d_rotProjection));
     gpuErrchk(cudaPeekAtLastError());
     if(idata.rotMask) {
