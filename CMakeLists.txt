@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(Cy-RSoXS VERSION 0.8.0 LANGUAGES CXX CUDA)
+project(Cy-RSoXS VERSION 0.8.1 LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
@@ -68,7 +68,7 @@ endif ()
 if(PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
-    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+    find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
     set(PYBIND_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11)
     add_subdirectory(${PYBIND_LOCATION})
