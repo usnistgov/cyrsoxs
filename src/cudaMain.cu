@@ -37,6 +37,7 @@
 #include <chrono>
 #include <npp.h>
 #include <Output/outputUtils.h>
+#include <stdint.h>  // for UINT32_MAX
 
 #define START_TIMER(X) timerArrayStart[X] = std::chrono::high_resolution_clock::now();
 #define END_TIMER(X) timerArrayEnd[X] = std::chrono::high_resolution_clock::now(); \
@@ -108,11 +109,47 @@ if(windowing == FFT::FFTWindowing::HANNING) {
 }
 
 
+/**
+ * Return false if system is too large to handle
+ *
+ * This checks whether the system is large enough to require
+ * 64 bit numbers for the indices. If so, it also checks whether
+ * data types will support this.
+ *
+ * @param voxel dimensions of voxel data
+ *
+ * @return false if system size cannot be supported
+ */
+bool check_system_size(const UINT *voxel) {
+  if (static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2] > UINT32_MAX) {
+    // need 64 bit sizes
+    if (sizeof(BigUINT) < 8) {
+      // BigUNIT needs to be set to 64-bit in include/DataTypes.h
+      // in order for this to work.
+      return false;
+    } else {
+      // There are currently multiple places in the code where this is
+      // implemented incorrectly. Even if fixed, it will run into memory
+      // limits.
+      std::cout << "[WARNING] large system size implementation may be wrong\n";
+    }
+  }
+  return true;
+}
+
+
 int cudaMain(const UINT *voxel,
              const InputData &idata,
              const std::vector<Material<NUM_MATERIAL> > &materialInput,
              Real * projectionGPUAveraged,
              const Voxel<NUM_MATERIAL> *voxelInput) {
+  
+  // check if system size is greater than data types can handle
+  if (!check_system_size(voxel)) {
+    std::cerr << "[ERROR] System is too large for compiled options\n";
+    std::cerr << "[ERROR] This must be fixed in the code\n";
+    return (EXIT_FAILURE);
+  }
 
   const BigUINT voxelSize = voxel[0] * voxel[1] * voxel[2]; /// Voxel size
   const UINT

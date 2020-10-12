@@ -43,7 +43,8 @@ typedef float4 Real4;
 typedef float2 Complex;
 
 #endif
-typedef uint64_t BigUINT;
+// this will probably not work properly if BigUINT is set to uint64_t
+typedef uint32_t BigUINT;
 typedef uint32_t UINT;
 
 #define NUM_THREADS 128
