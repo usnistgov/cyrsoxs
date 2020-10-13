@@ -288,10 +288,16 @@ int cudaMain(const UINT *voxel,
     vx.x = voxel[0];
     vx.y = voxel[1];
     vx.z = voxel[2];
+
+#ifdef DUMP_FILES
     Complex *polarizationZ = new Complex[voxelSize];
     Complex *polarizationX = new Complex[voxelSize];
     Complex *polarizationY = new Complex[voxelSize];
+#endif
+
+#if defined(EOC) || defined(DUMP_FILES)
     Real *scatter3D = new Real[voxelSize];
+#endif
 
 #ifdef EOC
     Real *projectionCPU = new Real[BATCH * voxel[0] * voxel[1]];
@@ -672,10 +678,15 @@ int cudaMain(const UINT *voxel,
     gpuErrchk(cudaPeekAtLastError());
 #endif
 
+#ifdef DUMP_FILES
     delete[] polarizationX;
     delete[] polarizationY;
     delete[] polarizationZ;
+#endif
+
+#if defined(EOC) || defined(DUMP_FILES)
     delete[] scatter3D;
+#endif
 
 #ifdef EOC
     delete[] projectionCPU;
