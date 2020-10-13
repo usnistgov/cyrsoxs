@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (Release 1.0 - Beta version)
+GPU enabled RSoXS simulation (0.8.1)
 ====================================
 
 Cy-RSoXS prints output in `.h5` and  `.vti` format. Both these file format can 

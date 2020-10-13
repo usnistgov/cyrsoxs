@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (Release 1.0 - Beta version)
+GPU enabled RSoXS simulation (0.8.1)
 ====================================
 
 # With Pybind support
@@ -87,7 +87,7 @@ from the run directory.
 ./$(PATH_TO_CyRSoXS_BUILD_DIR)/CyRSoXS  $(PATH_TO_HDF5_FILE)
 ```
 
-The output will be generated in the folder named `Projection`that will be
-created in the run directory. The output are generated in `.vti` / `.hdf5` format which
+The output will be generated in the folder named `HDF5` for HDF5 files and `VTI` for VTI files (if dumped) 
+that will be created in the run directory. The output are generated in `.vti` / `.hdf5` format which
 can be visualized using [Paraview](https://www.paraview.org/) or [Visit](https://wci.llnl.gov/simulation/computer-codes/visit/).
 
