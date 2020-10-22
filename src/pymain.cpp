@@ -48,7 +48,8 @@ namespace py = pybind11;
  * @param voxelData Voxel data
  */
 void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
-            const VoxelData &voxelData,ScatteringPattern & scatteringPattern) {
+            const VoxelData &voxelData,ScatteringPattern & scatteringPattern,
+            bool batch=false, bool write_meta_data=true) {
   if (not(inputData.validate())) {
     py::print("Issues with Input Data");
     return ;
@@ -65,18 +66,28 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
   }
 
   py::gil_scoped_release release;
-  printCopyrightInfo();
 
+  if (!batch) {
+    printCopyrightInfo();
 
-  std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
-  std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
-  std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
+    std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
+    std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+    std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
 
-  std::cout << "\n [STAT] Executing: \n\n";
+    std::cout << "\n [STAT] Executing: \n\n";
+  }
+  
   const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
+
   cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(), voxelData.data());
-  printMetaData(inputData);
-  std::cout << "\n [STAT] Execution finished \n";
+
+  if (write_meta_data) {
+    printMetaData(inputData);
+  }
+
+  if (!batch) {
+    std::cout << "\n [STAT] Execution finished \n";
+  }
 
   py::gil_scoped_acquire acquire;
 
@@ -158,7 +169,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"));
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
-             py::arg("VoxelData"),py::arg("ScatteringPattern"));
+             py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("IsBatch")=false,py::arg("WriteMetaData")=true);
   module.def("get_n_materials", &get_n_materials, "Get number of materials");
   module.def("cleanup", &cleanup, "Cleanup",  py::arg("RefractiveIndex"), py::arg("VoxelData"),py::arg("ScatteringPattern"));
 
