@@ -254,11 +254,14 @@ int cudaMain(const UINT *voxel,
     vx.x = voxel[0];
     vx.y = voxel[1];
     vx.z = voxel[2];
+#ifdef DUMP_FILES
     Complex *polarizationZ = new Complex[voxelSize];
     Complex *polarizationX = new Complex[voxelSize];
     Complex *polarizationY = new Complex[voxelSize];
+#endif
+#if defined(EOC) or defined(DUMP_FILES)
     Real *scatter3D = new Real[voxelSize];
-
+#endif
 #pragma message "Remove me. I am not needed if doing inplace swap"
     Complex * d_temporarySwapVariable;
 #ifdef EOC
@@ -665,17 +668,24 @@ int cudaMain(const UINT *voxel,
       gpuErrchk(cudaPeekAtLastError());
     }
 #endif
-
+#ifdef DUMP_FILES
     delete[] polarizationX;
     delete[] polarizationY;
     delete[] polarizationZ;
+
+#endif
+#if (defined(DUMP_FILES) or defined(EOC))
     delete[] scatter3D;
+#endif
 
 
     cufftDestroy(plan);
     cublasDestroy(handle);
 
-  }
+#ifdef EOC
+        delete[] projectionCPU;
+#endif
+    }
 
 
 
@@ -687,10 +697,7 @@ int cudaMain(const UINT *voxel,
   std::cout << "\n\n";
 #endif
 
-#ifdef EOC
-  delete[] projectionCPU;
-#else
-#endif
+
 
   return (EXIT_SUCCESS);
 }
