@@ -35,6 +35,7 @@
 #ifdef PYBIND
 #include <pybind11/pybind11.h>
 #include <bitset>
+#include <algorithm>
 
 namespace ParamChecker{
     enum Parameters: u_short {
@@ -87,6 +88,46 @@ private:
     }
     return res;
   }
+
+    /**
+   * Reads an array from the input file and stores it in the given vector.
+   *
+   * The given vector is resized to fit the data. Any existing data in the
+   * vector is lost. Resizing will only happen if the input file has an array
+   * of proper length associated with the given key.
+   *
+   * If the key is not found, an error will be printed and the program will
+   * exit with failure.
+   *
+   * @param config libconfig object for file
+   * @param key the name of the configuation value to retrieve
+   * @param[out] arr vector to store the data (will be allocated here)
+   */
+    template <typename T>
+    void ReadArrayRequired(libconfig::Config & config, const std::string& key,
+                           std::vector<T>& arr) {
+        // this is here because lookup throws an exception if not found
+        if (!config.exists(key)) {
+            std::cerr << "[Input Error] No value corresponding to " << key
+                      << " found. Exiting\n";
+            exit(EXIT_FAILURE);
+        }
+
+        libconfig::Setting &setting = config.lookup(key);
+        if (!setting.isArray()) {  // confirm this is an array
+            std::cerr << "expected array input but found single value "
+                      << "(key = " << key << ")\n";
+            exit(EXIT_FAILURE);
+        }
+
+        arr.clear();
+        for (int i = 0; i < setting.getLength(); i++) {
+            T value;
+            std::string item_path = key + ".[" + std::to_string(i) + "]";
+            ReadValueRequired(config, item_path, value);
+            arr.push_back(value);
+        }
+    }
 #else
     /// Checks the input data parameter for the required parameters
     std::bitset<ParamChecker::Parameters::MAX_SIZE> paramChecker_;
@@ -104,11 +145,7 @@ private:
   }
  public:
   /// start of energy
-  Real energyStart;
-  /// end of energy
-  Real energyEnd;
-  /// increment in Energy
-  Real incrementEnergy;
+  std::vector<Real> energies;
   /// startAngle
   Real startAngle;
   /// end Angle
@@ -153,9 +190,8 @@ private:
   InputData(std::vector<Material<NUM_MATERIAL> > &refractiveIndex, std::string filename = "config.txt") {
     libconfig::Config cfg;
     cfg.readFile(filename.c_str());
-    ReadValueRequired(cfg, "StartEnergy", energyStart);
-    ReadValueRequired(cfg, "EndEnergy", energyEnd);
-    ReadValueRequired(cfg, "IncrementEnergy", incrementEnergy);
+    ReadArrayRequired(cfg, "Energies", energies);
+    ReadArrayRequired(cfg, "Energies", energies);
     ReadValueRequired(cfg, "StartAngle", startAngle);
     ReadValueRequired(cfg, "EndAngle", endAngle);
     ReadValueRequired(cfg, "IncrementAngle", incrementAngle);
@@ -169,26 +205,16 @@ private:
     if(ReadValue(cfg, "WriteVTI",writeVTI)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
     check2D();
-    if(FEQUALS(incrementEnergy,0.0)) {
-      if(FEQUALS(energyStart,energyEnd)) {
-        std::cout << "[INFO] : Adjusting increment Energy to 0.1 for preventing 0/0 error.\n";
-        incrementEnergy = 0.1;
-      }
-      else {
-        throw std::logic_error("ERROR: Cannot add 0 increment Energy");
-      }
-    }
-    UINT numEnergy = std::round((energyEnd - energyStart) / incrementEnergy + 1);
 
-    refractiveIndex.resize(numEnergy);
-
+    refractiveIndex.resize(energies.size());
+    const UINT & numEnergy = energies.size();
     for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
       std::string fname = "Material" + std::to_string(numMaterial) + ".txt";
       cfg.readFile(fname.c_str());
       for (int i = 0; i < numEnergy; i++) {
         const auto &global = cfg.getRoot()["EnergyData" + std::to_string(i)];
         Real energy = global["Energy"];
-        Real currEnergy = (energyStart + i * incrementEnergy);
+        Real currEnergy =energies[i];
         Real diff = fabs(energy - currEnergy);
 
         if (diff > 1E-3) {
@@ -222,27 +248,16 @@ private:
     }
     /**
      * @brief Adds the energy data
-     * @param _energyStart Start energy (in eV)
-     * @param _energyEnd   End energy (in eV)
-     * @param _energyIncrement Increment in energy from energy start and energy end (in eV)
+     * @param _energies list of energies (in eV)
      */
-    void setEnergy(const Real & _energyStart, const  Real & _energyEnd,const  Real & _energyIncrement){
-        if(FEQUALS(_energyIncrement,0.0)) {
-          if(FEQUALS(_energyStart,_energyEnd)) {
-            pybind11::print("INFO : Adjusting increment Energy to 0.1 for preventing 0/0 error.");
-            incrementEnergy = 0.1;
-          }
-          else {
-            pybind11::print("ERROR: Cannot add 0 increment Energy");
-            return;
-          }
+    void setEnergies(const std::vector<Real> & _energies){
+        energies.clear();
+        energies = _energies;
+        std::sort(energies.begin(),energies.end());
+        const bool hasDuplicates = std::adjacent_find(energies.begin(), energies.end()) != energies.end();
+        if(hasDuplicates) {
+            pybind11::print("energies has duplicate entries . Can not add");
         }
-        else {
-          incrementEnergy = _energyIncrement;
-        }
-        energyStart = _energyStart;
-        energyEnd = _energyEnd;
-
         paramChecker_.set(ParamChecker::Parameters::ENERGY,true);
     }
     /**
@@ -287,7 +302,7 @@ private:
         pybind11::print("--------Required options------------------");
         pybind11::print("Dimensions           : [",numX,",",numY,",",numZ,"]");
         pybind11::print("PhysSize             : ", physSize);
-        pybind11::print("Energy from          : ",energyStart , "to",energyEnd,"with increment of",incrementEnergy);
+        pybind11::print("Energy from          : ",energies);
         pybind11::print("Rotation Angle  from : ",startAngle , "to",endAngle,"with increment of",incrementAngle);
 
         pybind11::print("--------Optional options------------------");

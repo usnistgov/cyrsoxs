@@ -43,7 +43,7 @@ public:
     ScatteringPattern(const InputData & InputData)
     :inputData_(InputData){
         const UINT
-            numEnergyLevel = static_cast<UINT>(std::round((inputData_.energyEnd - inputData_.energyStart) / inputData_.incrementEnergy + 1));
+            numEnergyLevel = static_cast<UINT>(inputData_.energies.size());
         data_ = new Real[numEnergyLevel * inputData_.numX * inputData_.numY];
     }
 
@@ -96,15 +96,16 @@ public:
      * @return numpy numpy array with the scattering pattern data of the energy
      */
     py::array_t<Real> writeToNumpy(const Real energy) const {
-      if((energy < inputData_.energyStart) or (energy > inputData_.energyEnd)){
+
+        const auto & energies = inputData_.energies;
+      if((energy < energies[0]) or (energy > energies[energies.size() - 1])){
         py::print("[LOG]: Wrong EnergyID");
         return py::array_t<Real>{};
       }
 
-      const UINT
-      energyID = static_cast<UINT>(std::round( (energy - inputData_.energyStart)/ inputData_.incrementEnergy));
+      const UINT energyID = std::lower_bound(energies.begin(),energies.end(),energy) - energies.begin();
 
-      if(not(FEQUALS(inputData_.energyStart + energyID*inputData_.incrementEnergy,energy))){
+      if(not(FEQUALS(energies[energyID],energy))){
         py::print("[LOG]: Wrong EnergyID");
         return py::array_t<Real>{};
       }

@@ -108,8 +108,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
 
   py::class_<InputData>(module, "InputData")
       .def(py::init<>())
-      .def("setEnergy", &InputData::setEnergy, "Set the energy data", py::arg("StartEnergy"), py::arg("EndEnergy"),
-           py::arg("IncrementEnergy"))
+      .def("setEnergies", &InputData::setEnergies, "Set the energy data", py::arg("energies"))
       .def("print", &InputData::print, "Print the input data")
       .def("setRotationAngle", &InputData::setAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
            py::arg("EndAngle"),

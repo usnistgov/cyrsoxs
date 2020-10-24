@@ -117,8 +117,7 @@ int cudaMain(const UINT *voxel,
   const BigUINT voxelSize = voxel[0] * voxel[1] * voxel[2]; /// Voxel size
   const UINT
       numAnglesRotation = static_cast<UINT>(std::round((idata.endAngle - idata.startAngle) / idata.incrementAngle + 1));
-  const UINT
-      numEnergyLevel = static_cast<UINT>(std::round((idata.energyEnd - idata.energyStart) / idata.incrementEnergy + 1));
+  const UINT & numEnergyLevel = idata.energies.size();
 
 
   int num_gpu;
@@ -229,15 +228,16 @@ int cudaMain(const UINT *voxel,
     rect.y = 0;
 
 
-    UINT numEnergyPerGPU = static_cast<UINT>(std::ceil(numEnergyLevel*1.0/num_gpu));
-    UINT numStart = (numEnergyPerGPU*omp_get_thread_num());
-    UINT numEnd   = (numEnergyPerGPU*(omp_get_thread_num() + 1));
-    numEnd = std::min(numEnd,numEnergyLevel);
+    const UINT ompThreadID = omp_get_thread_num();
+    const UINT numEnergyPerGPU = static_cast<UINT>(std::ceil(numEnergyLevel*1.0/num_gpu));
+    const UINT numStart = (numEnergyPerGPU*ompThreadID);
+    UINT numEnd   = (numEnergyPerGPU*(ompThreadID + 1));
+    numEnd = std::min(numEnd,numEnergyLevel-1);
 
-    Real energyStart = idata.energyStart + numStart*idata.incrementEnergy;
-    Real energyEnd   = idata.energyStart + (numEnd - 1)*idata.incrementEnergy;
+    const Real & energyStart = numStart < numEnergyLevel ? idata.energies[numStart] : 0;
+    const Real & energyEnd   = idata.energies[numEnd] ;
 
-    if(energyStart > idata.energyEnd){
+    if(numStart >= numEnergyLevel){
       std::cout << "[INFO] [GPU = " << dprop.name  << "] -> No computation. Idle\n";
     }
     else{
@@ -330,7 +330,7 @@ int cudaMain(const UINT *voxel,
 
     for (UINT j = numStart; j < numEnd; j++) {
 
-      Real energy = (idata.energyStart + j * idata.incrementEnergy);
+      const Real & energy = (idata.energies[j]);
       std::cout << " [STAT] Energy = " << energy << " starting "  << "\n";
 
       CUDA_CHECK_RETURN(cudaMemset(d_projectionAverage, 0, voxel[0] * voxel[1] * sizeof(Real)));
