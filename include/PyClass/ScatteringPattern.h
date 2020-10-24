@@ -34,8 +34,6 @@ class ScatteringPattern{
     const InputData & inputData_;
     /// Pointer to the scattering pattern data
     Real * data_ = nullptr;
-    /// Track the state of data whether its allocated or not
-    bool isAllocated_ = false;
 
 public:
     /**
@@ -44,23 +42,9 @@ public:
      */
     ScatteringPattern(const InputData & InputData)
     :inputData_(InputData){
-
-    }
-
-    /**
-     * @brief Allocates the memory
-     */
-    void allocate(){
-
-      if(isAllocated_){
-        py::print("The memory is already allocated. Please deallocate it first by calling clear");
-        return;
-      }
-      isAllocated_ = true;
-
-      const UINT
-          numEnergyLevel = static_cast<UINT>(std::round((inputData_.energyEnd - inputData_.energyStart) / inputData_.incrementEnergy + 1));
-      data_ = new Real[numEnergyLevel * inputData_.numX * inputData_.numY];
+        const UINT
+            numEnergyLevel = static_cast<UINT>(std::round((inputData_.energyEnd - inputData_.energyStart) / inputData_.incrementEnergy + 1));
+        data_ = new Real[numEnergyLevel * inputData_.numX * inputData_.numY];
     }
 
     /**
@@ -68,9 +52,6 @@ public:
      * @return the pointer to the scattering pattern data
      */
     inline Real * data(){
-      if(not(isAllocated_)){
-        py::print("[ERROR] Memory not allocated. Please allocate it first");
-      }
       return data_;
     }
 
@@ -81,7 +62,6 @@ public:
       if(data_ != nullptr) {
         delete[] data_;
         data_ = nullptr;
-        isAllocated_ = false;
       }
     }
 

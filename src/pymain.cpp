@@ -143,7 +143,6 @@ PYBIND11_MODULE(CyRSoXS, module) {
 
   py::class_<ScatteringPattern>(module,"ScatteringPattern")
       .def(py::init<const InputData &>(), "Constructor",py::arg("InputData"))
-      .def("allocate",&ScatteringPattern::allocate,"Allocates the memory")
       .def("clear",&ScatteringPattern::clear,"Clears the memory")
       .def("writeToHDF5",&ScatteringPattern::writeToHDF5,"Dumps data in  HDF5 file format")
       .def("writeToVTI",&ScatteringPattern::writeToVTI,"Dumps data in  VTI file format")
