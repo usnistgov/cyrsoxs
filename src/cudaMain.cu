@@ -85,8 +85,8 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 
 
 if(windowing == FFT::FFTWindowing::HANNING) {
-  UINT Z = static_cast<UINT>(floorf(threadID / (voxel.y * voxel.x * 1.0)));
-  UINT Y = static_cast<UINT>(floorf((threadID - Z * voxel.y * voxel.x) / (voxel.x * 1.0)));
+  UINT Z = static_cast<UINT>(threadID / (voxel.y * voxel.x * 1.0));
+  UINT Y = static_cast<UINT>((threadID - Z * voxel.y * voxel.x) / (voxel.x * 1.0));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
   Real3 hanningWeight;
   hanningWeight.x = static_cast<Real> (0.5 * (1 - cos(2 * M_PI * X / (voxel.x))));
