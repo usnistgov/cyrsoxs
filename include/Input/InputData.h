@@ -257,6 +257,7 @@ private:
         const bool hasDuplicates = std::adjacent_find(energies.begin(), energies.end()) != energies.end();
         if(hasDuplicates) {
             pybind11::print("energies has duplicate entries . Can not add");
+            return;
         }
         paramChecker_.set(ParamChecker::Parameters::ENERGY,true);
     }

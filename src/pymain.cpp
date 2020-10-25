@@ -48,7 +48,8 @@ namespace py = pybind11;
  * @param voxelData Voxel data
  */
 void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
-            const VoxelData &voxelData,ScatteringPattern & scatteringPattern) {
+            const VoxelData &voxelData,ScatteringPattern & scatteringPattern,
+            bool ifWriteMetadata = true) {
   if (not(inputData.validate())) {
     py::print("Issues with Input Data");
     return ;
@@ -64,9 +65,13 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
     return ;
   }
 
-  py::gil_scoped_release release;
-  printCopyrightInfo();
 
+  py::gil_scoped_release release;
+  static bool printCopyInfo = true;
+  if(printCopyInfo) {
+      printCopyrightInfo();
+      printCopyInfo = false;
+  }
 
   std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
   std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
@@ -75,8 +80,10 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
   std::cout << "\n [STAT] Executing: \n\n";
   const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
   cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(), voxelData.data());
-  printMetaData(inputData);
-  std::cout << "\n [STAT] Execution finished \n";
+  if(ifWriteMetadata) {
+      printMetaData(inputData);
+  }
+
 
   py::gil_scoped_acquire acquire;
 
@@ -148,7 +155,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"));
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
-             py::arg("VoxelData"),py::arg("ScatteringPattern"));
+             py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);
   module.def("cleanup", &cleanup, "Cleanup",  py::arg("RefractiveIndex"), py::arg("VoxelData"),py::arg("ScatteringPattern"));
 
 

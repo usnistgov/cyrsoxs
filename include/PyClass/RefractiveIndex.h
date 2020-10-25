@@ -17,7 +17,7 @@ namespace py = pybind11;
  * @brief Class to store the refractive index data
  */
 class RefractiveIndexData {
-    const std::vector<Real> energies; /// Start of energy
+    const std::vector<Real> &energies; /// Start of energy
     std::vector<Material<NUM_MATERIAL> > refractiveIndex; /// Refractive index data at all energy level
     std::vector<bool> isValid; /// A vector of bool to check if the optical constants is added at each energy level.
 public:
@@ -26,19 +26,23 @@ public:
      * @param inputData InputData
      */
     RefractiveIndexData(const InputData &inputData)
-        :energies(inputData.energies){
-      UINT numEnergyData = energies.size();
-      refractiveIndex.resize(numEnergyData);
-      isValid.resize(numEnergyData);
-      std::fill(isValid.begin(), isValid.end(), false);
+        : energies(inputData.energies){
+        UINT numEnergyData = energies.size();
+        refractiveIndex.resize(numEnergyData);
+        isValid.resize(numEnergyData);
+        std::fill(isValid.begin(), isValid.end(), false);
+    }
+
+    ~RefractiveIndexData() {
+        clear();
     }
 
     /**
      * @brief Clears up the memory
      */
     void clear() {
-      std::vector<Material<NUM_MATERIAL> > _materialInput;
-      std::swap(_materialInput, refractiveIndex);
+        std::vector<Material<NUM_MATERIAL> > _materialInput;
+        std::swap(_materialInput, refractiveIndex);
     }
 
 
@@ -50,36 +54,37 @@ public:
      * @param Energy The value of energy
      */
     void addData(const std::vector<std::vector<Real>> &values, const Real Energy) {
-      enum EnergyValues : u_short {
-          DeltaPara = 0,
-          BetaPara = 1,
-          DeltaPerp = 2,
-          BetaPerp = 3
-      };
-      if (not(values.size() == NUM_MATERIAL)) {
-        py::print("Wrong input for Energy. Number not matching with number of Materials");
-        return;
-      }
-      for (auto &value:values) {
-        if ((value.size() != 4)) {
-          py::print("Wrong number of input parameters. Parameters must be in the order of "
-                    "(DeltaPara, BetaPara, DeltaPerp, , BetaPerp)");
-          return;
+        enum EnergyValues : u_short {
+            DeltaPara = 0,
+            BetaPara = 1,
+            DeltaPerp = 2,
+            BetaPerp = 3
+        };
+        if (not(values.size() == NUM_MATERIAL)) {
+            py::print("Wrong input for Energy. Number not matching with number of Materials");
+            return;
         }
-      }
-      UINT counter = (std::lower_bound(energies.begin(),energies.end(),Energy) - energies.begin());
-      if(FEQUALS(energies[counter],Energy)){
-          py::print("Bad Energy. Trying to add parameters for non-existant energy.");
-          return;
-      }
-      for (UINT i = 0; i < NUM_MATERIAL; i++) {
-        refractiveIndex[counter].npara[i].x = 1 - values[i][EnergyValues::DeltaPara];
-        refractiveIndex[counter].npara[i].y = values[i][EnergyValues::BetaPara];
-        refractiveIndex[counter].nperp[i].x = 1 - values[i][EnergyValues::DeltaPerp];
-        refractiveIndex[counter].nperp[i].y = values[i][EnergyValues::BetaPerp];
-      }
+        for (auto &value:values) {
+            if ((value.size() != 4)) {
+                py::print("Wrong number of input parameters. Parameters must be in the order of "
+                          "(DeltaPara, BetaPara, DeltaPerp, , BetaPerp)");
+                return;
+            }
+        }
+        UINT counter = (std::lower_bound(energies.begin(), energies.end(), Energy) - energies.begin());
+        py::print(counter, " ", energies[counter]);
+        if (not(FEQUALS(energies[counter], Energy))) {
+            py::print("Bad Energy. Trying to add parameters for non-existant energy.");
+            return;
+        }
+        for (UINT i = 0; i < NUM_MATERIAL; i++) {
+            refractiveIndex[counter].npara[i].x = 1 - values[i][EnergyValues::DeltaPara];
+            refractiveIndex[counter].npara[i].y = values[i][EnergyValues::BetaPara];
+            refractiveIndex[counter].nperp[i].x = 1 - values[i][EnergyValues::DeltaPerp];
+            refractiveIndex[counter].nperp[i].y = values[i][EnergyValues::BetaPerp];
+        }
 
-      isValid[counter] = true;
+        isValid[counter] = true;
 
     }
 
@@ -87,17 +92,17 @@ public:
      * @brief prints the energy Data
      */
     void printEnergyData() const {
-      UINT count = 0;
-      for (auto &values : refractiveIndex) {
-        Real currEnegy = energies[count];
-        py::print("Energy = ", currEnegy);
-        for (int i = 0; i < NUM_MATERIAL; i++) {
-          py::print("Material = ", i, "npara = ", std::complex<Real>(values.npara[i].x, values.npara[i].y),
-                    "nperp = ", std::complex<Real>(values.nperp[i].x, values.nperp[i].y));
-        }
-        count++;
+        UINT count = 0;
+        for (auto &values : refractiveIndex) {
+            Real currEnegy = energies[count];
+            py::print("Energy = ", currEnegy);
+            for (int i = 0; i < NUM_MATERIAL; i++) {
+                py::print("Material = ", i, "npara = ", std::complex<Real>(values.npara[i].x, values.npara[i].y),
+                          "nperp = ", std::complex<Real>(values.nperp[i].x, values.nperp[i].y));
+            }
+            count++;
 
-      }
+        }
     }
 
     /**
@@ -105,7 +110,7 @@ public:
      * @return The refractive index data
      */
     const std::vector<Material<NUM_MATERIAL>> &getRefractiveIndexData() const {
-      return refractiveIndex;
+        return refractiveIndex;
     }
 
     /**
@@ -113,17 +118,16 @@ public:
      * @return True if the energy data is valid. False otherwise
      */
     bool validate() const {
-      if(std::all_of(isValid.begin(), isValid.end(), [](bool x) { return (x == true); })){
-        return true;
-      }
-      else{
-        for(UINT i = 0; i < isValid.size(); i++){
-          if(not(isValid[i])){
-            py::print("Optical constants data missing for energy = ",energies[i],"eV");
-          }
+        if (std::all_of(isValid.begin(), isValid.end(), [](bool x) { return (x == true); })) {
+            return true;
+        } else {
+            for (UINT i = 0; i < isValid.size(); i++) {
+                if (not(isValid[i])) {
+                    py::print("Optical constants data missing for energy = ", energies[i], "eV");
+                }
+            }
         }
-      }
-      return false;
+        return false;
     }
 };
 

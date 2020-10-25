@@ -88,7 +88,6 @@ public:
       writeVTI(inputData_, voxelDimensions, data_);
     }
 
-
     /**
      * @brief returns the data in the numpy array. Note that it is the same memory allocation
      * with numpy wrapper.

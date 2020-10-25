@@ -190,11 +190,10 @@ int cudaMain(const UINT *voxel,
   {
 
 
-    int device_gpu = -1;
     cudaSetDevice(omp_get_thread_num());
     cudaDeviceProp dprop;
     cudaGetDeviceProperties(&dprop, omp_get_thread_num());
-    cudaGetDeviceCount(&device_gpu);
+
 #ifdef PROFILING
     if(warmup() == EXIT_SUCCESS){
       std::cout << "Warmup completed on GPU " << dprop.name << "\n";
