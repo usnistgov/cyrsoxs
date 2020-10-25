@@ -82,12 +82,13 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
   static bool printCopyInfo = true;
   if(printCopyInfo) {
       printCopyrightInfo();
+      std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
+      std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+      std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
       printCopyInfo = false;
   }
 
-  std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
-  std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
-  std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
+
 
   std::cout << "\n [STAT] Executing: \n\n";
   const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};

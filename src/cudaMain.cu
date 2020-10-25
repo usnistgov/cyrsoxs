@@ -114,7 +114,7 @@ int cudaMain(const UINT *voxel,
              Real * projectionGPUAveraged,
              const Voxel<NUM_MATERIAL> *voxelInput) {
 
-    if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > UINT32_MAX){
+    if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()){
         std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
         exit(EXIT_FAILURE);
     }
