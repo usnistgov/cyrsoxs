@@ -42,6 +42,18 @@ namespace py = pybind11;
 
 
 /**
+ * Returns the number of materials the code was compiled with
+ *
+ * @return number of materials
+ */
+int getNumMaterials() {
+    return NUM_MATERIAL;
+}
+
+
+
+
+/**
  * @brief Launch the GPU kernel for CyRSoXS.
  * @param inputData InputData
  * @param energyData Energy data
@@ -157,6 +169,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);
   module.def("cleanup", &cleanup, "Cleanup",  py::arg("RefractiveIndex"), py::arg("VoxelData"),py::arg("ScatteringPattern"));
+  module.def("get_n_materials", &getNumMaterials, "Get number of materials");
 
 
 }
