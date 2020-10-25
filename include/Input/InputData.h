@@ -191,7 +191,6 @@ private:
     libconfig::Config cfg;
     cfg.readFile(filename.c_str());
     ReadArrayRequired(cfg, "Energies", energies);
-    ReadArrayRequired(cfg, "Energies", energies);
     ReadValueRequired(cfg, "StartAngle", startAngle);
     ReadValueRequired(cfg, "EndAngle", endAngle);
     ReadValueRequired(cfg, "IncrementAngle", incrementAngle);
