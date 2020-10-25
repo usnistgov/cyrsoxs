@@ -43,7 +43,11 @@ typedef float4 Real4;
 typedef float2 Complex;
 
 #endif
+#ifdef USE_64_BIT_INDICES
+typedef uint64_t BigUINT;
+#else
 typedef uint32_t BigUINT;
+#endif
 typedef uint32_t UINT;
 
 #define NUM_THREADS 128

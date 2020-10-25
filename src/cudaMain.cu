@@ -114,10 +114,17 @@ int cudaMain(const UINT *voxel,
              Real * projectionGPUAveraged,
              const Voxel<NUM_MATERIAL> *voxelInput) {
 
+    if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > UINT32_MAX){
+        std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
+        exit(EXIT_FAILURE);
+    }
+
   const BigUINT voxelSize = voxel[0] * voxel[1] * voxel[2]; /// Voxel size
   const UINT
       numAnglesRotation = static_cast<UINT>(std::round((idata.endAngle - idata.startAngle) / idata.incrementAngle + 1));
   const UINT & numEnergyLevel = idata.energies.size();
+
+
 
 
   int num_gpu;
@@ -231,10 +238,10 @@ int cudaMain(const UINT *voxel,
     const UINT numEnergyPerGPU = static_cast<UINT>(std::ceil(numEnergyLevel*1.0/num_gpu));
     const UINT numStart = (numEnergyPerGPU*ompThreadID);
     UINT numEnd   = (numEnergyPerGPU*(ompThreadID + 1));
-    numEnd = std::min(numEnd,numEnergyLevel-1);
+    numEnd = std::min(numEnd,numEnergyLevel);
 
     const Real & energyStart = numStart < numEnergyLevel ? idata.energies[numStart] : 0;
-    const Real & energyEnd   = idata.energies[numEnd] ;
+    const Real & energyEnd   = idata.energies[numEnd - 1] ;
 
     if(numStart >= numEnergyLevel){
       std::cout << "[INFO] [GPU = " << dprop.name  << "] -> No computation. Idle\n";
@@ -324,7 +331,7 @@ int cudaMain(const UINT *voxel,
     UINT BlockSize = static_cast<UINT >(ceil(voxelSize * 1.0 / NUM_THREADS));
     UINT BlockSize2 = static_cast<UINT>(ceil(voxel[0] * voxel[1] * 1.0 / NUM_THREADS));
 
-    for (UINT j = numStart; j <= numEnd; j++) {
+    for (UINT j = numStart; j < numEnd; j++) {
 
       const Real & energy = (idata.energies[j]);
       std::cout << " [STAT] Energy = " << energy << " starting "  << "\n";
@@ -420,11 +427,10 @@ int cudaMain(const UINT *voxel,
         }
 
 
-
+#pragma message "Make me callbacks"
         FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationX,vx);
         cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
-
 
         FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationY,vx);
         cudaDeviceSynchronize();

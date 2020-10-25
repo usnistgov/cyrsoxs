@@ -1,5 +1,10 @@
 Cy-RSoXS Changes History
 ====================================
+Version 0.8.2
+=================
+* Energies now accepted as lists
+* Size of `BigUINT` dropped to 32 bit. Compilation option added to enable 64 bit.
+* FFT made in place.
 
 Version 0.8.1
 =================
