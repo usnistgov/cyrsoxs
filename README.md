@@ -62,6 +62,10 @@ Acknowledgement
 ===============
 We thank ONR MURI Center for Self-Assembled Organic Electronics for providing the support for this work.
 
+Frequently Asked Question
+============================
+See [docs/FAQ.md](docs/FAQ.md) for some of the known issues or Frequently asked questions.
+
 Contact
 =======
 Questions and comments should be sent to Dr. Baskar Ganapathysubramanian at [baskarg@iastate.edu](mailto:baskarg@iastate.edu) or Dr.  Adarsh Krishnamurthy [adarsh@iastate.edu](mailto:adarsh@iastate.edu).
