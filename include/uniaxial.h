@@ -259,11 +259,7 @@ __device__ void FFTShift(T *array, uint3 voxel) {
 
 
 /**
- * @brief This function computes the Scatter3D computation. The current implementation
- * assumes that the Fourier transform of polarization is shifted (in the default order
- * given by Matlab or cuFFT). This is different from the Igor. This offset is taken care
- * on the fly during computation of scatter3D.
- *
+ * @brief This function computes the Scatter3D computation.
  *
  * @param [in] polarizationX  X component of polarization in Fourier space
  * @param [in] polarizationY  Y component of polarization in Fourier space
@@ -279,6 +275,8 @@ __global__ void computeScatter3D(Complex *polarizationX,
                                  Complex *polarizationZ,
                                  Real *Scatter3D,
                                  const ElectricField elefield,
+                                 const Real eAngle,
+                                 const Real kAngle,
                                  const BigUINT voxelNum,
                                  const uint3 voxel,
                                  const Real physSize,
@@ -290,9 +288,9 @@ __global__ void computeScatter3D(Complex *polarizationX,
     return;
   }
 
-  const Complex pX = polarizationX[threadID];
-  const Complex pY = polarizationY[threadID];
-  const Complex pZ = polarizationZ[threadID];
+  const Complex  pX = polarizationX[threadID];
+  const Complex  pY = polarizationY[threadID];
+  const Complex  pZ = polarizationZ[threadID];
 
   UINT X, Y, Z;
   reshape1Dto3D(threadID, X, Y, Z, voxel);
@@ -338,6 +336,7 @@ __global__ void computeScatter3D(Complex *polarizationX,
        py*(k^2 - q2^2) - px*q1*q2 + pz*q2*(k - q3)
        pz*q3*(2*k - q3) + px*q1*(k - q3) + py*q2*(k - q3)
  */
+/*
 
   const Real &k = elefield.k.z;
   const Real &q1 = q.x;
@@ -357,7 +356,44 @@ __global__ void computeScatter3D(Complex *polarizationX,
   res += val.x * val.x + val.y * val.y;
 
   Scatter3D[threadID] = res;
+*/
+ const Real cosPhi   = cos(eAngle);
+ const Real cosTheta = cos(kAngle);
+ const Real sinPhi   = sin(eAngle);
+ const Real sinTheta = sin(kAngle);
 
+ const Real &k = elefield.k.z;
+ const Real &qX = q.x;
+ const Real &qY = q.y;
+ const Real &qZ = q.z;
+
+ Complex p1,p2,p3;
+ p1.x = pX.x*cosPhi + pY.x*sinPhi;
+ p1.y = pX.y*cosPhi + pY.y*sinPhi;
+
+ p2.x = -pX.x*sinPhi*cosTheta + pY.x*cosPhi*cosTheta - pZ.x*sinTheta;
+ p2.y = -pX.y*sinPhi*cosTheta + pY.y*cosPhi*cosTheta - pZ.y*sinTheta;
+
+ p3.x = -pX.x*sinPhi*sinTheta + pY.x*cosPhi*sinTheta + pZ.x*cosTheta;
+ p3.y = -pX.y*sinPhi*sinTheta + pY.y*cosPhi*sinTheta + pZ.y*cosTheta;
+
+ const Real qe   =  qX*cosPhi + qY*sinPhi;
+ const Real qper = -qX*sinPhi*cosTheta + qY*cosPhi*sinTheta - qZ*sinTheta;
+ const Real qpar = -qX*sinPhi*sinTheta + qY*cosPhi*sinTheta + qZ*cosTheta;
+
+ val.x = -qe*qe*p1.x + k*k*p1.x -qe*(qper*p2.x + qpar*p3.x);
+ val.y = -qe*qe*p1.y + k*k*p1.y -qe*(qper*p2.y + qpar*p3.y);
+ res = val.x * val.x + val.y * val.y;
+
+ val.x = -qe*qper*p1.x + (-qper*qper + k*k)*p2.x - qper*qpar*p3.x;
+ val.y = -qe*qper*p1.y + (-qper*qper + k*k)*p2.y - qper*qpar*p3.y;
+ res += val.x * val.x + val.y * val.y;
+
+ val.x = -qe*qpar*p1.x  - qper*qpar*p2.x + (-qpar*qpar + k*k)*p3.x;
+ val.y = -qe*qpar*p1.y  - qper*qpar*p2.y + (-qpar*qpar + k*k)*p3.y;
+ res += val.x * val.x + val.y * val.y;
+
+ Scatter3D[threadID] = res;
 }
 
 /**
@@ -502,7 +538,7 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   if (not(enable2D)) {
     dx.z = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.z - 1) * 1.0));
   }
-  UINT Y = static_cast<UINT>(floorf(threadID) / (voxel.x * 1.0));
+  UINT Y = static_cast<UINT>(threadID / (voxel.x * 1.0));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x);
 
   pos.y = start + Y * dx.y;
@@ -662,7 +698,7 @@ __global__ void radialIntegrate(Real *integrate,
     return;
   }
 
-  UINT Y = static_cast<UINT>(floorf(threadID) / (voxel.x * 1.0));
+  UINT Y = static_cast<UINT>(threadID / (voxel.x * 1.0));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x);
   Real2 dx, pos;
   Real start, val;

@@ -123,7 +123,7 @@ int cudaMain(const UINT *voxel,
   const UINT
       numAnglesRotation = static_cast<UINT>(std::round((idata.endAngle - idata.startAngle) / idata.incrementAngle + 1));
   const UINT & numEnergyLevel = idata.energies.size();
-
+  const UINT numKRotation = static_cast<UINT>(std::round((idata.kEnd - idata.kStart) / idata.kIncrement + 1));
 
 
 
@@ -476,48 +476,53 @@ int cudaMain(const UINT *voxel,
 
 
 
-        /** Scatter 3D computation **/
-        computeScatter3D <<< BlockSize, NUM_THREADS >>> (d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, voxelSize, vx, idata.physSize,
-                                                         idata.if2DComputation());
-        cudaDeviceSynchronize();
-        gpuErrchk(cudaPeekAtLastError());
+        for(UINT kAngleID = 0; kAngleID < numKRotation; kAngleID++) {
+            Real kAngle = kAngleID*idata.kIncrement;
+            /** Scatter 3D computation **/
+            computeScatter3D <<< BlockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
+                                                            d_scatter3D, eleField, angle,kAngle, voxelSize, vx, idata.physSize,
+                                                            idata.if2DComputation());
+            cudaDeviceSynchronize();
+            gpuErrchk(cudaPeekAtLastError());
 
 #ifdef DUMP_FILES
-        CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError())
-        {
-          std::string dirname = "Scatter/";
-          std::string fname = dirname + "scatter" + std::to_string(i);
-          VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
-        }
+            CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
+            gpuErrchk(cudaPeekAtLastError())
+            {
+              std::string dirname = "Scatter/";
+              std::string fname = dirname + "scatter" + std::to_string(i);
+              VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
+            }
 
 #endif
 
 #ifdef PROFILING
-        {
-          END_TIMER(TIMERS::SCATTER3D)
-          START_TIMER(TIMERS::EWALDS)
-        }
+            {
+              END_TIMER(TIMERS::SCATTER3D)
+              START_TIMER(TIMERS::EWALDS)
+            }
 #endif
 
 #ifdef EOC
-        CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
+            CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
+            gpuErrchk(cudaPeekAtLastError());
 
 #ifdef PROFILING
-        {
+            {
 
-        }
+            }
 #endif
-        computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
+            computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
 #else
-        cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
+            cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
 
-        computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>> (d_projection,d_rotProjection, d_scatter3D, vx,
-            eleField.k.z,idata.physSize, static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
-                                                                   idata.if2DComputation());
-        cudaDeviceSynchronize();
-        gpuErrchk(cudaPeekAtLastError());
+            computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_rotProjection, d_scatter3D, vx,
+                                                                      eleField.k.z, idata.physSize,
+                                                                      static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
+                                                                      idata.if2DComputation());
+            cudaDeviceSynchronize();
+            gpuErrchk(cudaPeekAtLastError());
+        }
 #ifdef PROFILING
         {
           END_TIMER(TIMERS::EWALDS)

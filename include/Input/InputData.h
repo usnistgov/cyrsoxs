@@ -172,6 +172,13 @@ private:
   int ewaldsInterpolation = Interpolation::EwaldsInterpolation::LINEAR;
   /// Windowing Type
   UINT windowingType = FFT::FFTWindowing::NONE;
+  /// Start of k rotation
+  Real kStart = 0;
+  /// End of k rotation
+  Real kEnd = 0;
+  /// k Intcrement
+  Real kIncrement = 1.0;
+
 
   /**
    *
@@ -203,6 +210,18 @@ private:
     if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
     if(ReadValue(cfg, "WriteVTI",writeVTI)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
+    if(ReadValue(cfg, "kStart",kStart)){}
+    if(ReadValue(cfg, "kEnd",kEnd)){}
+    if(ReadValue(cfg, "kIncrement",kIncrement)){
+        if(FEQUALS(kStart,kEnd)){
+            kIncrement = 1.0;
+        }
+        else{
+            if(FEQUALS(kIncrement,0.0)){
+                throw std::logic_error("kIncrement can not be 0\n");
+            }
+        }
+    }
     check2D();
 
     refractiveIndex.resize(energies.size());
