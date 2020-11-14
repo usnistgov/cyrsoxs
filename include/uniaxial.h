@@ -552,17 +552,18 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
     pos.z = -k + sqrt(val);
     if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
       BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
-      projection[threadID] = scatter3D[id];
+      projection[threadID] += scatter3D[id];
     }
     else {
       if (enable2D) {
-        projection[threadID] = computeBilinearInterpolation(scatter3D, pos, start, dx, X, Y, voxel);
+        projection[threadID] += computeBilinearInterpolation(scatter3D, pos, start, dx, X, Y, voxel);
       } else {
         UINT Z = static_cast<UINT >(round((pos.z - start) / (dx.z)));
-        projection[threadID] = computeTrilinearInterpolation(scatter3D, pos, start, dx, X, Y, Z, voxel);
+        projection[threadID] += computeTrilinearInterpolation(scatter3D, pos, start, dx, X, Y, Z, voxel);
       }
     }
   }
+#pragma message "Fix me"
   d_rotprojection[threadID] = NAN;
 
 }
@@ -570,7 +571,7 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
  * @brief This function computes the rotation masks.
  * If during the rotation, some values has been NANs, because they do not belong
  * within the boundary, this function resets it to zero. In addition, it computes a
- * mask counter keeping track of which pixels has been NANs as wedo not want to average
+ * mask counter keeping track of which pixels has been NANs as we do not want to average
  * the final result which has been NANs.
  * @param [in,out] rotProjection the rotated projection
  * @param [out] mask the mask vector

@@ -475,9 +475,10 @@ int cudaMain(const UINT *voxel,
 #endif
 
 
-
+        cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
+        cudaMemset(d_projection, 0, voxel[0] * voxel[1] * sizeof(Real));
         for(UINT kAngleID = 0; kAngleID < numKRotation; kAngleID++) {
-            Real kAngle = kAngleID*idata.kIncrement;
+            Real kAngle = (idata.kStart + kAngleID*idata.kIncrement)*M_PI/180.0;
             /** Scatter 3D computation **/
             computeScatter3D <<< BlockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
                                                             d_scatter3D, eleField, angle,kAngle, voxelSize, vx, idata.physSize,
@@ -514,8 +515,6 @@ int cudaMain(const UINT *voxel,
 #endif
             computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
 #else
-            cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
-
             computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_rotProjection, d_scatter3D, vx,
                                                                       eleField.k.z, idata.physSize,
                                                                       static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
@@ -523,6 +522,18 @@ int cudaMain(const UINT *voxel,
             cudaDeviceSynchronize();
             gpuErrchk(cudaPeekAtLastError());
         }
+        const Real _factor = static_cast<Real>(numKRotation);
+#ifdef DOUBLE_PRECISION
+          stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
+#else
+          stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
+#endif
+        if (stat != CUBLAS_STATUS_SUCCESS) {
+            std::cout << "CUBLAS during scaling failed  with status " << stat << "\n";
+            exit(EXIT_FAILURE);
+        }
+
+
 #ifdef PROFILING
         {
           END_TIMER(TIMERS::EWALDS)
