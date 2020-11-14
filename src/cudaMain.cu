@@ -522,7 +522,7 @@ int cudaMain(const UINT *voxel,
             cudaDeviceSynchronize();
             gpuErrchk(cudaPeekAtLastError());
         }
-        const Real _factor = static_cast<Real>(numKRotation);
+        const Real _factor = static_cast<Real>(1.0/(numKRotation*1.0));
 #ifdef DOUBLE_PRECISION
           stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
 #else
