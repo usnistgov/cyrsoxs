@@ -549,7 +549,12 @@ __global__ void averageRotation(Real *rotProjection, const UINT *mask, const uin
   if (threadID >= totalSize) {
     return;
   }
-  rotProjection[threadID] = rotProjection[threadID] * static_cast<Real>(1.0 / (mask[threadID] * 1.0));
+  if(mask[threadID] == 0){
+      rotProjection[threadID] = 0;
+  }
+  else {
+      rotProjection[threadID] = rotProjection[threadID] * static_cast<Real>(1.0 / (mask[threadID] * 1.0));
+  }
 
 }
 
