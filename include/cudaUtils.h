@@ -258,4 +258,41 @@ __global__ void  getMaxandMinimum(const Real *val, const int2 idx, const uint2 v
 
 }
 
+/**
+ * @brief This function computes the matrix vector product.
+ * @param Matrix The matrix of complex type.
+ * @param Vec  The vector.
+ * @param matVec The matrix vector product
+ */
+__device__ Real computeMagVec1TimesVec1TTimesVec2(const Real *vec1 ,const Complex *vec2, const Real & k) {
+    const Real d = k*k;
+
+    const Real & a = vec1[0];
+    const Real & b = vec1[1];
+    const Real & c = vec1[2];
+
+    const Complex & p1 = vec2[0];
+    const Complex & p2 = vec2[1];
+    const Complex & p3 = vec2[2];
+
+    Real res = 0;
+    Complex _temp;
+    _temp.x = -a*a*p1.x + d*p1.x - a*(b*p2.x + c*p3.x);
+    _temp.y = -a*a*p1.y + d*p1.y - a*(b*p2.y + c*p3.y);
+    res = _temp.x*_temp.x + _temp.y*_temp.y;
+
+    _temp.x = -a*b*p1.x - b*b*p2.x + d*p2.x - b*c*p3.x;
+    _temp.y = -a*b*p1.y - b*b*p2.y + d*p2.y - b*c*p3.y;
+    res += _temp.x*_temp.x + _temp.y*_temp.y;
+
+    _temp.x = -a*c*p1.x - b*c*p2.x + (-c*c + d)*p3.x;
+    _temp.y = -a*c*p1.y - b*c*p2.y + (-c*c + d)*p3.y;
+    res += _temp.x*_temp.x + _temp.y*_temp.y;
+
+    return res;
+
+
+}
+
+
 #endif //WRITER_CUDAUTILS_H

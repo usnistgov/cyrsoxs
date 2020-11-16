@@ -288,10 +288,6 @@ __global__ void computeScatter3D(Complex *polarizationX,
     return;
   }
 
-  const Complex  pX = polarizationX[threadID];
-  const Complex  pY = polarizationY[threadID];
-  const Complex  pZ = polarizationZ[threadID];
-
   UINT X, Y, Z;
   reshape1Dto3D(threadID, X, Y, Z, voxel);
 
@@ -309,54 +305,6 @@ __global__ void computeScatter3D(Complex *polarizationX,
   if (not(enable2D)) {
     q.z = static_cast<Real>((-M_PI / physSize) + Z * dx.z);
   }
-  Complex val;
-  Real res;
-/*
-  val.x = q.z * (2 * elefield.k.z - q.z) * pX.x
-      + q.y * (elefield.k.z - q.z) * pY.x + q.x * (elefield.k.z - q.z) * pZ.x;
-
-  val.y = q.z * (2 * elefield.k.z - q.z) * pX.y
-      + q.y * (elefield.k.z - q.z) * pY.y + q.x * (elefield.k.z - q.z) * pZ.y;
-  res = val.x * val.x + val.y * val.y;
-
-  val.x = q.y * (elefield.k.z - q.z) * pX.x
-      - (q.y * q.y - elefield.k.z * elefield.k.z) * pY.x - q.y * q.x * pZ.x;
-  val.y = q.y * (elefield.k.z - q.z) * pX.y
-      - (q.y * q.y - elefield.k.z * elefield.k.z) * pY.y - q.y * q.x * pZ.y;
-  res += val.x * val.x + val.y * val.y;
-
-  val.x = q.x * (elefield.k.z - q.z) * pX.x - (q.y * q.x) * pY.x
-      - (q.x * q.x - elefield.k.z * elefield.k.z) * pZ.x;
-  val.y = q.x * (elefield.k.z - q.z) * pX.y - (q.y * q.x) * pY.y
-      - (q.x * q.x - elefield.k.z * elefield.k.z) * pZ.y;
-  res += val.x * val.x + val.y * val.y;
-  */
-  /**
-       px*(k^2 - q1^2) - py*q1*q2 + pz*q1*(k - q3)
-       py*(k^2 - q2^2) - px*q1*q2 + pz*q2*(k - q3)
-       pz*q3*(2*k - q3) + px*q1*(k - q3) + py*q2*(k - q3)
- */
-/*
-
-  const Real &k = elefield.k.z;
-  const Real &q1 = q.x;
-  const Real &q2 = q.y;
-  const Real &q3 = q.z;
-
-  val.x = pX.x * (k * k - q1 * q1) - pY.x * q1 * q2 + pZ.x * q1 * (k - q3);
-  val.y = pX.y * (k * k - q1 * q1) - pY.y * q1 * q2 + pZ.y * q1 * (k - q3);
-  res = val.x * val.x + val.y * val.y;
-
-  val.x = pY.x * (k * k - q2 * q2) - pX.x * q1 * q2 + pZ.x * q2 * (k - q3);
-  val.y = pY.y * (k * k - q2 * q2) - pX.y * q1 * q2 + pZ.y * q2 * (k - q3);
-  res += val.x * val.x + val.y * val.y;
-
-  val.x = pZ.x * q3 * (2 * k - q3) + pX.x * q1 * (k - q3) + pY.x * q2 * (k - q3);
-  val.y = pZ.y * q3 * (2 * k - q3) + pX.y * q1 * (k - q3) + pY.y * q2 * (k - q3);
-  res += val.x * val.x + val.y * val.y;
-
-  Scatter3D[threadID] = res;
-*/
  const Real cosPhi   = cos(eAngle);
  const Real cosTheta = cos(kAngle);
  const Real sinPhi   = sin(eAngle);
@@ -367,33 +315,10 @@ __global__ void computeScatter3D(Complex *polarizationX,
  const Real &qY = q.y;
  const Real &qZ = q.z;
 
- Complex p1,p2,p3;
- p1.x = pX.x*cosPhi + pY.x*sinPhi;
- p1.y = pX.y*cosPhi + pY.y*sinPhi;
+ const Complex  pVec[3]{polarizationX[threadID],polarizationY[threadID],polarizationZ[threadID]};
+ const Real     qVec[3]{(-k*sinPhi*sinTheta + qX), (k*cosPhi*sinTheta+qY),(k*cosTheta+qZ)};
 
- p2.x = -pX.x*sinPhi*cosTheta + pY.x*cosPhi*cosTheta - pZ.x*sinTheta;
- p2.y = -pX.y*sinPhi*cosTheta + pY.y*cosPhi*cosTheta - pZ.y*sinTheta;
-
- p3.x = -pX.x*sinPhi*sinTheta + pY.x*cosPhi*sinTheta + pZ.x*cosTheta;
- p3.y = -pX.y*sinPhi*sinTheta + pY.y*cosPhi*sinTheta + pZ.y*cosTheta;
-
- const Real qe   =  qX*cosPhi + qY*sinPhi;
- const Real qper = -qX*sinPhi*cosTheta + qY*cosPhi*sinTheta - qZ*sinTheta;
- const Real qpar = -qX*sinPhi*sinTheta + qY*cosPhi*sinTheta + qZ*cosTheta;
-
- val.x = -qe*qe*p1.x + k*k*p1.x -qe*(qper*p2.x + qpar*p3.x);
- val.y = -qe*qe*p1.y + k*k*p1.y -qe*(qper*p2.y + qpar*p3.y);
- res = val.x * val.x + val.y * val.y;
-
- val.x = -qe*qper*p1.x + (-qper*qper + k*k)*p2.x - qper*qpar*p3.x;
- val.y = -qe*qper*p1.y + (-qper*qper + k*k)*p2.y - qper*qpar*p3.y;
- res += val.x * val.x + val.y * val.y;
-
- val.x = -qe*qpar*p1.x  - qper*qpar*p2.x + (-qpar*qpar + k*k)*p3.x;
- val.y = -qe*qpar*p1.y  - qper*qpar*p2.y + (-qpar*qpar + k*k)*p3.y;
- res += val.x * val.x + val.y * val.y;
-
- Scatter3D[threadID] = res;
+ Scatter3D[threadID] = computeMagVec1TimesVec1TTimesVec2(qVec,pVec,k);
 }
 
 /**
@@ -520,6 +445,8 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
                                           const Real *scatter3D,
                                           const uint3 voxel,
                                           const Real k,
+                                          const Real eAngle,
+                                          const Real kAngle,
                                           const Real physSize,
                                           const Interpolation::EwaldsInterpolation interpolation,
                                           const bool enable2D) {
@@ -532,6 +459,15 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   Real3 dx, pos;
   start = -static_cast<Real>(M_PI / physSize);
 
+  const Real cosPhi   = cos(eAngle);
+  const Real cosTheta = cos(kAngle);
+  const Real sinPhi   = sin(eAngle);
+  const Real sinTheta = sin(kAngle);
+
+  const Real kx = -k*sinPhi*sinTheta;
+  const Real ky =  k*cosPhi*sinTheta;
+  const Real kz =  k*cosTheta;
+
   dx.x = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.x - 1) * 1.0));
   dx.y = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.y - 1) * 1.0));
   dx.z = 0;
@@ -540,16 +476,16 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   }
   UINT Y = static_cast<UINT>(threadID / (voxel.x * 1.0));
   UINT X = static_cast<UINT>(threadID - Y * voxel.x);
+  pos.y = (start + Y * dx.y) ;
+  pos.x = (start + X * dx.x) ;
 
-  pos.y = start + Y * dx.y;
-  pos.x = start + X * dx.x;
-  val = k * k - pos.x * pos.x - pos.y * pos.y;
+  val = k * k - (pos.x + kx) * (pos.x + kx) - (pos.y + ky) * (pos.y + ky);
   if((val < 0) or (X == (voxel.x - 1)) or (Y == (voxel.y - 1))) {
     projection[threadID] = NAN;
   }
   else
   {
-    pos.z = -k + sqrt(val);
+    pos.z = -kz + sqrt(val);
     if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
       BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
       projection[threadID] += scatter3D[id];
