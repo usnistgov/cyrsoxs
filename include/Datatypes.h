@@ -73,6 +73,14 @@ namespace FFT {
     static_assert(sizeof(windowingName)/sizeof(char*) == FFTWindowing::MAX_SIZE,
                   "sizes dont match");
 }
+enum KRotationType : UINT{
+    NOROTATION = 0,
+    ROTATION = 1,
+    MAX = 2
+};
+static const char *kRotationTypeName[]{"No Rotation : (k = 0,0,1)","Rotation"};
+static_assert(sizeof(kRotationTypeName)/sizeof(char*) == KRotationType::MAX,
+              "sizes dont match");
 
 
 #define FEQUALS(x, y) fabs((x) - (y)) < 1E-10 ? true : false

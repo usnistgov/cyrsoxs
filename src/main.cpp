@@ -87,7 +87,7 @@
 int main(int argc, char **argv) {
 
     if(argc < 2){
-        std::cout << "Usage : " << argv[0] << " "<< "HDF5 fileName";
+        std::cout << "Usage : " << argv[0] << " "<< "HDF5FileName";
         exit(EXIT_FAILURE);
     }
     std::vector<Material<NUM_MATERIAL> > materialInput;
@@ -104,10 +104,10 @@ int main(int argc, char **argv) {
     printCopyrightInfo();
     cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, voxelData);
     if(inputData.writeHDF5) {
-      writeH5(inputData, voxelSize, projectionGPUAveraged);
+      writeH5(inputData, voxelSize, projectionGPUAveraged,inputData.HDF5DirName);
     }
     if(inputData.writeVTI) {
-      writeVTI(inputData, voxelSize, projectionGPUAveraged);
+      writeVTI(inputData, voxelSize, projectionGPUAveraged,inputData.VTIDirName);
     }
     printMetaData(inputData);
     delete[] projectionGPUAveraged;

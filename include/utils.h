@@ -35,8 +35,8 @@
  * @param voxelSize Voxel Size
  * @param projectionGPUAveraged The scattering pattern
  */
-static void writeH5(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged){
-    createDirectory("HDF5");
+static void writeH5(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged, const std::string dirName = "HDF5"){
+    createDirectory(dirName);
     // TODO: Make it work in parallel.
     omp_set_num_threads(1);
 
@@ -66,8 +66,8 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
  * @param voxelSize Voxel Size
  * @param projectionGPUAveraged The scattering pattern
  */
-static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged){
-    createDirectory("VTI");
+static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged,const std::string dirName = "VTI"){
+    createDirectory(dirName);
     omp_set_num_threads(inputData.num_threads);
     const UINT numEnergyLevel = inputData.energies.size();
 #pragma omp parallel

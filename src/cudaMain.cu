@@ -515,17 +515,22 @@ int cudaMain(const UINT *voxel,
 #endif
             computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
 #else
-            computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_rotProjection, d_scatter3D, vx,
-                                                                      eleField.k.z, idata.physSize,
+            computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_scatter3D, vx,
+                                                                      eleField.k.z, idata.physSize,angle,kAngle,
                                                                       static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
                                                                       idata.if2DComputation());
             cudaDeviceSynchronize();
             gpuErrchk(cudaPeekAtLastError());
         }
-        const Real _factor = static_cast<Real>(1.0/(numKRotation*1.0));
+
+        Real _factor;
+        _factor = NAN;
+        stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
+        _factor= static_cast<Real>(1.0/(numKRotation*1.0));
 #ifdef DOUBLE_PRECISION
           stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
 #else
+
           stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
 #endif
         if (stat != CUBLAS_STATUS_SUCCESS) {

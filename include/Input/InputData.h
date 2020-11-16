@@ -178,7 +178,11 @@ private:
   Real kEnd = 0;
   /// k Intcrement
   Real kIncrement = 1.0;
+  /// kRotationType
+  UINT kRotationType = KRotationType::NOROTATION;
 
+  std::string VTIDirName = "VTI";
+  std::string HDF5DirName = "HDF5";
 
   /**
    *
@@ -209,19 +213,31 @@ private:
     if(ReadValue(cfg, "RotMask",rotMask)){}
     if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
     if(ReadValue(cfg, "WriteVTI",writeVTI)){}
+    if(ReadValue(cfg, "VTIDirName",VTIDirName)){}
+    if(ReadValue(cfg, "HDF5DirName",HDF5DirName)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
-    if(ReadValue(cfg, "kStart",kStart)){}
-    if(ReadValue(cfg, "kEnd",kEnd)){}
-    if(ReadValue(cfg, "kIncrement",kIncrement)){
-        if(FEQUALS(kStart,kEnd)){
-            kIncrement = 1.0;
-        }
-        else{
-            if(FEQUALS(kIncrement,0.0)){
-                throw std::logic_error("kIncrement can not be 0\n");
+    if(ReadValue(cfg,"kRotationType",kRotationType)){}
+    if(kRotationType == KRotationType::ROTATION){
+        ReadValueRequired(cfg,"kStart",kStart);
+        ReadValueRequired(cfg,"kEnd",kEnd);
+        ReadValueRequired(cfg,"kIncrement",kIncrement);
+        if(ReadValue(cfg, "kIncrement",kIncrement)){
+            if(FEQUALS(kStart,kEnd)){
+                kIncrement = 1.0;
+            }
+            else{
+                if(FEQUALS(kIncrement,0.0)){
+                    throw std::logic_error("kIncrement can not be 0\n");
+                }
             }
         }
+        std::cout << "[WARNING:] This is an experimental routine that you are trying to use\n";
+    } else{
+        kStart = 0.0;
+        kEnd = 0.0;
+        kIncrement = 1.0;
     }
+
     check2D();
 
     refractiveIndex.resize(energies.size());

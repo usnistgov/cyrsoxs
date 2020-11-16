@@ -350,13 +350,13 @@ __host__ __device__ BigUINT computeEquivalentID(const Real3 pos,
 }
 
 
-__host__ __device__ inline Real computeBilinearInterpolation(const Real *data,
-                                                             const Real3 pos,
-                                                             const Real start,
-                                                             const Real3 dx,
-                                                             const UINT X,
-                                                             const UINT Y,
-                                                             const uint3 voxel
+__device__ inline Real computeBilinearInterpolation(const Real *data,
+                                                             const Real3 & pos,
+                                                             const Real & start,
+                                                             const Real3 & dx,
+                                                             const UINT & X,
+                                                             const UINT & Y,
+                                                             const uint3 & voxel
 ) {
 
   static constexpr unsigned short num_neigbour = 4;
@@ -380,14 +380,14 @@ __host__ __device__ inline Real computeBilinearInterpolation(const Real *data,
 
 }
 
-__host__ __device__ inline Real computeTrilinearInterpolation(const Real *data,
-                                                              const Real3 pos,
-                                                              const Real start,
-                                                              const Real3 dx,
-                                                              const UINT X,
-                                                              const UINT Y,
-                                                              const UINT Z,
-                                                              const uint3 voxel
+__device__ inline Real computeTrilinearInterpolation(const Real *data,
+                                                              const Real3 & pos,
+                                                              const Real & start,
+                                                              const Real3 & dx,
+                                                              const UINT & X,
+                                                              const UINT & Y,
+                                                              const UINT & Z,
+                                                              const uint3 & voxel
 ) {
   static constexpr unsigned short num_neigbour = 8;
   Real3 diffX;
@@ -441,7 +441,6 @@ __host__ __device__ inline Real computeTrilinearInterpolation(const Real *data,
  */
 /// TODO: template it
 __global__ void computeEwaldProjectionGPU(Real *projection,
-                                          Real *d_rotprojection,
                                           const Real *scatter3D,
                                           const uint3 voxel,
                                           const Real k,
@@ -499,9 +498,6 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
       }
     }
   }
-#pragma message "Fix me"
-  d_rotprojection[threadID] = NAN;
-
 }
 /**
  * @brief This function computes the rotation masks.
