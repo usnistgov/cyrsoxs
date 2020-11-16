@@ -35,7 +35,7 @@
  * @param voxelSize Voxel Size
  * @param projectionGPUAveraged The scattering pattern
  */
-static void writeH5(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged, const std::string dirName = "HDF5"){
+static void writeH5(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged, const std::string& dirName = "HDF5"){
     createDirectory(dirName);
     // TODO: Make it work in parallel.
     omp_set_num_threads(1);
@@ -54,7 +54,7 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
       stream << std::fixed << std::setprecision(2) << energy;
       std::string s = stream.str();
       std::memcpy(oneEnergyData, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
-      const std::string outputFname = "HDF5/Energy_" + s;
+      const std::string outputFname = dirName + "/Energy_" + s;
 
       H5::writeFile2D(outputFname, oneEnergyData, voxelSize);
     }
@@ -66,7 +66,7 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
  * @param voxelSize Voxel Size
  * @param projectionGPUAveraged The scattering pattern
  */
-static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged,const std::string dirName = "VTI"){
+static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged,const std::string& dirName = "VTI"){
     createDirectory(dirName);
     omp_set_num_threads(inputData.num_threads);
     const UINT numEnergyLevel = inputData.energies.size();
@@ -87,7 +87,7 @@ static void writeVTI(const InputData & inputData, const UINT * voxelSize,const R
           Real energy = inputData.energies[csize];
           stream << std::fixed << std::setprecision(2) << energy;
           std::string s = stream.str();
-          const std::string outputFname = "VTI/Energy_" + s;
+          const std::string outputFname = dirName + "/Energy_" + s;
           VTI::writeDataScalar2DFP(projectionLocal, voxelSize, outputFname, "projection");
 
         }
