@@ -479,6 +479,7 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   pos.x = (start + X * dx.x) ;
 
   val = k * k - (pos.x + kx) * (pos.x + kx) - (pos.y + ky) * (pos.y + ky);
+
   if((val < 0) or (X == (voxel.x - 1)) or (Y == (voxel.y - 1))) {
     projection[threadID] = NAN;
   }

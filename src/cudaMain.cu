@@ -477,11 +477,12 @@ int cudaMain(const UINT *voxel,
 
         cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
         cudaMemset(d_projection, 0, voxel[0] * voxel[1] * sizeof(Real));
+        const Real eAngle = idata.kRotationType==(KRotationType::NOROTATION)?0:angle;
         for(UINT kAngleID = 0; kAngleID < numKRotation; kAngleID++) {
             Real kAngle = (idata.kStart + kAngleID*idata.kIncrement)*M_PI/180.0;
             /** Scatter 3D computation **/
             computeScatter3D <<< BlockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
-                                                            d_scatter3D, eleField, angle,kAngle, voxelSize, vx, idata.physSize,
+                                                            d_scatter3D, eleField, eAngle,kAngle, voxelSize, vx, idata.physSize,
                                                             idata.if2DComputation());
             cudaDeviceSynchronize();
             gpuErrchk(cudaPeekAtLastError());
@@ -516,7 +517,7 @@ int cudaMain(const UINT *voxel,
             computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
 #else
             computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_scatter3D, vx,
-                                                                      eleField.k.z, idata.physSize,angle,kAngle,
+                                                                      eleField.k.z,eAngle,kAngle,idata.physSize,
                                                                       static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
                                                                       idata.if2DComputation());
             cudaDeviceSynchronize();
