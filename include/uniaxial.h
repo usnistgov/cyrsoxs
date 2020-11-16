@@ -315,8 +315,25 @@ __global__ void computeScatter3D(Complex *polarizationX,
  const Real &qY = q.y;
  const Real &qZ = q.z;
 
- const Complex  pVec[3]{polarizationX[threadID],polarizationY[threadID],polarizationZ[threadID]};
- const Real     qVec[3]{(-k*sinPhi*sinTheta + qX), (k*cosPhi*sinTheta+qY),(k*cosTheta+qZ)};
+ Complex p1,p2,p3;
+
+ p1.x = polarizationX[threadID].x*cosPhi + polarizationY[threadID].x*sinPhi;
+ p1.y = polarizationX[threadID].y*cosPhi + polarizationY[threadID].y*sinPhi;
+
+ p2.x = -polarizationX[threadID].x*sinPhi*cosTheta + polarizationY[threadID].x*cosPhi*cosTheta -polarizationZ[threadID].x*sinTheta;
+ p2.y = -polarizationX[threadID].y*sinPhi*cosTheta + polarizationY[threadID].y*cosPhi*cosTheta -polarizationZ[threadID].y*sinTheta;
+
+ p3.x = -polarizationX[threadID].x*sinPhi*sinTheta + polarizationY[threadID].x*cosPhi*sinTheta +polarizationZ[threadID].x*cosTheta;
+ p3.y = -polarizationX[threadID].y*sinPhi*sinTheta + polarizationY[threadID].y*cosPhi*sinTheta +polarizationZ[threadID].y*cosTheta;
+
+ Real q1,q2,q3;
+
+ q1 = qX*cosPhi + qY*sinPhi;
+ q2 = -qX*sinPhi*cosTheta + qY*cosPhi*cosTheta -qZ*sinTheta;
+ q3 = -qX*sinPhi*sinTheta + qY*cosPhi*sinTheta +qZ*cosTheta;
+
+ const Complex  pVec[3]{p1,p2,p3};
+ const Real     qVec[3]{q3,q2,k+q1};
 
  Scatter3D[threadID] = computeMagVec1TimesVec1TTimesVec2(qVec,pVec,k);
 }
@@ -458,14 +475,9 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   Real3 dx, pos;
   start = -static_cast<Real>(M_PI / physSize);
 
-  const Real cosPhi   = cos(eAngle);
-  const Real cosTheta = cos(kAngle);
-  const Real sinPhi   = sin(eAngle);
-  const Real sinTheta = sin(kAngle);
-
-  const Real kx = -k*sinPhi*sinTheta;
-  const Real ky =  k*cosPhi*sinTheta;
-  const Real kz =  k*cosTheta;
+  const Real & kx = 0;
+  const Real & ky = 0;
+  const Real & kz = k;
 
   dx.x = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.x - 1) * 1.0));
   dx.y = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.y - 1) * 1.0));
