@@ -259,12 +259,13 @@ __global__ void  getMaxandMinimum(const Real *val, const int2 idx, const uint2 v
 }
 
 /**
- * @brief This function computes the matrix vector product.
- * @param Matrix The matrix of complex type.
- * @param Vec  The vector.
- * @param matVec The matrix vector product
+ * @brief Computes || (k^2 I - vec1.vec1').vec2 ||^2
+ * @param vec1 vector1
+ * @param vec2 vector2
+ * @param k magnitude of k
+ * @return the magnitude
  */
-__device__ Real computeMagVec1TimesVec1TTimesVec2(const Real *vec1 ,const Complex *vec2, const Real & k) {
+__device__ inline Real computeMagVec1TimesVec1TTimesVec2(const Real *vec1 ,const Complex *vec2, const Real & k) {
     const Real d = k*k;
 
     const Real & a = vec1[0];
