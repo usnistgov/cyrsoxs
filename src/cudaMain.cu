@@ -468,17 +468,16 @@ int cudaMain(const UINT *voxel,
 #endif
 
 #ifdef PROFILING
-        {
-          END_TIMER(TIMERS::FFT)
-          START_TIMER(TIMERS::SCATTER3D)
-        }
+          {
+              END_TIMER(TIMERS::FFT)
+              START_TIMER(TIMERS::SCATTER3D)
+          }
 #endif
-
-
         cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
         cudaMemset(d_projection, 0, voxel[0] * voxel[1] * sizeof(Real));
-        const Real eAngle = idata.kRotationType==(KRotationType::NOROTATION)?0:angle;
+        const Real eAngle = (idata.kRotationType==KRotationType::NOROTATION) ? 0:angle;
         for(UINT kAngleID = 0; kAngleID < numKRotation; kAngleID++) {
+
             Real kAngle = (idata.kStart + kAngleID*idata.kIncrement)*M_PI/180.0;
             /** Scatter 3D computation **/
             computeScatter3D <<< BlockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
@@ -498,12 +497,6 @@ int cudaMain(const UINT *voxel,
 
 #endif
 
-#ifdef PROFILING
-            {
-              END_TIMER(TIMERS::SCATTER3D)
-              START_TIMER(TIMERS::EWALDS)
-            }
-#endif
 
 #ifdef EOC
             CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
@@ -526,13 +519,15 @@ int cudaMain(const UINT *voxel,
 
         Real _factor;
         _factor = NAN;
+
+#ifdef DOUBLE_PRECISION
+        stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
+        _factor= static_cast<Real>(1.0/(numKRotation*1.0));
+        stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
+#else
         stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
         _factor= static_cast<Real>(1.0/(numKRotation*1.0));
-#ifdef DOUBLE_PRECISION
-          stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
-#else
-
-          stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
+        stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
 #endif
         if (stat != CUBLAS_STATUS_SUCCESS) {
             std::cout << "CUBLAS during scaling failed  with status " << stat << "\n";
@@ -542,7 +537,7 @@ int cudaMain(const UINT *voxel,
 
 #ifdef PROFILING
         {
-          END_TIMER(TIMERS::EWALDS)
+          END_TIMER(TIMERS::SCATTER3D)
           START_TIMER(TIMERS::ROTATION)
         }
 #endif

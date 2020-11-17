@@ -92,6 +92,7 @@ int main(int argc, char **argv) {
     }
     std::vector<Material<NUM_MATERIAL> > materialInput;
     InputData inputData(materialInput);
+    inputData.print();
     const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
 
     std::string fname = argv[1];

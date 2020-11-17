@@ -231,7 +231,7 @@ private:
                 }
             }
         }
-        std::cout << "[WARNING:] This is an experimental routine that you are trying to use\n";
+        std::cout << "[WARNING] : This is an experimental routine that you are trying to use\n";
     } else{
         kStart = 0.0;
         kEnd = 0.0;
@@ -271,7 +271,22 @@ private:
 
     }
   }
+    /**
+     * @brief prints the input data
+     */
+    void print() const{
 
+        std::cout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
+        std::cout << "PhysSize             : " << physSize << "\n";
+        std::cout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
+        std::cout << "Windowing Type       : " << FFT::windowingName[windowingType]<<"\n";
+        std::cout << "Rotation Mask        : " << rotMask << "\n";
+        std::cout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
+        std::cout << "K RotationType       : " << kRotationTypeName[kRotationType] << "\n";
+        if(kRotationType == KRotationType::ROTATION) {
+            std::cout << "kRotationAngle       : " << kStart << " : " << kIncrement << " : " << kEnd << "\n";
+        }
+    }
 #else
     /**
     * @brief Constructor
