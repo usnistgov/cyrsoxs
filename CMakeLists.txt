@@ -177,7 +177,7 @@ else()
         target_link_libraries(CyRSoXS ${OpenCV_LIBS})
     endif()
 endif()
-
+set_property(TARGET CyRSoXS PROPERTY CUDA_ARCHITECTURES 30 35 37 50 52 53 60 61 62 70 72 75 80 86)
 if (BUILD_DOCS)
     find_package(Doxygen)
     if (DOXYGEN_FOUND)
