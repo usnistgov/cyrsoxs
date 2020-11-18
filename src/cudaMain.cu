@@ -146,18 +146,16 @@ int cudaMain(const UINT *voxel,
     POLARIZATION = 2,
     FFT = 3,
     SCATTER3D = 4,
-    EWALDS = 5,
-    IMAGE_ROTATION=6,
-    MEMCOPY_GPU_CPU = 7,
-    ENERGY=8,
-    MAX = 9
+    IMAGE_ROTATION=5,
+    MEMCOPY_GPU_CPU = 6,
+    ENERGY=7,
+    MAX = 8
   };
   static const char *timersName[]{"Malloc on CPU + GPU",
                                   "Memcopy CPU -> GPU",
                                   "Polarization",
                                   "FFT",
-                                  "Scatter3D",
-                                  "Ewalds",
+                                  "Scatter3D + Ewalds",
                                   "Rotation",
                                   "Memcopy GPU -> CPU",
                                   "Total time "};
