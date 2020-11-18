@@ -145,25 +145,23 @@ static void printCopyrightInfo(std::ofstream & fout){
 static void printMetaData(const InputData & inputData){
   std::ofstream file("metadata.txt");
   printCopyrightInfo(file);
+  file << "\n\nCyRSoXS: \n";
+  file << "=========================================================================================\n";
+  file << "Version              : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  file << "Git patch            : " << GIT_HASH << "\n";
+  file << "Size of Real         : " << sizeof(Real) << "\n";
+  file << "Number of material   : " << NUM_MATERIAL << "\n";
 
-  file << "\n\n---------------- Cy-RSoXS Details--------------\n";
-  file << "Version = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
-  file << "Git patch = " << GIT_HASH << "\n";
-
-  file << "\n---------------- Scaling Information--------------\n";
-  file << "Number of pixel = [" << inputData.numX << "," << inputData.numY << "]\n";
-  file << "Q range  = [" << -M_PI / inputData.physSize << "," << M_PI / inputData.physSize << "]\n";
-  file << "Electric field rotated through = [" << inputData.startAngle << "," << inputData.endAngle << "]\n";
-  file << "Increments in electric field rotation " << inputData.incrementAngle << "\n";
+  file << "\nScaling Information:\n";
+  file << "=========================================================================================\n";
+  file << "Number of pixel      :[" << inputData.numX << "," << inputData.numY << "]\n";
+  file << "Q range              :[" << -M_PI / inputData.physSize << "," << M_PI / inputData.physSize << "]\n";
   file << "\n\n";
 
-  file << "-----------------Simulation information -----------------\n";
-  file << "Size of Real = " << sizeof(Real) << "\n";
-  file << "Number of materials =" << NUM_MATERIAL << "\n";
-  file << "Energies simulated: ";
-  for (const auto & energy: inputData.energies) {
-        file << energy << ' ';
-  }
+  file << "\nInputData : \n";
+  file << "=========================================================================================\n";
+  inputData.printToFile(file);
+
   file.close();
 }
 

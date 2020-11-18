@@ -32,6 +32,8 @@
 #include <Input/Input.h>
 #include <vector>
 #include <cmath>
+#include <fstream>
+
 #ifdef PYBIND
 #include <pybind11/pybind11.h>
 #include <bitset>
@@ -121,8 +123,9 @@ private:
         }
         if(size > 0){
             if(setting.getLength() != size){
-                std::cout << RED << "[Input Error]: The array corresponding to " << key << "must be of size" << size
-                << ". But found = " << setting.getLength() << NRM <<"\n";
+                std::cout << RED << "[Input Error]: The array corresponding to " << key << " must be of length " << size
+                << ". But found of length " << setting.getLength() << NRM <<"\n";
+                exit(EXIT_FAILURE);
             }
         }
         arr.clear();
@@ -241,10 +244,10 @@ private:
     if(ReadValue(cfg, "VTIDirName",VTIDirName)){}
     if(ReadValue(cfg, "HDF5DirName",HDF5DirName)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
-    if(ReadValue(cfg,"kRotationType",kRotationType)){}
-    if(ReadValue(cfg,"scatterApproach",scatterApproach)){}
+    if(ReadValue(cfg,"KRotationType",kRotationType)){}
+    if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     else{
-        if(numZ < 8){
+        if(numZ < 4){
             scatterApproach = ScatterApproach::FULL;
         }
     }
@@ -313,17 +316,23 @@ private:
     void print() const{
 
         std::cout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
-        std::cout << "PhysSize             : " << physSize << "\n";
+        std::cout << "PhysSize             : " << physSize << " nm \n";
         std::cout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
-        std::cout << "Windowing Type       : " << FFT::windowingName[windowingType]<<"\n";
-        std::cout << "Rotation Mask        : " << rotMask << "\n";
-        std::cout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
-        std::cout << "HDF Output Directory : " << HDF5DirName << "\n";
         std::cout << "K RotationType       : " << kRotationTypeName[kRotationType] << "\n";
-        std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
         if(kRotationType == KRotationType::ROTATION) {
             std::cout << "kRotationAngle       : " << kStart << " : " << kIncrement << " : " << kEnd << "\n";
         }
+        std::cout << "Energies simulated   : [";
+        for (const auto & energy: energies) {
+            std::cout << energy << " " ;
+        }
+        std::cout << "]\n";
+        std::cout << "Windowing Type       : " << FFT::windowingName[windowingType] << "\n";
+        std::cout << "Rotation Mask        : " << rotMask << "\n";
+        std::cout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
+        std::cout << "HDF Output Directory : " << HDF5DirName << "\n";
+        std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
+
     }
 #else
     /**
@@ -418,7 +427,27 @@ private:
       return(paramChecker_.all());
     }
 #endif
+    void printToFile(std::ofstream & fout) const{
+        fout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
+        fout << "PhysSize             : " << physSize << "nm \n";
+        fout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
+        fout << "K RotationType       : " << kRotationTypeName[kRotationType] << "\n";
+        if(kRotationType == KRotationType::ROTATION) {
+            std::cout << "kRotationAngle       : " << kStart << " : " << kIncrement << " : " << kEnd << "\n";
+        }
+        fout << "Energies simulated   : [";
+        for (const auto & energy: energies) {
+            fout << energy << " " ;
+        }
+        fout << "]\n";
+        fout << "Windowing Type       : " << FFT::windowingName[windowingType] << "\n";
+        fout << "Rotation Mask        : " << rotMask << "\n";
+        fout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
+        fout << "HDF Output Directory : " << HDF5DirName << "\n";
+        fout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
 
+
+    }
 
 };
 
