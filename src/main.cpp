@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     std::vector<Material<NUM_MATERIAL> > materialInput;
     InputData inputData(materialInput);
     inputData.validate();
-    if(argc > 1){
+    if(argc > 2){
         inputData.HDF5DirName = argv[2];
     }
     inputData.print();

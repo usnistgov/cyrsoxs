@@ -110,11 +110,12 @@ void cleanup(RefractiveIndexData &energyData, VoxelData &voxelData, ScatteringPa
 }
 
 PYBIND11_MODULE(CyRSoXS, module) {
-  module.doc() = "pybind11  plugin for Cy-RSoXS";
+  module.doc() = "pybind11  plugin for CyRSoXS";
 
-  py::print("----------------Compile time options-------------------");
+  py::print("CyRSoXS");
+  py::print("============================================================================");
   py::print("Number of materials : ", NUM_MATERIAL);
-  py::print("Size of Real", sizeof(Real));
+  py::print("Size of Real        :", sizeof(Real));
   py::add_ostream_redirect(module, "ostream_redirect");
   py::enum_<Interpolation::EwaldsInterpolation>(module, "InterpolationType")
       .value("Linear", Interpolation::EwaldsInterpolation::LINEAR)
@@ -122,24 +123,39 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .export_values();
 
   py::enum_<FFT::FFTWindowing>(module, "FFTWindowing")
-      .value("NoPadding", FFT::FFTWindowing::NONE)
+      .value("None", FFT::FFTWindowing::NONE)
       .value("Hanning", FFT::FFTWindowing::HANNING)
       .export_values();
+
+  py::enum_<ScatterApproach>(module, "ScatterApproach")
+      .value("Partial", ScatterApproach::PARTIAL)
+      .value("Full", ScatterApproach::FULL)
+      .export_values();
+
+  py::enum_<KRotationType>(module, "KRotationType")
+      .value("NONE", KRotationType::NOROTATION)
+      .value("Rotation", KRotationType::ROTATION)
+      .export_values();
+
 
   py::class_<InputData>(module, "InputData")
       .def(py::init<>())
       .def("setEnergies", &InputData::setEnergies, "Set the energy data", py::arg("energies"))
       .def("print", &InputData::print, "Print the input data")
-      .def("setRotationAngle", &InputData::setAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
-           py::arg("EndAngle"),
-           py::arg("IncrementAngle"))
+      .def("setRotationAngle", &InputData::setEAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
+           py::arg("EndAngle"),py::arg("IncrementAngle"))
+      .def("setRotationAngle", &InputData::setKAngles, "Set the rotation for K wave vector", py::arg("StartAngle"),
+           py::arg("EndAngle"),py::arg("IncrementAngle"))
       .def("physSize", &InputData::setPhysSize, "Set the Physical size (in nm)", py::arg("PhysSize"))
       .def("dimensions", &InputData::setDimension, "Set the Dimensions", py::arg("X"), py::arg("Y"), py::arg("Z"))
       .def("validate", &InputData::validate, "Validate the input data")
+      .def("kRotation",&InputData::setKRotationType,"Sets the krotation Type",py::arg("kRotation"))
       .def_readwrite("interpolationType", &InputData::ewaldsInterpolation, "Ewalds interpolation type")
       .def_readwrite("windowingType", &InputData::windowingType, "Windowing type")
       .def_readwrite("rotMask",&InputData::rotMask,"Rotation Mask")
-      .def_readwrite("openMP", &InputData::num_threads, "number of OpenMP threads");
+      .def_readwrite("openMP", &InputData::num_threads, "number of OpenMP threads")
+      .def_readwrite("scatterApproach", &InputData::scatterApproach, "sets the scatter approach");
+
 
   py::class_<RefractiveIndexData>(module, "RefractiveIndex")
       .def(py::init<const InputData &>(), "Constructor")

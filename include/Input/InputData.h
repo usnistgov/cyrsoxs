@@ -44,10 +44,11 @@ namespace ParamChecker{
         ENERGY = 0,
         DIMENSION = 1,
         PHYSSIZE = 2,
-        ANGLE = 3,
-        MAX_SIZE = 4
+        EANGLE = 3,
+        KANGLE = 4,
+        MAX_SIZE = 5
     };
-    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","ANGLE"};
+    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","EANGLE","KANGLE"};
     static_assert(sizeof(ParamChecker::paramNames)/sizeof(char*) == ParamChecker::Parameters::MAX_SIZE,
             "sizes dont match");
 
@@ -136,6 +137,21 @@ private:
             arr.push_back(value);
         }
     }
+      /**
+   *
+   * @tparam T
+   * @param name name of the variable
+   * @param val value
+   * @param max max allowable for that type
+   */
+  template<typename T>
+  void validate(const std::string & name, const T & val, const UINT & max) const{
+    if(val >= max){
+        std::cout << RED << "[Error] : " << name << "Wrong value. Max acceptable value " <<  max-1 << ". Value found =  " << val << NRM <<"\n";
+        exit(EXIT_FAILURE);
+    }
+  }
+
 #else
     /// Checks the input data parameter for the required parameters
     std::bitset<ParamChecker::Parameters::MAX_SIZE> paramChecker_;
@@ -149,20 +165,6 @@ private:
     } else {
       std::cout << "[INFO] 2D computation enabled\n";
       enable2D_ = true;
-    }
-  }
-  /**
-   *
-   * @tparam T
-   * @param name name of the variable
-   * @param val value
-   * @param max max allowable for that type
-   */
-  template<typename T>
-  void validate(const std::string & name, const T & val, const UINT & max) const{
-    if(val >= max){
-        std::cout << RED << "[Error] : " << name << "Wrong value. Max acceptable value " <<  max-1 << ". Value found =  " << val << NRM <<"\n";
-        exit(EXIT_FAILURE);
     }
   }
 
@@ -341,6 +343,7 @@ private:
     InputData() {
       writeHDF5 = false;
       paramChecker_.reset();
+      paramChecker_.set(ParamChecker::Parameters::KANGLE,true);
     }
     /**
      * @brief Adds the energy data
@@ -385,28 +388,76 @@ private:
      * @param _endAngle   end Angle (in degrees)
      * @param _incrementAngle increment in Angle (in degrees)
      */
-    void setAngles(const Real & _startAngle, const Real & _endAngle, const Real & _incrementAngle) {
+    void setEAngles(const Real & _startAngle, const Real & _endAngle, const Real & _incrementAngle) {
       startAngle = _startAngle;
       endAngle = _endAngle;
       incrementAngle = _incrementAngle;
-      paramChecker_.set(ParamChecker::Parameters::ANGLE,true);
+      if(FEQUALS(startAngle,endAngle)) {
+          incrementAngle = 1.0;
+      }
+      else {
+          if(FEQUALS(incrementAngle,0.0)) {
+              pybind11::print("[ERROR] :  Increment angle for Electric field rotation cannot be 0");
+              return;
+          }
+      }
+      paramChecker_.set(ParamChecker::Parameters::EANGLE,true);
+    }
+    /**
+     * @brief Set the angles for rotation for Electric field
+     * @param _startAngle start Angle (in degrees)
+     * @param _endAngle   end Angle (in degrees)
+     * @param _incrementAngle increment in Angle (in degrees)
+     */
+    void setKAngles(const Real & _startAngle, const Real & _endAngle, const Real & _incrementAngle) {
+        if(kRotationType == KRotationType::NOROTATION) {
+            pybind11::print("[ERROR] : Trying to set angles with K rotation type set to NONE. First change the KRotationType. Returning." );
+            return;
+        }
+        kStart = _startAngle;
+        kEnd = _endAngle;
+        kIncrement = _incrementAngle;
+        if(FEQUALS(kStart,kEnd)) {
+            kIncrement = 1.0;
+        }
+        else {
+            if(FEQUALS(kIncrement,0.0)) {
+                pybind11::print("[ERROR] :  Increment angle for K rotation cannot be 0");
+                return;
+            }
+        }
+        paramChecker_.set(ParamChecker::Parameters::KANGLE,true);
     }
 
+    void setKRotationType(const KRotationType & _rotationType) {
+        kRotationType = _rotationType;
+        if(kRotationType == KRotationType::ROTATION) {
+            paramChecker_.set(ParamChecker::Parameters::KANGLE,false);
+        }
+
+    }
     /**
      * @brief prints the input data
      */
     void print() const{
-        pybind11::print("--------Required options------------------");
+        pybind11::print("Required options:");
+        pybind11::print("==================================================");
         pybind11::print("Dimensions           : [",numX,",",numY,",",numZ,"]");
         pybind11::print("PhysSize             : ", physSize);
         pybind11::print("Energy from          : ",energies);
-        pybind11::print("Rotation Angle  from : ",startAngle , "to",endAngle,"with increment of",incrementAngle);
+        pybind11::print("Rotation Angle  from : ",startAngle , " : ", incrementAngle, " : ",endAngle);
+        pybind11::print("K Rotation Type      : ",kRotationTypeName[kRotationType]);
+        if(kRotationType == KRotationType::ROTATION) {
+            pybind11::print("Rotation Angle  from : ",kStart , " : ", kIncrement, " : ",kEnd);
+        }
 
-        pybind11::print("--------Optional options------------------");
+        pybind11::print("Optional options");
+        pybind11::print("==================================================");
         pybind11::print("Number of openMP threads : ",num_threads);
         pybind11::print("Interpolation Type       : ",Interpolation::interpolationName[ewaldsInterpolation]);
         pybind11::print("Windowing Type           : ",FFT::windowingName[windowingType]);
         pybind11::print("Rotation Mask            : ",rotMask);
+
     }
 
     /**
@@ -443,7 +494,9 @@ private:
         fout << "Windowing Type       : " << FFT::windowingName[windowingType] << "\n";
         fout << "Rotation Mask        : " << rotMask << "\n";
         fout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
+#ifndef PYBIND
         fout << "HDF Output Directory : " << HDF5DirName << "\n";
+#endif
         fout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
 
 

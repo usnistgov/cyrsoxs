@@ -75,17 +75,17 @@ public:
     /**
      * @brief Writes Scattering pattern data to HDF5 file
      */
-    void writeToHDF5() const {
+    void writeToHDF5(const std::string & dirName = "HDF5") const {
       const UINT voxelDimensions[3]{inputData_.numX,inputData_.numY,inputData_.numZ};
-      writeH5(inputData_, voxelDimensions, data_);
+      writeH5(inputData_, voxelDimensions, data_,dirName);
     }
 
     /**
      * @brief Writes scattering pattern data to VTI paraview format
      */
-    void writeToVTI() const {
+    void writeToVTI(const std::string & dirName = "VTI") const {
       const UINT voxelDimensions[3]{inputData_.numX,inputData_.numY,inputData_.numZ};
-      writeVTI(inputData_, voxelDimensions, data_);
+      writeVTI(inputData_, voxelDimensions, data_,dirName);
     }
 
     /**
