@@ -12,3 +12,4 @@ IO/*.vti
 *.pyc
 __pycache__
 .ipynb*
+*.asv

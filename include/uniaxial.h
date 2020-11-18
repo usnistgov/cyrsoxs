@@ -260,7 +260,8 @@ __device__ void FFTShift(T *array, uint3 voxel) {
 
 /**
  * @brief This function computes the Scatter3D computation.
- *
+ * This is an optimized routine based on the fact that the rotation does not
+ * change the magnitude.
  * @param [in] polarizationX  X component of polarization in Fourier space
  * @param [in] polarizationY  Y component of polarization in Fourier space
  * @param [in] polarizationZ  Z component of polarization in Fourier space
@@ -315,25 +316,12 @@ __global__ void computeScatter3D(Complex *polarizationX,
  const Real &qY = q.y;
  const Real &qZ = q.z;
 
- Complex p1,p2,p3;
+ Real qVec[3];
+ qVec[0] = -k*sinPhi*sinTheta + qX;
+ qVec[1] =  k*cosPhi*sinTheta + qY;
+ qVec[2] =  k*cosTheta + qZ;
 
- p1.x = polarizationX[threadID].x*cosPhi + polarizationY[threadID].x*sinPhi;
- p1.y = polarizationX[threadID].y*cosPhi + polarizationY[threadID].y*sinPhi;
-
- p2.x = -polarizationX[threadID].x*sinPhi*cosTheta + polarizationY[threadID].x*cosPhi*cosTheta -polarizationZ[threadID].x*sinTheta;
- p2.y = -polarizationX[threadID].y*sinPhi*cosTheta + polarizationY[threadID].y*cosPhi*cosTheta -polarizationZ[threadID].y*sinTheta;
-
- p3.x = -polarizationX[threadID].x*sinPhi*sinTheta + polarizationY[threadID].x*cosPhi*sinTheta +polarizationZ[threadID].x*cosTheta;
- p3.y = -polarizationX[threadID].y*sinPhi*sinTheta + polarizationY[threadID].y*cosPhi*sinTheta +polarizationZ[threadID].y*cosTheta;
-
- Real q1,q2,q3;
-
- q1 = qX*cosPhi + qY*sinPhi;
- q2 = -qX*sinPhi*cosTheta + qY*cosPhi*cosTheta -qZ*sinTheta;
- q3 = -qX*sinPhi*sinTheta + qY*cosPhi*sinTheta +qZ*cosTheta;
-
- const Complex  pVec[3]{p1,p2,p3};
- const Real     qVec[3]{q3,q2,k+q1};
+ Complex pVec[3]{polarizationX[threadID],polarizationY[threadID],polarizationZ[threadID]};
 
  Scatter3D[threadID] = computeMagVec1TimesVec1TTimesVec2(qVec,pVec,k);
 }
