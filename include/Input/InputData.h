@@ -105,7 +105,7 @@ private:
    */
     template <typename T>
     void ReadArrayRequired(libconfig::Config & config, const std::string& key,
-                           std::vector<T>& arr) {
+                           std::vector<T>& arr, const UINT size = 0) {
         // this is here because lookup throws an exception if not found
         if (!config.exists(key)) {
             std::cerr << "[Input Error] No value corresponding to " << key
@@ -119,7 +119,12 @@ private:
                       << "(key = " << key << ")\n";
             exit(EXIT_FAILURE);
         }
-
+        if(size > 0){
+            if(setting.getLength() != size){
+                std::cout << RED << "[Input Error]: The array corresponding to " << key << "must be of size" << size
+                << ". But found = " << setting.getLength() << NRM <<"\n";
+            }
+        }
         arr.clear();
         for (int i = 0; i < setting.getLength(); i++) {
             T value;
@@ -221,9 +226,10 @@ private:
     libconfig::Config cfg;
     cfg.readFile(filename.c_str());
     ReadArrayRequired(cfg, "Energies", energies);
-    ReadValueRequired(cfg, "StartAngle", startAngle);
-    ReadValueRequired(cfg, "EndAngle", endAngle);
-    ReadValueRequired(cfg, "IncrementAngle", incrementAngle);
+    std::vector<Real> _temp;
+    ReadArrayRequired(cfg, "EAngleRotation", _temp,3);
+    startAngle = _temp[0]; incrementAngle = _temp[1]; endAngle = _temp[2];
+
     ReadValueRequired(cfg, "NumThreads", num_threads);
     ReadValueRequired(cfg, "NumX", numX);
     ReadValueRequired(cfg, "NumY", numY);
@@ -243,17 +249,14 @@ private:
         }
     }
     if(kRotationType == KRotationType::ROTATION){
-        ReadValueRequired(cfg,"kStart",kStart);
-        ReadValueRequired(cfg,"kEnd",kEnd);
-        ReadValueRequired(cfg,"kIncrement",kIncrement);
-        if(ReadValue(cfg, "kIncrement",kIncrement)){
-            if(FEQUALS(kStart,kEnd)){
+        ReadArrayRequired(cfg, "KAngleRotation", _temp,3);
+        kStart = _temp[0];kIncrement = _temp[1];kEnd = _temp[2];
+        if(FEQUALS(kStart,kEnd)){
                 kIncrement = 1.0;
-            }
-            else{
-                if(FEQUALS(kIncrement,0.0)){
-                    throw std::logic_error("kIncrement can not be 0\n");
-                }
+        }
+        else{
+            if(FEQUALS(kIncrement,0.0)){
+                throw std::logic_error("kIncrement can not be 0\n");
             }
         }
         std::cout << MAG << "[WARNING] : This is an experimental routine that you are trying to use " << NRM << "\n";
@@ -315,6 +318,7 @@ private:
         std::cout << "Windowing Type       : " << FFT::windowingName[windowingType]<<"\n";
         std::cout << "Rotation Mask        : " << rotMask << "\n";
         std::cout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
+        std::cout << "HDF Output Directory : " << HDF5DirName << "\n";
         std::cout << "K RotationType       : " << kRotationTypeName[kRotationType] << "\n";
         std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
         if(kRotationType == KRotationType::ROTATION) {

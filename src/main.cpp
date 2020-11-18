@@ -87,12 +87,15 @@
 int main(int argc, char **argv) {
 
     if(argc < 2){
-        std::cout << "Usage : " << argv[0] << " "<< "HDF5FileName";
+        std::cout << "Usage : " << argv[0] << " "<< "HDF5FileName" << "[optional] HDF5OutputDirname";
         exit(EXIT_FAILURE);
     }
     std::vector<Material<NUM_MATERIAL> > materialInput;
     InputData inputData(materialInput);
     inputData.validate();
+    if(argc > 1){
+        inputData.HDF5DirName = argv[2];
+    }
     inputData.print();
     const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
 
