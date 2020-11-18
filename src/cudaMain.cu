@@ -477,44 +477,54 @@ int cudaMain(const UINT *voxel,
         cudaMemset(d_projection, 0, voxel[0] * voxel[1] * sizeof(Real));
         const Real eAngle = (idata.kRotationType==KRotationType::NOROTATION) ? 0:angle;
         for(UINT kAngleID = 0; kAngleID < numKRotation; kAngleID++) {
-
-            Real kAngle = (idata.kStart + kAngleID*idata.kIncrement)*M_PI/180.0;
-            /** Scatter 3D computation **/
-            computeScatter3D <<< BlockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
-                                                            d_scatter3D, eleField, eAngle,kAngle, voxelSize, vx, idata.physSize,
-                                                            idata.if2DComputation());
-            cudaDeviceSynchronize();
-            gpuErrchk(cudaPeekAtLastError());
+            Real kAngle = (idata.kStart + kAngleID * idata.kIncrement) * M_PI / 180.0;
+            if(idata.numZ < 8) {
+                /** Scatter 3D computation **/
+                computeScatter3D <<< BlockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
+                                                                d_scatter3D, eleField, eAngle, kAngle, voxelSize, vx,
+                                                                idata.physSize,
+                                                                idata.if2DComputation());
+                cudaDeviceSynchronize();
+                gpuErrchk(cudaPeekAtLastError());
 
 #ifdef DUMP_FILES
-            CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
-            gpuErrchk(cudaPeekAtLastError())
-            {
-              std::string dirname = "Scatter/";
-              std::string fname = dirname + "scatter" + std::to_string(i);
-              VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
-            }
+                CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
+                gpuErrchk(cudaPeekAtLastError())
+                {
+                  std::string dirname = "Scatter/";
+                  std::string fname = dirname + "scatter" + std::to_string(i);
+                  VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
+                }
 
 #endif
 
 
 #ifdef EOC
-            CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
-            gpuErrchk(cudaPeekAtLastError());
+                CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
+                gpuErrchk(cudaPeekAtLastError());
 
 #ifdef PROFILING
-            {
+                {
 
-            }
+                }
 #endif
-            computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
+                computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
 #else
-            computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_scatter3D, vx,
-                                                                      eleField.k.z,eAngle,kAngle,idata.physSize,
-                                                                      static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
-                                                                      idata.if2DComputation());
-            cudaDeviceSynchronize();
-            gpuErrchk(cudaPeekAtLastError());
+                computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_scatter3D, vx,
+                                                                          eleField.k.z, eAngle, kAngle, idata.physSize,
+                                                                          static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
+                                                                          idata.if2DComputation());
+                cudaDeviceSynchronize();
+                gpuErrchk(cudaPeekAtLastError());
+            }
+            else{
+                computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection,d_polarizationX,d_polarizationY, d_polarizationZ, vx,
+                                                                          eleField.k.z, eAngle, kAngle, idata.physSize,
+                                                                          static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
+                                                                          idata.if2DComputation());
+                cudaDeviceSynchronize();
+                gpuErrchk(cudaPeekAtLastError());
+            }
         }
 
         Real _factor;

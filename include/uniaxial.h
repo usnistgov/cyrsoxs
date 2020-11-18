@@ -258,22 +258,59 @@ __device__ void FFTShift(T *array, uint3 voxel) {
 }
 
 
+
+inline __device__ Real computeScatter3D(const Complex * polarizationX,
+                                        const Complex * polarizationY,
+                                        const Complex * polarizationZ,
+                                        const Real & k,
+                                        const Real & eAngle,
+                                        const Real & kAngle,
+                                        const Real3 & dX,
+                                        const Real & physSize,
+                                        const BigUINT & id,
+                                        const uint3 & voxel,
+                                        const bool enable2D
+){
+    const Real cosPhi   = cos(eAngle);
+    const Real cosTheta = cos(kAngle);
+    const Real sinPhi   = sin(eAngle);
+    const Real sinTheta = sin(kAngle);
+
+    UINT X, Y, Z;
+    reshape1Dto3D(id, X, Y, Z, voxel);
+    Real3 q;
+    q.x = static_cast<Real>((-M_PI / physSize) + X * dX.x);
+    q.y = static_cast<Real>((-M_PI / physSize) + Y * dX.y);
+    q.z = 0;
+    if (not(enable2D)) {
+        q.z = static_cast<Real>((-M_PI / physSize) + Z * dX.z);
+    }
+
+    Real qVec[3];
+    qVec[0] = -k*sinPhi*sinTheta + q.x;
+    qVec[1] =  k*cosPhi*sinTheta + q.y;
+    qVec[2] =  k*cosTheta + q.z;
+
+    Complex pVec[3]{polarizationX[id],polarizationY[id],polarizationZ[id]};
+    return (computeMagVec1TimesVec1TTimesVec2(qVec,pVec,k));
+}
+
 /**
- * @brief This function computes the Scatter3D computation.
- * This is an optimized routine based on the fact that the rotation does not
- * change the magnitude.
- * @param [in] polarizationX  X component of polarization in Fourier space
- * @param [in] polarizationY  Y component of polarization in Fourier space
- * @param [in] polarizationZ  Z component of polarization in Fourier space
- * @param [out] Scatter3D     Scatter 3D result
- * @param [in] elefield       Electric field
- * @param [in] voxelNum       Number of total voxel
- * @param [in] voxel          Number of voxel in each direciton.
- * @param [in] physSize       Physical Size
- */
-__global__ void computeScatter3D(Complex *polarizationX,
-                                 Complex *polarizationY,
-                                 Complex *polarizationZ,
+* @brief This function computes the Scatter3D computation.
+* This is an optimized routine based on the fact that the rotation does not
+* change the magnitude.
+* @param [in] polarizationX  X component of polarization in Fourier space
+* @param [in] polarizationY  Y component of polarization in Fourier space
+* @param [in] polarizationZ  Z component of polarization in Fourier space
+* @param [out] Scatter3D     Scatter 3D result
+* @param [in] elefield       Electric field
+* @param [in] voxelNum       Number of total voxel
+* @param [in] voxel          Number of voxel in each direciton.
+* @param [in] physSize       Physical Size
+*/
+__global__ void computeScatter3D(const Complex *polarizationX,
+                                 const Complex *polarizationY,
+                                 const Complex *polarizationZ,
                                  Real *Scatter3D,
                                  const ElectricField elefield,
                                  const Real eAngle,
@@ -299,32 +336,28 @@ __global__ void computeScatter3D(Complex *polarizationX,
   if (not(enable2D)) {
     dx.z = static_cast<Real>((2 * M_PI / physSize) / ((voxel.z - 1) * 1.0));
   }
-  Real3 q;
-  q.x = static_cast<Real>((-M_PI / physSize) + X * dx.x);
-  q.y = static_cast<Real>((-M_PI / physSize) + Y * dx.y);
-  q.z = 0;
-  if (not(enable2D)) {
-    q.z = static_cast<Real>((-M_PI / physSize) + Z * dx.z);
-  }
- const Real cosPhi   = cos(eAngle);
- const Real cosTheta = cos(kAngle);
- const Real sinPhi   = sin(eAngle);
- const Real sinTheta = sin(kAngle);
 
- const Real &k = elefield.k.z;
- const Real &qX = q.x;
- const Real &qY = q.y;
- const Real &qZ = q.z;
+// const Real cosPhi   = cos(eAngle);
+// const Real cosTheta = cos(kAngle);
+// const Real sinPhi   = sin(eAngle);
+// const Real sinTheta = sin(kAngle);
+//
+// const Real &k = elefield.k.z;
+// const Real &qX = q.x;
+// const Real &qY = q.y;
+// const Real &qZ = q.z;
+//
+// Real qVec[3];
+// qVec[0] = -k*sinPhi*sinTheta + qX;
+// qVec[1] =  k*cosPhi*sinTheta + qY;
+// qVec[2] =  k*cosTheta + qZ;
+//
+// Complex pVec[3]{polarizationX[threadID],polarizationY[threadID],polarizationZ[threadID]};
 
- Real qVec[3];
- qVec[0] = -k*sinPhi*sinTheta + qX;
- qVec[1] =  k*cosPhi*sinTheta + qY;
- qVec[2] =  k*cosTheta + qZ;
-
- Complex pVec[3]{polarizationX[threadID],polarizationY[threadID],polarizationZ[threadID]};
-
- Scatter3D[threadID] = computeMagVec1TimesVec1TTimesVec2(qVec,pVec,k);
+ Scatter3D[threadID] = computeScatter3D(polarizationX,polarizationY,polarizationZ,elefield.k.z,eAngle,kAngle,dx,physSize,threadID,voxel,enable2D);
 }
+
+
 
 /**
  * This function computes the equivalent id of the given position.
@@ -356,7 +389,7 @@ __host__ __device__ BigUINT computeEquivalentID(const Real3 pos,
 
 
 /**
- * @brief This routine is optimized for the case where pixel location is alligned with X,Y which is the case
+ * @brief This routine is optimized for the case where pixel location is aligned with X,Y which is the case
  * in these simulations
  * @param data data from which the interpolation happens
  * @param pos position of the desired location
@@ -377,12 +410,31 @@ __device__ inline Real computeTrilinearInterpolation(const Real *data,
                                                               const UINT & Z,
                                                               const uint3 & voxel
 ) {
+    if((Z+1) > voxel.z){
+        return NAN;
+    }
     Real diffZ;
     diffZ = (pos.z - (start + Z * dx.z)) / dx.z;
     Real _data[2];
     _data[0] = data[reshape3Dto1D(X, Y, Z, voxel)];                /// (X,Y,Z)
     _data[1] = data[reshape3Dto1D(X, Y, Z + 1, voxel)];             /// (X,Y,Z + 1)
     Real c = ((1 - diffZ) * _data[0] + (diffZ) * _data[1]); /// Interpolate along Z
+    return (c);
+}
+
+__device__ inline Real computeTrilinearInterpolation(const Real & data1,
+                                                     const Real & data2,
+                                                     const Real3 & pos,
+                                                     const Real & start,
+                                                     const Real3 & dx,
+                                                     const UINT & X,
+                                                     const UINT & Y,
+                                                     const UINT & Z,
+                                                     const uint3 & voxel
+) {
+    Real diffZ;
+    diffZ = (pos.z - (start + Z * dx.z)) / dx.z;
+    Real c = ((1 - diffZ) * data1 + (diffZ) * data2);
     return (c);
 }
 
@@ -450,6 +502,77 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
       }
     }
   }
+}
+
+__global__ void computeEwaldProjectionGPU(Real *projection,
+                                          const Complex *polarizationX,
+                                          const Complex *polarizationY,
+                                          const Complex *polarizationZ,
+                                          const uint3 voxel,
+                                          const Real k,
+                                          const Real eAngle,
+                                          const Real kAngle,
+                                          const Real physSize,
+                                          const Interpolation::EwaldsInterpolation interpolation,
+                                          const bool enable2D) {
+    UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+    const UINT totalSize = voxel.x * voxel.y;
+    if (threadID >= totalSize) {
+        return;
+    }
+    Real val, start;
+    Real3 dx, pos;
+    start = -static_cast<Real>(M_PI / physSize);
+
+
+    dx.x = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.x - 1) * 1.0));
+    dx.y = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.y - 1) * 1.0));
+    dx.z = 0;
+    if (not(enable2D)) {
+        dx.z = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.z - 1) * 1.0));
+    }
+    UINT Y = static_cast<UINT>(threadID / (voxel.x * 1.0));
+    UINT X = static_cast<UINT>(threadID - Y * voxel.x);
+    pos.y = (start + Y * dx.y) ;
+    pos.x = (start + X * dx.x) ;
+
+    val = k * k - (pos.x) * (pos.x) - (pos.y ) * (pos.y);
+
+    if((val < 0) or (X == (voxel.x - 1)) or (Y == (voxel.y - 1))) {
+        projection[threadID] = NAN;
+    }
+    else
+    {
+        pos.z = -k + sqrt(val);
+        if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
+            BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
+            projection[threadID] += computeScatter3D(polarizationX,polarizationY,polarizationZ,k,eAngle,kAngle,dx,physSize,id,voxel,enable2D);
+        }
+        else {
+            if (enable2D) {
+                BigUINT id = reshape3Dto1D(X,Y,0,voxel);
+                projection[threadID] += computeScatter3D(polarizationX,polarizationY,polarizationZ,k,eAngle,kAngle,dx,physSize,id,voxel,enable2D);
+
+            } else {
+                UINT Z = static_cast<UINT >(((pos.z - start) / (dx.z)));
+                if(Z > (voxel.z - 1)){
+                    projection[threadID] = NAN;
+                }
+                else {
+                    BigUINT id1 = reshape3Dto1D(X, Y, Z, voxel);
+                    BigUINT id2 = reshape3Dto1D(X, Y, Z + 1, voxel);
+
+                    Real data1 = computeScatter3D(polarizationX, polarizationY, polarizationZ, k, eAngle, kAngle, dx,
+                                                  physSize, id1, voxel, enable2D);
+                    Real data2 = computeScatter3D(polarizationX, polarizationY, polarizationZ, k, eAngle, kAngle, dx,
+                                                  physSize, id2, voxel, enable2D);
+
+                    projection[threadID] += computeTrilinearInterpolation(data1, data2, pos, start, dx, X, Y, Z, voxel);
+                }
+
+            }
+        }
+    }
 }
 /**
  * @brief This function computes the rotation masks.
