@@ -76,13 +76,29 @@ namespace FFT {
 enum KRotationType : UINT{
     NOROTATION = 0,
     ROTATION = 1,
-    MAX = 2
+    MAX_ROTATION_TYPE = 2
 };
 static const char *kRotationTypeName[]{"No Rotation : (k = 0,0,1)","Rotation"};
-static_assert(sizeof(kRotationTypeName)/sizeof(char*) == KRotationType::MAX,
+static_assert(sizeof(kRotationTypeName)/sizeof(char*) == KRotationType::MAX_ROTATION_TYPE,
               "sizes dont match");
 
+enum ScatterApproach:UINT{
+    PARTIAL = 0,
+    FULL = 1,
+    MAX_SCATTER_APPROACH = 2
+};
 
+static const char *scatterApproachName[]{"Partial","Full"};
+static_assert(sizeof(scatterApproachName)/sizeof(char*) == ScatterApproach::MAX_SCATTER_APPROACH,
+              "sizes dont match");
 #define FEQUALS(x, y) fabs((x) - (y)) < 1E-10 ? true : false
+
+#define RED "\e[1;31m"
+#define BLU "\e[2;34m"
+#define GRN "\e[0;32m"
+#define YLW "\e[0;33m"
+#define MAG "\e[0;35m"
+#define CYN "\e[0;36m"
+#define NRM "\e[0m"
 
 #endif

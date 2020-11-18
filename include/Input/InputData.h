@@ -84,7 +84,7 @@ private:
   bool ReadValue(libconfig::Config & config, const std::string key, T & value ){
     bool res = config.lookupValue(key, value);
     if(res == false){
-      std::cout << "[WARNING] : No value corresponding to " << key << " found. Setting to default\n";
+      std::cout << YLW<<  "[WARNING] : No value corresponding to " << key << " found. Setting to default" << NRM << "\n";
     }
     return res;
   }
@@ -143,6 +143,21 @@ private:
       enable2D_ = true;
     }
   }
+  /**
+   *
+   * @tparam T
+   * @param name name of the variable
+   * @param val value
+   * @param max max allowable for that type
+   */
+  template<typename T>
+  void validate(const std::string & name, const T & val, const UINT & max) const{
+    if(val >= max){
+        std::cout << RED << "[Error] : " << name << "Wrong value. Max acceptable value " <<  max-1 << ". Value found =  " << val << NRM <<"\n";
+        exit(EXIT_FAILURE);
+    }
+  }
+
  public:
   /// start of energy
   std::vector<Real> energies;
@@ -180,6 +195,8 @@ private:
   Real kIncrement = 1.0;
   /// kRotationType
   UINT kRotationType = KRotationType::NOROTATION;
+  /// scatter Approach
+  UINT scatterApproach = ScatterApproach::PARTIAL;
 
   std::string VTIDirName = "VTI";
   std::string HDF5DirName = "HDF5";
@@ -191,6 +208,8 @@ private:
   inline bool if2DComputation() const {
      return enable2D_;
   }
+
+
 #ifndef PYBIND
 
   /**
@@ -217,6 +236,12 @@ private:
     if(ReadValue(cfg, "HDF5DirName",HDF5DirName)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
     if(ReadValue(cfg,"kRotationType",kRotationType)){}
+    if(ReadValue(cfg,"scatterApproach",scatterApproach)){}
+    else{
+        if(numZ < 8){
+            scatterApproach = ScatterApproach::FULL;
+        }
+    }
     if(kRotationType == KRotationType::ROTATION){
         ReadValueRequired(cfg,"kStart",kStart);
         ReadValueRequired(cfg,"kEnd",kEnd);
@@ -231,7 +256,7 @@ private:
                 }
             }
         }
-        std::cout << "[WARNING] : This is an experimental routine that you are trying to use\n";
+        std::cout << MAG << "[WARNING] : This is an experimental routine that you are trying to use " << NRM << "\n";
     } else{
         kStart = 0.0;
         kEnd = 0.0;
@@ -271,6 +296,14 @@ private:
 
     }
   }
+
+  void validate() const{
+      validate("FFT Windowing",windowingType,FFT::FFTWindowing::MAX_SIZE);
+      validate("K Rotation",kRotationType,KRotationType::MAX_ROTATION_TYPE);
+      validate("Scatter Approach",scatterApproach,ScatterApproach::MAX_SCATTER_APPROACH);
+      validate("Ewalds Interpolation",ewaldsInterpolation,Interpolation::EwaldsInterpolation::MAX_SIZE);
+      std::cout << GRN << "Input Data : [OK] " << NRM << "\n";
+  }
     /**
      * @brief prints the input data
      */
@@ -283,6 +316,7 @@ private:
         std::cout << "Rotation Mask        : " << rotMask << "\n";
         std::cout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
         std::cout << "K RotationType       : " << kRotationTypeName[kRotationType] << "\n";
+        std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
         if(kRotationType == KRotationType::ROTATION) {
             std::cout << "kRotationAngle       : " << kStart << " : " << kIncrement << " : " << kEnd << "\n";
         }

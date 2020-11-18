@@ -147,7 +147,7 @@ int cudaMain(const UINT *voxel,
     FFT = 3,
     SCATTER3D = 4,
     EWALDS = 5,
-    ROTATION=6,
+    IMAGE_ROTATION=6,
     MEMCOPY_GPU_CPU = 7,
     ENERGY=8,
     MAX = 9
@@ -284,11 +284,10 @@ int cudaMain(const UINT *voxel,
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_polarizationY, sizeof(Complex) * voxelSize));
     gpuErrchk(cudaPeekAtLastError());
-    CUDA_CHECK_RETURN(cudaMalloc((void **) &d_scatter3D, sizeof(Real) * voxelSize));
-    gpuErrchk(cudaPeekAtLastError());
-
-
-
+    if(idata.scatterApproach == ScatterApproach::FULL) {
+        CUDA_CHECK_RETURN(cudaMalloc((void **) &d_scatter3D, sizeof(Real) * voxelSize));
+        gpuErrchk(cudaPeekAtLastError());
+    }
 #ifndef EOC
     Real *d_projection, *d_rotProjection, *d_projectionAverage;
     CUDA_CHECK_RETURN(cudaMalloc((void **) &d_projection, sizeof(Real) * (voxel[0] * voxel[1])));
@@ -478,7 +477,7 @@ int cudaMain(const UINT *voxel,
         const Real eAngle = (idata.kRotationType==KRotationType::NOROTATION) ? 0:angle;
         for(UINT kAngleID = 0; kAngleID < numKRotation; kAngleID++) {
             Real kAngle = (idata.kStart + kAngleID * idata.kIncrement) * M_PI / 180.0;
-            if(idata.numZ < 8) {
+            if(idata.scatterApproach == ScatterApproach::FULL) {
                 /** Scatter 3D computation **/
                 computeScatter3D <<< BlockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
                                                                 d_scatter3D, eleField, eAngle, kAngle, voxelSize, vx,
@@ -548,7 +547,7 @@ int cudaMain(const UINT *voxel,
 #ifdef PROFILING
         {
           END_TIMER(TIMERS::SCATTER3D)
-          START_TIMER(TIMERS::ROTATION)
+          START_TIMER(TIMERS::IMAGE_ROTATION)
         }
 #endif
         const double alpha = cos(angle);
@@ -588,7 +587,7 @@ int cudaMain(const UINT *voxel,
           exit(-1);
         }
         if(status != NPP_SUCCESS){
-          std::cout << "[WARNING] Image rotation warning = " << status << "\n";
+          std::cout << YLW << "[WARNING] Image rotation warning = " << status << NRM <<"\n";
         }
 
         if(idata.rotMask){
@@ -609,7 +608,7 @@ int cudaMain(const UINT *voxel,
 
 #ifdef PROFILING
         {
-          END_TIMER(TIMERS::ROTATION)
+          END_TIMER(TIMERS::IMAGE_ROTATION)
         }
 #endif
 #endif
@@ -659,8 +658,10 @@ int cudaMain(const UINT *voxel,
     gpuErrchk(cudaPeekAtLastError());
     CUDA_CHECK_RETURN(cudaFree(d_polarizationX));
     gpuErrchk(cudaPeekAtLastError());
-    CUDA_CHECK_RETURN(cudaFree(d_scatter3D));
-    gpuErrchk(cudaPeekAtLastError());
+    if(idata.scatterApproach == ScatterApproach::FULL) {
+        CUDA_CHECK_RETURN(cudaFree(d_scatter3D));
+        gpuErrchk(cudaPeekAtLastError());
+    }
     CUDA_CHECK_RETURN(cudaFree(d_voxelInput));
     gpuErrchk(cudaPeekAtLastError());
 
