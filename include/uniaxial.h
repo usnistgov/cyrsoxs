@@ -355,36 +355,19 @@ __host__ __device__ BigUINT computeEquivalentID(const Real3 pos,
 }
 
 
-__device__ inline Real computeBilinearInterpolation(const Real *data,
-                                                             const Real3 & pos,
-                                                             const Real & start,
-                                                             const Real3 & dx,
-                                                             const UINT & X,
-                                                             const UINT & Y,
-                                                             const uint3 & voxel
-) {
-
-  static constexpr unsigned short num_neigbour = 4;
-  Real2 diffX;
-  diffX.x = (pos.x - (start + X * dx.x)) / dx.x;
-  diffX.y = (pos.y - (start + Y * dx.y)) / dx.y;
-
-  Real _data[num_neigbour];
-
-  _data[0] = data[reshape3Dto1D(X, Y, 0, voxel)];                /// (X,Y)
-  _data[1] = data[reshape3Dto1D(X + 1, Y, 0, voxel)];            /// (X + 1,Y)
-  _data[2] = data[reshape3Dto1D(X, Y + 1, 0, voxel)];           /// (X,Y + 1)
-  _data[3] = data[reshape3Dto1D(X + 1, Y + 1, 0, voxel)];        /// (X + 1,Y + 1)
-
-  Real valx1 = ((1 - diffX.x) * (_data[0]) + (diffX.x) * (_data[1])); /// Interpolate along X1
-  Real valx2 = ((1 - diffX.x) * (_data[2]) + (diffX.x) * (_data[3])); /// Interpolate along X2
-
-  Real valy = ((1 - diffX.y) * valx1 + (diffX.y) * valx2);
-  return (valy);
-
-
-}
-
+/**
+ * @brief This routine is optimized for the case where pixel location is alligned with X,Y which is the case
+ * in these simulations
+ * @param data data from which the interpolation happens
+ * @param pos position of the desired location
+ * @param start start of the domain
+ * @param dx spacing
+ * @param X X voxel id
+ * @param Y Y voxel id
+ * @param Z Z voxel id
+ * @param voxel Number of voxels
+ * @return the interpolated value
+ */
 __device__ inline Real computeTrilinearInterpolation(const Real *data,
                                                               const Real3 & pos,
                                                               const Real & start,
@@ -394,42 +377,13 @@ __device__ inline Real computeTrilinearInterpolation(const Real *data,
                                                               const UINT & Z,
                                                               const uint3 & voxel
 ) {
-  static constexpr unsigned short num_neigbour = 8;
-  Real3 diffX;
-  diffX.x = (pos.x - (start + X * dx.x)) / dx.x;
-  diffX.y = (pos.y - (start + Y * dx.y)) / dx.y;
-  diffX.z = (pos.z - (start + Z * dx.z)) / dx.z;
-
-
-  Real _data[num_neigbour];
-
-  if ((Z + 1) >= voxel.z) {
-    return NAN;
-  }
-
-  _data[0] = data[reshape3Dto1D(X, Y, Z, voxel)];                /// (X,Y,Z)
-  _data[1] = data[reshape3Dto1D(X + 1, Y, Z, voxel)];            /// (X + 1,Y,Z)
-  _data[2] = data[reshape3Dto1D(X, Y + 1, Z, voxel)];           /// (X,Y + 1,Z)
-  _data[3] = data[reshape3Dto1D(X + 1, Y + 1, Z, voxel)];        /// (X + 1,Y + 1,Z)
-
-  _data[4] = data[reshape3Dto1D(X, Y, Z + 1, voxel)];             /// (X,Y,Z + 1)
-  _data[5] = data[reshape3Dto1D(X + 1, Y, Z + 1, voxel)];           /// (X + 1,Y,Z + 1)
-  _data[6] = data[reshape3Dto1D(X, Y + 1, Z + 1, voxel)];          /// (X,Y + 1,Z + 1)
-  _data[7] = data[reshape3Dto1D(X + 1, Y + 1, Z + 1, voxel)];       /// (X + 1,Y + 1,Z + 1)
-
-  /*** https://en.wikipedia.org/wiki/Trilinear_interpolation **/
-  Real c00 = ((1 - diffX.x) * (_data[0]) + (diffX.x) * (_data[1])); /// Interpolate along X1
-  Real c01 = ((1 - diffX.x) * (_data[2]) + (diffX.x) * (_data[3])); /// Interpolate along X2
-  Real c10 = ((1 - diffX.x) * (_data[4]) + (diffX.x) * (_data[5])); /// Interpolate along X3 Z is changed
-  Real c11 = ((1 - diffX.x) * (_data[6]) + (diffX.x) * (_data[7])); /// Interpolate along X4  Z is chaged
-
-  Real c0 = ((1 - diffX.y) * (c00) + (diffX.y) * (c01)); /// Interpolate along Y1
-  Real c1 = ((1 - diffX.y) * (c10) + (diffX.y) * (c11)); /// Interpolate along Y2
-
-  Real c = ((1 - diffX.z) * c0 + (diffX.z) * c1); /// Interpolate along Z
-
-  return (c);
-
+    Real diffZ;
+    diffZ = (pos.z - (start + Z * dx.z)) / dx.z;
+    Real _data[2];
+    _data[0] = data[reshape3Dto1D(X, Y, Z, voxel)];                /// (X,Y,Z)
+    _data[1] = data[reshape3Dto1D(X, Y, Z + 1, voxel)];             /// (X,Y,Z + 1)
+    Real c = ((1 - diffZ) * _data[0] + (diffZ) * _data[1]); /// Interpolate along Z
+    return (c);
 }
 
 /**
@@ -463,9 +417,6 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   Real3 dx, pos;
   start = -static_cast<Real>(M_PI / physSize);
 
-  const Real & kx = 0;
-  const Real & ky = 0;
-  const Real & kz = k;
 
   dx.x = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.x - 1) * 1.0));
   dx.y = static_cast<Real>((2.0 * M_PI / physSize) / ((voxel.y - 1) * 1.0));
@@ -478,21 +429,21 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   pos.y = (start + Y * dx.y) ;
   pos.x = (start + X * dx.x) ;
 
-  val = k * k - (pos.x + kx) * (pos.x + kx) - (pos.y + ky) * (pos.y + ky);
+  val = k * k - (pos.x) * (pos.x) - (pos.y ) * (pos.y);
 
   if((val < 0) or (X == (voxel.x - 1)) or (Y == (voxel.y - 1))) {
     projection[threadID] = NAN;
   }
   else
   {
-    pos.z = -kz + sqrt(val);
+    pos.z = -k + sqrt(val);
     if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
       BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
       projection[threadID] += scatter3D[id];
     }
     else {
       if (enable2D) {
-        projection[threadID] += computeBilinearInterpolation(scatter3D, pos, start, dx, X, Y, voxel);
+        projection[threadID] += scatter3D[reshape3Dto1D(X,Y,0,voxel)];
       } else {
         UINT Z = static_cast<UINT >(((pos.z - start) / (dx.z)));
         projection[threadID] += computeTrilinearInterpolation(scatter3D, pos, start, dx, X, Y, Z, voxel);
