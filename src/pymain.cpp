@@ -123,7 +123,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .export_values();
 
   py::enum_<FFT::FFTWindowing>(module, "FFTWindowing")
-      .value("None", FFT::FFTWindowing::NONE)
+      .value("NoPadding", FFT::FFTWindowing::NONE)
       .value("Hanning", FFT::FFTWindowing::HANNING)
       .export_values();
 
@@ -133,7 +133,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .export_values();
 
   py::enum_<KRotationType>(module, "KRotationType")
-      .value("NONE", KRotationType::NOROTATION)
+      .value("NoRotation", KRotationType::NOROTATION)
       .value("Rotation", KRotationType::ROTATION)
       .export_values();
 
@@ -142,14 +142,14 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def(py::init<>())
       .def("setEnergies", &InputData::setEnergies, "Set the energy data", py::arg("energies"))
       .def("print", &InputData::print, "Print the input data")
-      .def("setRotationAngle", &InputData::setEAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
+      .def("setERotationAngle", &InputData::setEAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
            py::arg("EndAngle"),py::arg("IncrementAngle"))
-      .def("setRotationAngle", &InputData::setKAngles, "Set the rotation for K wave vector", py::arg("StartAngle"),
+      .def("setKRotationAngle", &InputData::setKAngles, "Set the rotation for K wave vector", py::arg("StartAngle"),
            py::arg("EndAngle"),py::arg("IncrementAngle"))
       .def("physSize", &InputData::setPhysSize, "Set the Physical size (in nm)", py::arg("PhysSize"))
       .def("dimensions", &InputData::setDimension, "Set the Dimensions", py::arg("X"), py::arg("Y"), py::arg("Z"))
       .def("validate", &InputData::validate, "Validate the input data")
-      .def("kRotation",&InputData::setKRotationType,"Sets the krotation Type",py::arg("kRotation"))
+      .def("setKRotationType",&InputData::setKRotationType,"Sets the krotation Type",py::arg("kRotation"))
       .def_readwrite("interpolationType", &InputData::ewaldsInterpolation, "Ewalds interpolation type")
       .def_readwrite("windowingType", &InputData::windowingType, "Windowing type")
       .def_readwrite("rotMask",&InputData::rotMask,"Rotation Mask")

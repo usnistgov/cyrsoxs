@@ -450,8 +450,8 @@ private:
         if(kRotationType == KRotationType::ROTATION) {
             pybind11::print("Rotation Angle  from : ",kStart , " : ", kIncrement, " : ",kEnd);
         }
-
-        pybind11::print("Optional options");
+        pybind11::print("\n");
+        pybind11::print("Optional :");
         pybind11::print("==================================================");
         pybind11::print("Number of openMP threads : ",num_threads);
         pybind11::print("Interpolation Type       : ",Interpolation::interpolationName[ewaldsInterpolation]);
