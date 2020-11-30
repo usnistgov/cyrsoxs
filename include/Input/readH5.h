@@ -36,19 +36,6 @@
 #include "H5Cpp.h"
 
 namespace H5 {
-
-inline UINT getNumMaterial(const H5::H5File &file) {
-  int numMaterial;
-  DataSet dataSet = file.openDataSet("igor_parameters/igormaterialnum");
-  dataSet.read(&numMaterial, PredType::NATIVE_INT32);
-
-  if(numMaterial != NUM_MATERIAL) {
-      throw std::logic_error("Number of material does not match with the compiled version");
-  }
-
-  return (static_cast<UINT>(numMaterial));
-}
-
 /**
  *
  * @param [in] file HDF5 file pointer
@@ -57,47 +44,47 @@ inline UINT getNumMaterial(const H5::H5File &file) {
  * @param [out] inputData inputData for Mat_alligned
  */
 
-inline void getMatAllignment(const H5::H5File &file,
-                             const UINT numMaterial,
-                             const UINT *voxelSize,
-                             std::vector<std::vector<Real> > &inputData) {
-  assert(numMaterial == NUM_MATERIAL);
-  std::string groupName = "vector_morphology/";
-  BigUINT numVoxel = static_cast<BigUINT>((BigUINT)voxelSize[0] * (BigUINT)voxelSize[1] * (BigUINT)voxelSize[2]);
-  inputData.resize(numMaterial);
-  for (UINT i = 0; i < numMaterial; i++) {
-    inputData[i].resize(numVoxel * 3);
-  }
-  for (int i = 1; i <= numMaterial; i++) {
-    std::string varname = groupName + "Mat_" + std::to_string(i) + "_alignment";
-    H5::DataSet dataSet = file.openDataSet(varname);
-    H5::DataType dataType = dataSet.getDataType();
-#ifdef DOUBLE_PRECISION
-    if(dataType != PredType::NATIVE_DOUBLE){
-       std::cout << "The data format is not supported for double precision \n";
-       exit(EXIT_FAILURE);
+  static inline void getMatAllignment(const H5::H5File &file,
+                                      const UINT numMaterial,
+                                      const UINT *voxelSize,
+                                      std::vector<std::vector<Real> > &inputData) {
+    assert(numMaterial == NUM_MATERIAL);
+    std::string groupName = "vector_morphology/";
+    BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
+    inputData.resize(numMaterial);
+    for (UINT i = 0; i < numMaterial; i++) {
+      inputData[i].resize(numVoxel * 3);
     }
-    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
+    for (int i = 1; i <= numMaterial; i++) {
+      std::string varname = groupName + "Mat_" + std::to_string(i) + "_alignment";
+      H5::DataSet dataSet = file.openDataSet(varname);
+      H5::DataType dataType = dataSet.getDataType();
+#ifdef DOUBLE_PRECISION
+      if(dataType != PredType::NATIVE_DOUBLE){
+         std::cout << "The data format is not supported for double precision \n";
+         exit(EXIT_FAILURE);
+      }
+      dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
 
 #else
-    if(dataType == PredType::NATIVE_DOUBLE){
+      if (dataType == PredType::NATIVE_DOUBLE) {
 
-      std::vector<double> alignedData(numVoxel*3);
-      dataSet.read(alignedData.data(), H5::PredType::NATIVE_DOUBLE);
-      for(int id = 0;id < numVoxel;id++){
-        inputData[i - 1][id*3 + 0]= static_cast<Real>(alignedData[3*id + 0]);
-        inputData[i - 1][id*3 + 1]= static_cast<Real>(alignedData[3*id + 1]);
-        inputData[i - 1][id*3 + 2]= static_cast<Real>(alignedData[3*id + 2]);
+        std::vector<double> alignedData(numVoxel * 3);
+        dataSet.read(alignedData.data(), H5::PredType::NATIVE_DOUBLE);
+        for (int id = 0; id < numVoxel; id++) {
+          inputData[i - 1][id * 3 + 0] = static_cast<Real>(alignedData[3 * id + 0]);
+          inputData[i - 1][id * 3 + 1] = static_cast<Real>(alignedData[3 * id + 1]);
+          inputData[i - 1][id * 3 + 2] = static_cast<Real>(alignedData[3 * id + 2]);
+        }
+      } else if (dataType == PredType::NATIVE_FLOAT) {
+        dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT);
       }
-    }
-    else if (dataType == PredType::NATIVE_FLOAT){
-      dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT);
-    }
-    dataType.close();
-    dataSet.close();
+      dataType.close();
+      dataSet.close();
 #endif
+    }
   }
-}
+
 /**
  *
  * @param [in] file HDF5 file pointer
@@ -106,52 +93,51 @@ inline void getMatAllignment(const H5::H5File &file,
  * @param [out] inputData inputData for Mat_unaligned
  */
 
-inline void getMatUnAlligned(const H5::H5File &file,
-                             const UINT numMaterial,
-                             const UINT *voxelSize,
-                             std::vector<std::vector<Real> > &inputData) {
+  static inline void getScalar(const H5::H5File &file,
+                               const std::string & groupName,
+                                      const std::string & strName,
+                                      const UINT numMaterial,
+                                      const UINT *voxelSize,
+                                      std::vector<std::vector<Real> > &inputData) {
 
-  assert(numMaterial == NUM_MATERIAL);
-  std::string groupName = "vector_morphology/";
-  BigUINT numVoxel = static_cast<BigUINT>((BigUINT)voxelSize[0] * (BigUINT)voxelSize[1] * (BigUINT)voxelSize[2]);
+    assert(numMaterial == NUM_MATERIAL);
+    BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
 
-  inputData.resize(numMaterial);
-  for (UINT i = 0; i < numMaterial; i++) {
-    inputData[i].resize(numVoxel);
-  }
-  for (int i = 1; i <= numMaterial; i++) {
-    std::string varname = groupName + "Mat_" + std::to_string(i) + "_unaligned";
+    inputData.resize(numMaterial);
+    for (UINT i = 0; i < numMaterial; i++) {
+      inputData[i].resize(numVoxel);
+    }
+    for (int i = 1; i <= numMaterial; i++) {
+      std::string varname = groupName + "Mat_" + std::to_string(i) + strName;
 
-    H5::DataSet dataSet = file.openDataSet(varname);
-    H5::DataType dataType = dataSet.getDataType();
+      H5::DataSet dataSet = file.openDataSet(varname);
+      H5::DataType dataType = dataSet.getDataType();
 
 #ifdef DOUBLE_PRECISION
-    if(dataType != PredType::NATIVE_DOUBLE){
-       std::cout << "The data format is not supported for double precision \n";
-       exit(EXIT_FAILURE);
-    }
-    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
-#else
-    if(dataType == PredType::NATIVE_DOUBLE){
-      std::vector<double> unalignedData(numVoxel);
-      dataSet.read(unalignedData.data(), H5::PredType::NATIVE_DOUBLE);
-      for(int id = 0;id < unalignedData.size();id++){
-        inputData[i - 1][id]= static_cast<Real>(unalignedData[id]);
+      if(dataType != PredType::NATIVE_DOUBLE){
+         std::cout << "The data format is not supported for double precision \n";
+         exit(EXIT_FAILURE);
       }
-    }
-    else if (dataType == PredType::NATIVE_FLOAT){
-      dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT);
-    }
-    else{
-      std::cout << "This data format is not supported \n";
-      exit(EXIT_FAILURE);
-    }
-    dataType.close();
-    dataSet.close();
+      dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
+#else
+      if (dataType == PredType::NATIVE_DOUBLE) {
+        std::vector<double> unalignedData(numVoxel);
+        dataSet.read(unalignedData.data(), H5::PredType::NATIVE_DOUBLE);
+        for (int id = 0; id < unalignedData.size(); id++) {
+          inputData[i - 1][id] = static_cast<Real>(unalignedData[id]);
+        }
+      } else if (dataType == PredType::NATIVE_FLOAT) {
+        dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_FLOAT);
+      } else {
+        std::cout << "This data format is not supported \n";
+        exit(EXIT_FAILURE);
+      }
+      dataType.close();
+      dataSet.close();
 #endif
-  }
+    }
 
-}
+  }
 
 /**
  * @brief reads the hdf5 file
@@ -161,39 +147,50 @@ inline void getMatUnAlligned(const H5::H5File &file,
  * @param isAllocated true if the size of voxelData is allocated
  */
 
-void readFile(const std::string& hdf5file, const UINT *voxelSize, Voxel<NUM_MATERIAL> *& voxelData, bool isAllocated = false) {
-  H5::H5File file(hdf5file, H5F_ACC_RDONLY);
-  const UINT numMaterial = getNumMaterial(file);
-
-  BigUINT numVoxel = static_cast<BigUINT>((BigUINT)voxelSize[0] * (BigUINT)voxelSize[1] * (BigUINT)voxelSize[2]);
-  if(not isAllocated){
-    voxelData = new Voxel<NUM_MATERIAL>[numVoxel];
-  }
-  {
-    std::vector<std::vector<Real> > alignmentData;
-    getMatAllignment(file, numMaterial, voxelSize, alignmentData);
-    for(UINT numMat = 0; numMat < numMaterial; numMat++) {
-      for (int i = 0; i < numVoxel; i++) {
-        voxelData[i].s1[numMat].x = alignmentData[numMat][3*i + 0];
-        voxelData[i].s1[numMat].y = alignmentData[numMat][3*i + 1];
-        voxelData[i].s1[numMat].z = alignmentData[numMat][3*i + 2];
+  static void readFile(const std::string &hdf5file, const UINT *voxelSize, Voxel<NUM_MATERIAL> *&voxelData,
+                       MorphologyType morphologyType, bool isAllocated = false) {
+    H5::H5File file(hdf5file, H5F_ACC_RDONLY);
+    BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
+    if (not isAllocated) {
+      voxelData = new Voxel<NUM_MATERIAL>[numVoxel];
+    }
+    if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
+      {
+        std::vector<std::vector<Real> > alignmentData;
+        getMatAllignment(file, NUM_MATERIAL, voxelSize, alignmentData);
+        for (UINT numMat = 0; numMat < NUM_MATERIAL; numMat++) {
+          for (int i = 0; i < numVoxel; i++) {
+            voxelData[i].s1[numMat].x = alignmentData[numMat][3 * i + 0];
+            voxelData[i].s1[numMat].y = alignmentData[numMat][3 * i + 1];
+            voxelData[i].s1[numMat].z = alignmentData[numMat][3 * i + 2];
+          }
+        }
+      }
+      {
+        std::vector<std::vector<Real> > unalignedData;
+        getScalar(file,"vector_morphology","unaligned", NUM_MATERIAL, voxelSize, unalignedData);
+        for (UINT numMat = 0; numMat < NUM_MATERIAL; numMat++) {
+          for (int i = 0; i < numVoxel; i++) {
+            voxelData[i].s1[numMat].w = unalignedData[numMat][i];
+          }
+        }
+      }
+    }
+    else{
+      std::vector<std::vector<Real> > s, phi, theta, vfrac;
+      getScalar(file,"morphology","S", NUM_MATERIAL, voxelSize, s);
+      getScalar(file,"morphology","Phi", NUM_MATERIAL, voxelSize, phi);
+      getScalar(file,"morphology","Theta", NUM_MATERIAL, voxelSize, theta);
+      getScalar(file,"morphology","vFrac", NUM_MATERIAL, voxelSize, vfrac);
+      for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
+        for (int i = 0; i < numVoxel; i++) {
+          voxelData[i].s1[matID].x = s[matID][i]*cos(theta[matID][i]);
+          voxelData[i].s1[matID].y = s[matID][i]*sin(theta[matID][i])*sin(phi[matID][i]);
+          voxelData[i].s1[matID].z = s[matID][i]*sin(theta[matID][i])*cos(phi[matID][i]);
+          voxelData[i].s1[matID].w = vfrac[matID][i] - s[matID][i];
+        }
       }
     }
   }
-
-  {
-    std::vector<std::vector<Real> > unalignedData;
-    getMatUnAlligned(file, numMaterial, voxelSize, unalignedData);
-    for(UINT numMat = 0; numMat < numMaterial; numMat++) {
-      for (int i = 0; i < numVoxel; i++) {
-        voxelData[i].s1[numMat].w = unalignedData[numMat][i];
-      }
-    }
-  }
-
-
-}
-
-
 }
 #endif //PRS_READH5_H

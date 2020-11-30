@@ -101,4 +101,9 @@ static_assert(sizeof(scatterApproachName)/sizeof(char*) == ScatterApproach::MAX_
 #define CYN "\e[0;36m"
 #define NRM "\e[0m"
 
+
+enum MorphologyType:UINT{
+    EULER_ANGLES = 0,
+    VECTOR_MORPHOLOGY = 1
+};
 #endif

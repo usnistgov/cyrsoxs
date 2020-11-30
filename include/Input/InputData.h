@@ -340,7 +340,7 @@ private:
     /**
     * @brief Constructor
     */
-    InputData() {
+    InputData(){
       writeHDF5 = false;
       paramChecker_.reset();
       paramChecker_.set(ParamChecker::Parameters::KANGLE,true);
@@ -443,7 +443,7 @@ private:
         pybind11::print("Required options:");
         pybind11::print("==================================================");
         pybind11::print("Dimensions           : [",numX,",",numY,",",numZ,"]");
-        pybind11::print("PhysSize             : ", physSize);
+        pybind11::print("PhysSize             : ", physSize , "nm");
         pybind11::print("Energy from          : ",energies);
         pybind11::print("Rotation Angle  from : ",startAngle , " : ", incrementAngle, " : ",endAngle);
         pybind11::print("K Rotation Type      : ",kRotationTypeName[kRotationType]);
@@ -451,7 +451,7 @@ private:
             pybind11::print("Rotation Angle  from : ",kStart , " : ", kIncrement, " : ",kEnd);
         }
         pybind11::print("\n");
-        pybind11::print("Optional :");
+        pybind11::print("Optional options:");
         pybind11::print("==================================================");
         pybind11::print("Number of openMP threads : ",num_threads);
         pybind11::print("Interpolation Type       : ",Interpolation::interpolationName[ewaldsInterpolation]);

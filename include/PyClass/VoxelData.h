@@ -46,13 +46,14 @@ private:
     Voxel<NUM_MATERIAL> *voxel = nullptr; /// Voxel data
     const InputData &inputData_;           /// input data
     std::bitset<NUM_MATERIAL> validData_; /// Check that voxel data is correct
+    const MorphologyType morphologyType_;
 public:
     /**
      * @brief constructor
      * @param inputData Input data
      */
-    VoxelData(const InputData &inputData)
-        : inputData_(inputData) {
+    VoxelData(const InputData &inputData,const MorphologyType morphologyType)
+        : inputData_(inputData),morphologyType_(morphologyType) {
       clear();
       const BigUINT numVoxels = inputData_.numX * inputData_.numY * inputData_.numZ;
       voxel = new Voxel<NUM_MATERIAL>[numVoxels];
@@ -69,6 +70,9 @@ public:
     void addMaterialData(py::array_t<Real, py::array::c_style | py::array::forcecast> &matAlignementData,
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matUnalignedData,
                          const UINT matID) {
+      if(morphologyType_ == MorphologyType::EULER_ANGLES){
+          throw std::logic_error("Wrong type of morphology Type.");
+      }
       if (matID >= NUM_MATERIAL) {
         throw std::logic_error("Number of material does not match with the compiled version");
       }
@@ -86,6 +90,32 @@ public:
       validData_.set(matID, true);
     }
 
+    void addMaterialData(py::array_t<Real, py::array::c_style | py::array::forcecast> &matSVector,
+                         py::array_t<Real, py::array::c_style | py::array::forcecast> &matThetaVector,
+                         py::array_t<Real, py::array::c_style | py::array::forcecast> &matPhiVector,
+                         py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
+                         const UINT matID) {
+        if(morphologyType_ != MorphologyType::EULER_ANGLES){
+            throw std::logic_error("Wrong type of morphology Type.");
+        }
+        if (matID >= NUM_MATERIAL) {
+            throw std::logic_error("Number of material does not match with the compiled version");
+        }
+        if(validData_.test(matID)){
+            py::print("The material is already set. Please first reset to add the entries. Returning.");
+            return;
+        }
+        const BigUINT numVoxels = inputData_.numX * inputData_.numY * inputData_.numZ;
+
+        for (BigUINT i = 0; i < numVoxels; i++) {
+            voxel[i].s1[matID].x = matSVector.data()[i]*cos(matThetaVector.data()[i]);
+            voxel[i].s1[matID].y = matSVector.data()[i]*sin(matThetaVector.data()[i])*sin(matPhiVector.data()[i]);
+            voxel[i].s1[matID].z = matSVector.data()[i]*sin(matThetaVector.data()[i])*cos(matPhiVector.data()[i]);
+            voxel[i].s1[matID].w = matVfracVector.data()[i] - matSVector.data()[i];
+        }
+        validData_.set(matID, true);
+    }
+
     /**
      * @brief read the material information from the filename
      * @param fname HDF5 filename
@@ -96,7 +126,7 @@ public:
         return;
       }
       const UINT voxelDim[3]{inputData_.numX, inputData_.numY, inputData_.numZ};
-      H5::readFile(fname, voxelDim, voxel, true);
+      H5::readFile(fname, voxelDim, voxel,morphologyType_, true);
       validData_.flip();
     }
 
