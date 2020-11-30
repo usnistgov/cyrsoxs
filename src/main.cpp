@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
 
     std::string fname = argv[1];
     Voxel<NUM_MATERIAL> *voxelData;
-    H5::readFile(fname, voxelSize, voxelData);
+    H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType));
     Real *projectionGPUAveraged;
     const UINT
       numEnergyLevel = inputData.energies.size();

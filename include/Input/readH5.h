@@ -45,17 +45,16 @@ namespace H5 {
  */
 
   static inline void getMatAllignment(const H5::H5File &file,
-                                      const UINT numMaterial,
                                       const UINT *voxelSize,
                                       std::vector<std::vector<Real> > &inputData) {
-    assert(numMaterial == NUM_MATERIAL);
+
     std::string groupName = "vector_morphology/";
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
-    inputData.resize(numMaterial);
-    for (UINT i = 0; i < numMaterial; i++) {
+    inputData.resize(NUM_MATERIAL);
+    for (UINT i = 0; i < NUM_MATERIAL; i++) {
       inputData[i].resize(numVoxel * 3);
     }
-    for (int i = 1; i <= numMaterial; i++) {
+    for (int i = 1; i <= NUM_MATERIAL; i++) {
       std::string varname = groupName + "Mat_" + std::to_string(i) + "_alignment";
       H5::DataSet dataSet = file.openDataSet(varname);
       H5::DataType dataType = dataSet.getDataType();
@@ -96,18 +95,16 @@ namespace H5 {
   static inline void getScalar(const H5::H5File &file,
                                const std::string & groupName,
                                       const std::string & strName,
-                                      const UINT numMaterial,
                                       const UINT *voxelSize,
                                       std::vector<std::vector<Real> > &inputData) {
 
-    assert(numMaterial == NUM_MATERIAL);
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
 
-    inputData.resize(numMaterial);
-    for (UINT i = 0; i < numMaterial; i++) {
+    inputData.resize(NUM_MATERIAL);
+    for (UINT i = 0; i < NUM_MATERIAL; i++) {
       inputData[i].resize(numVoxel);
     }
-    for (int i = 1; i <= numMaterial; i++) {
+    for (int i = 1; i <= NUM_MATERIAL; i++) {
       std::string varname = groupName + "Mat_" + std::to_string(i) + strName;
 
       H5::DataSet dataSet = file.openDataSet(varname);
@@ -148,7 +145,7 @@ namespace H5 {
  */
 
   static void readFile(const std::string &hdf5file, const UINT *voxelSize, Voxel<NUM_MATERIAL> *&voxelData,
-                       MorphologyType morphologyType, bool isAllocated = false) {
+                      const MorphologyType & morphologyType, bool isAllocated = false) {
     H5::H5File file(hdf5file, H5F_ACC_RDONLY);
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
     if (not isAllocated) {
@@ -157,7 +154,7 @@ namespace H5 {
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
       {
         std::vector<std::vector<Real> > alignmentData;
-        getMatAllignment(file, NUM_MATERIAL, voxelSize, alignmentData);
+        getMatAllignment(file, voxelSize, alignmentData);
         for (UINT numMat = 0; numMat < NUM_MATERIAL; numMat++) {
           for (int i = 0; i < numVoxel; i++) {
             voxelData[i].s1[numMat].x = alignmentData[numMat][3 * i + 0];
@@ -168,7 +165,7 @@ namespace H5 {
       }
       {
         std::vector<std::vector<Real> > unalignedData;
-        getScalar(file,"vector_morphology","unaligned", NUM_MATERIAL, voxelSize, unalignedData);
+        getScalar(file,"vector_morphology","unaligned", voxelSize, unalignedData);
         for (UINT numMat = 0; numMat < NUM_MATERIAL; numMat++) {
           for (int i = 0; i < numVoxel; i++) {
             voxelData[i].s1[numMat].w = unalignedData[numMat][i];
@@ -178,10 +175,10 @@ namespace H5 {
     }
     else{
       std::vector<std::vector<Real> > s, phi, theta, vfrac;
-      getScalar(file,"morphology","S", NUM_MATERIAL, voxelSize, s);
-      getScalar(file,"morphology","Phi", NUM_MATERIAL, voxelSize, phi);
-      getScalar(file,"morphology","Theta", NUM_MATERIAL, voxelSize, theta);
-      getScalar(file,"morphology","vFrac", NUM_MATERIAL, voxelSize, vfrac);
+      getScalar(file,"morphology","S", voxelSize, s);
+      getScalar(file,"morphology","Phi", voxelSize, phi);
+      getScalar(file,"morphology","Theta", voxelSize, theta);
+      getScalar(file,"morphology","vFrac", voxelSize, vfrac);
       for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
         for (int i = 0; i < numVoxel; i++) {
           voxelData[i].s1[matID].x = s[matID][i]*cos(theta[matID][i]);

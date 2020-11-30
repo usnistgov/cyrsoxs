@@ -136,6 +136,11 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .value("NoRotation", KRotationType::NOROTATION)
       .value("Rotation", KRotationType::ROTATION)
       .export_values();
+  py::enum_<MorphologyType>(module, "MorphologyType")
+    .value("EulerAngles", MorphologyType::EULER_ANGLES)
+    .value("VectorMorphology", MorphologyType::VECTOR_MORPHOLOGY)
+    .export_values();
+
 
 
   py::class_<InputData>(module, "InputData")
@@ -166,10 +171,13 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("print", &RefractiveIndexData::printEnergyData, "Prints the refractive index data");
 
   py::class_<VoxelData>(module, "VoxelData")
-      .def(py::init<const InputData &>(), "Constructor")
-      .def("addVoxelData", &VoxelData::addMaterialData,
+      .def(py::init<const InputData &,const MorphologyType &>(), "Constructor")
+      .def("addVoxelData", &VoxelData::addMaterialDataVectorMorphology,
            "Adds the Allignment and unaligned component to the given material", py::arg("AlignedData"),
            py::arg("UnalignedData"), py::arg("MaterialID"))
+      .def("addVoxelData", &VoxelData::addMaterialDataEulerAngles,
+         "Adds the Allignment and unaligned component to the given material", py::arg("S"),
+         py::arg("Phi"),py::arg("Theta"), py::arg("vFrac"),py::arg("MaterialID"))
       .def("clear", &VoxelData::clear,"Clears the voxel data")
       .def("validate", &VoxelData::validate,"validate the Voxel data")
       .def("readFromH5", &VoxelData::readFromH5, "Reads from HDF5",py::arg("Filename"))

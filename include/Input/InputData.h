@@ -222,6 +222,8 @@ private:
 
 #ifndef PYBIND
 
+  /// Morphology type
+  UINT morphologyType;
   /**
    * Constructor to read input data
    * @param refractiveIndex material input
@@ -240,6 +242,7 @@ private:
     ReadValueRequired(cfg, "NumY", numY);
     ReadValueRequired(cfg, "NumZ", numZ);
     ReadValueRequired(cfg, "PhysSize", physSize);
+    ReadValueRequired(cfg, "MorphologyType", physSize);
     if(ReadValue(cfg, "RotMask",rotMask)){}
     if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
     if(ReadValue(cfg, "WriteVTI",writeVTI)){}
@@ -310,6 +313,7 @@ private:
       validate("K Rotation",kRotationType,KRotationType::MAX_ROTATION_TYPE);
       validate("Scatter Approach",scatterApproach,ScatterApproach::MAX_SCATTER_APPROACH);
       validate("Ewalds Interpolation",ewaldsInterpolation,Interpolation::EwaldsInterpolation::MAX_SIZE);
+      validate("Morphology Type",ewaldsInterpolation,MorphologyType::MAX_MORPHOLOGY_TYPE);
       std::cout << GRN << "Input Data : [OK] " << NRM << "\n";
   }
     /**
@@ -324,6 +328,7 @@ private:
         if(kRotationType == KRotationType::ROTATION) {
             std::cout << "kRotationAngle       : " << kStart << " : " << kIncrement << " : " << kEnd << "\n";
         }
+        std::cout << "MorphologyType       : " << morphologyTypeName[morphologyType] << "\n";
         std::cout << "Energies simulated   : [";
         for (const auto & energy: energies) {
             std::cout << energy << " " ;

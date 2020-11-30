@@ -46,13 +46,13 @@ private:
     Voxel<NUM_MATERIAL> *voxel = nullptr; /// Voxel data
     const InputData &inputData_;           /// input data
     std::bitset<NUM_MATERIAL> validData_; /// Check that voxel data is correct
-    const MorphologyType morphologyType_;
+    const MorphologyType morphologyType_; /// MorphologyType
 public:
     /**
      * @brief constructor
      * @param inputData Input data
      */
-    VoxelData(const InputData &inputData,const MorphologyType morphologyType)
+    VoxelData(const InputData &inputData,const MorphologyType & morphologyType)
         : inputData_(inputData),morphologyType_(morphologyType) {
       clear();
       const BigUINT numVoxels = inputData_.numX * inputData_.numY * inputData_.numZ;
@@ -67,11 +67,12 @@ public:
      * @param matUnalignedData The unalignment component for the material
      * @param matID material ID
      */
-    void addMaterialData(py::array_t<Real, py::array::c_style | py::array::forcecast> &matAlignementData,
+    void addMaterialDataVectorMorphology(py::array_t<Real, py::array::c_style | py::array::forcecast> &matAlignementData,
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matUnalignedData,
                          const UINT matID) {
       if(morphologyType_ == MorphologyType::EULER_ANGLES){
-          throw std::logic_error("Wrong type of morphology Type.");
+        py::print("[Expected]: Vector  Morphologies\n");
+          throw std::logic_error("Trying to access wrong type of morphology.");
       }
       if (matID >= NUM_MATERIAL) {
         throw std::logic_error("Number of material does not match with the compiled version");
@@ -90,13 +91,14 @@ public:
       validData_.set(matID, true);
     }
 
-    void addMaterialData(py::array_t<Real, py::array::c_style | py::array::forcecast> &matSVector,
+    void addMaterialDataEulerAngles(py::array_t<Real, py::array::c_style | py::array::forcecast> &matSVector,
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matThetaVector,
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matPhiVector,
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
                          const UINT matID) {
         if(morphologyType_ != MorphologyType::EULER_ANGLES){
-            throw std::logic_error("Wrong type of morphology Type.");
+          py::print("[Expected]: Euler Angles\n");
+          throw std::logic_error("Trying to access wrong type of morphology.");
         }
         if (matID >= NUM_MATERIAL) {
             throw std::logic_error("Number of material does not match with the compiled version");
