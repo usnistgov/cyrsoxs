@@ -1,10 +1,15 @@
 Cy-RSoXS Changes History
 ====================================
-Version 0.8.2
+Version 0.9.0
 =================
 * Energies now accepted as lists
 * Size of `BigUINT` dropped to 32 bit. Compilation option added to enable 64 bit.
 * FFT made in place.
+* kRotation added (still Experimental)
+* Scatter Approach made partial 
+* Pybind function names modified for Electric field rotations
+* Config modified. Now rotations accepted as list `[start:increment:end]`
+* Morphology can be added as vector morphology or Euler Angles
 
 Version 0.8.1
 =================

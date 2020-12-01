@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(Cy-RSoXS VERSION 0.8.2 LANGUAGES CXX CUDA)
+project(Cy-RSoXS VERSION 0.9.0 LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)

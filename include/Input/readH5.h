@@ -105,7 +105,7 @@ namespace H5 {
       inputData[i].resize(numVoxel);
     }
     for (int i = 1; i <= NUM_MATERIAL; i++) {
-      std::string varname = groupName + "Mat_" + std::to_string(i) + strName;
+      std::string varname = groupName + "/Mat_" + std::to_string(i) + strName;
 
       H5::DataSet dataSet = file.openDataSet(varname);
       H5::DataType dataType = dataSet.getDataType();
@@ -178,7 +178,7 @@ namespace H5 {
       getScalar(file,"morphology","_S", voxelSize, s);
       getScalar(file,"morphology","_Phi", voxelSize, phi);
       getScalar(file,"morphology","_Theta", voxelSize, theta);
-      getScalar(file,"morphology","_vFrac", voxelSize, vfrac);
+      getScalar(file,"morphology","_vfrac", voxelSize, vfrac);
       for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
         for (UINT i = 0; i < numVoxel; i++) {
           voxelData[i].s1[matID].x = s[matID][i]*cos(theta[matID][i]);
