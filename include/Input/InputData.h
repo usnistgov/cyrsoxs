@@ -242,7 +242,7 @@ private:
     ReadValueRequired(cfg, "NumY", numY);
     ReadValueRequired(cfg, "NumZ", numZ);
     ReadValueRequired(cfg, "PhysSize", physSize);
-    ReadValueRequired(cfg, "MorphologyType", physSize);
+    ReadValueRequired(cfg, "MorphologyType", morphologyType);
     if(ReadValue(cfg, "RotMask",rotMask)){}
     if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
     if(ReadValue(cfg, "WriteVTI",writeVTI)){}

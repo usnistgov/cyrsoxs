@@ -165,9 +165,9 @@ namespace H5 {
       }
       {
         std::vector<std::vector<Real> > unalignedData;
-        getScalar(file,"vector_morphology","unaligned", voxelSize, unalignedData);
+        getScalar(file,"vector_morphology","_unaligned", voxelSize, unalignedData);
         for (UINT numMat = 0; numMat < NUM_MATERIAL; numMat++) {
-          for (int i = 0; i < numVoxel; i++) {
+          for (UINT i = 0; i < numVoxel; i++) {
             voxelData[i].s1[numMat].w = unalignedData[numMat][i];
           }
         }
@@ -175,12 +175,12 @@ namespace H5 {
     }
     else{
       std::vector<std::vector<Real> > s, phi, theta, vfrac;
-      getScalar(file,"morphology","S", voxelSize, s);
-      getScalar(file,"morphology","Phi", voxelSize, phi);
-      getScalar(file,"morphology","Theta", voxelSize, theta);
-      getScalar(file,"morphology","vFrac", voxelSize, vfrac);
+      getScalar(file,"morphology","_S", voxelSize, s);
+      getScalar(file,"morphology","_Phi", voxelSize, phi);
+      getScalar(file,"morphology","_Theta", voxelSize, theta);
+      getScalar(file,"morphology","_vFrac", voxelSize, vfrac);
       for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
-        for (int i = 0; i < numVoxel; i++) {
+        for (UINT i = 0; i < numVoxel; i++) {
           voxelData[i].s1[matID].x = s[matID][i]*cos(theta[matID][i]);
           voxelData[i].s1[matID].y = s[matID][i]*sin(theta[matID][i])*sin(phi[matID][i]);
           voxelData[i].s1[matID].z = s[matID][i]*sin(theta[matID][i])*cos(phi[matID][i]);
