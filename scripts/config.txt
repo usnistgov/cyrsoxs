@@ -1,0 +1,15 @@
+Energies=[280.0,285.0,281.0];
+EAngleRotation=[0.0,2.0,180.0];
+NumThreads = 4;
+NumX = 2048;
+NumY = 2048;
+NumZ = 1;
+PhysSize = 5.0;
+RotMask = False;
+EwaldsInterpolation= 1;
+WriteVTI = False;
+WindowingType = 0;
+MorphologyType = 0;
+scatterApproach = 0;
+KRotationType = 0;
+KAngleRotation=[0.0,2.0,180.0];
