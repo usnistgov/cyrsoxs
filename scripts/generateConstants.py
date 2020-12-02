@@ -164,7 +164,7 @@ if __name__ == "__main__":
     EwaldsInterpolation = 1  # 1 : Linear Interpolation 0: Nearest Neighbour
     writeVTI = False
     windowingType = 0
-    morphologyType = 0  # 0: Euler angles 1: Vector Morphology
+    morphologyType = 0  # 0: Euler angles 1: Vector Morphology 2: Spherical coordinate
     scatterApproach = 0  # 0 : Partial (Default) 1: Full
 
     # Files corresponding to Each material. For vacuum pass vacuum
