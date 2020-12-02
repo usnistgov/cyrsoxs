@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (0.8.1)
+GPU enabled RSoXS simulation (0.9.0)
 ====================================
 
 # With Pybind support
