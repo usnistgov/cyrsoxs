@@ -447,13 +447,13 @@ private:
     void print() const{
         pybind11::print("Required options:");
         pybind11::print("==================================================");
-        pybind11::print("Dimensions           : [",numX,",",numY,",",numZ,"]");
+        pybind11::print("Dimensions           :  [",numX,",",numY,",",numZ,"]");
         pybind11::print("PhysSize             : ", physSize , "nm");
-        pybind11::print("Energy from          : ",energies);
-        pybind11::print("Rotation Angle  from : ",startAngle , " : ", incrementAngle, " : ",endAngle);
+        pybind11::print("Energy               : ",energies);
+        pybind11::print("Rotation Angle       : ",startAngle , " : ", incrementAngle, " : ",endAngle);
         pybind11::print("K Rotation Type      : ",kRotationTypeName[kRotationType]);
         if(kRotationType == KRotationType::ROTATION) {
-            pybind11::print("Rotation Angle  from : ",kStart , " : ", kIncrement, " : ",kEnd);
+        pybind11::print("Rotation Angle       : ",kStart , " : ", kIncrement, " : ",kEnd);
         }
         pybind11::print("\n");
         pybind11::print("Optional options:");
