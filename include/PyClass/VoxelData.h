@@ -71,8 +71,8 @@ public:
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matUnalignedData,
                          const UINT matID) {
       if(morphologyType_ == MorphologyType::EULER_ANGLES){
-        py::print("[Expected]: Vector  Morphologies\n");
-          throw std::logic_error("Trying to access wrong type of morphology.");
+        py::print("Error: [Expected]: Vector Morphology [Found:] Euler Angles. Returning\n");
+        return;
       }
       if (matID >= NUM_MATERIAL) {
         throw std::logic_error("Number of material does not match with the compiled version");
@@ -97,8 +97,8 @@ public:
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
                          const UINT matID) {
         if(morphologyType_ != MorphologyType::EULER_ANGLES){
-          py::print("[Expected]: Euler Angles\n");
-          throw std::logic_error("Trying to access wrong type of morphology.");
+          py::print("Error: [Expected]: Euler Angles. [Found:] VectorMorphology\n");
+          return;
         }
         if (matID >= NUM_MATERIAL) {
             throw std::logic_error("Number of material does not match with the compiled version");
