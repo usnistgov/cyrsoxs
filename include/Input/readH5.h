@@ -192,9 +192,9 @@ namespace H5 {
       else if(morphologyType == MorphologyType::EULER_ANGLES){
         for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
           for (UINT i = 0; i < numVoxel; i++) {
-            voxelData[i].s1[matID].x = s[matID][i] * cos(theta[matID][i]);
-            voxelData[i].s1[matID].y = s[matID][i] * sin(theta[matID][i]) * cos(phi[matID][i]);
-            voxelData[i].s1[matID].z = s[matID][i] * sin(theta[matID][i]) * sin(phi[matID][i]);
+            voxelData[i].s1[matID].x = s[matID][i] * cos(phi[matID][i]);
+            voxelData[i].s1[matID].y = s[matID][i] * sin(phi[matID][i]) * cos(theta[matID][i]);
+            voxelData[i].s1[matID].z = s[matID][i] * sin(phi[matID][i]) * sin(theta[matID][i]);
             voxelData[i].s1[matID].w = vfrac[matID][i] - s[matID][i];
           }
         }

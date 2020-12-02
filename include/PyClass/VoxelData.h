@@ -118,9 +118,9 @@ public:
         }
         else if(morphologyType_ == MorphologyType::EULER_ANGLES) {
           for (BigUINT i = 0; i < numVoxels; i++) {
-            voxel[i].s1[matID].x = matSVector.data()[i] * cos(matThetaVector.data()[i]);
-            voxel[i].s1[matID].y = matSVector.data()[i] * sin(matThetaVector.data()[i]) * cos(matPhiVector.data()[i]);
-            voxel[i].s1[matID].z = matSVector.data()[i] * sin(matThetaVector.data()[i]) * sin(matPhiVector.data()[i]);
+            voxel[i].s1[matID].x = matSVector.data()[i] * cos(matPhiVector.data()[i]);
+            voxel[i].s1[matID].y = matSVector.data()[i] * sin(matPhiVector.data()[i]) * cos(matThetaVector.data()[i]);
+            voxel[i].s1[matID].z = matSVector.data()[i] * sin(matPhiVector.data()[i]) * sin(matThetaVector.data()[i]);
             voxel[i].s1[matID].w = matVfracVector.data()[i] - matSVector.data()[i];
           }
         }
