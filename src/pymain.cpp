@@ -172,7 +172,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("print", &RefractiveIndexData::printEnergyData, "Prints the refractive index data");
 
   py::class_<VoxelData>(module, "VoxelData")
-      .def(py::init<const InputData &,const MorphologyType &>(), "Constructor")
+      .def(py::init<const InputData &,const MorphologyType &>(), "Constructor",py::arg("InputData"),py::arg("MorphologyType"))
       .def("addVoxelData", &VoxelData::addMaterialDataVectorMorphology,
            "Adds the Allignment and unaligned component to the given material", py::arg("AlignedData"),
            py::arg("UnalignedData"), py::arg("MaterialID"))

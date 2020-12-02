@@ -17,21 +17,24 @@ from the scripts folder.
 Here are the description of the individual parameters that you would need to change
 in `__main__`.
 ```
-startEnergy = 280.0; #Start energy
-endEnergy = 290.0;   #End  energy
-incrementEnergy = 0.1; #Increment in  energy
-startAngle = 0.0; #start angle
-endAngle = 180.0; #end angle
-incrementAngle = 2.0; #increment in each angle
-numThreads = 4; number of threads for execution
+#Required options
+energies = [280.0, 285.0, 281.0]
+eAngleRotation = [0.0, 2.0, 180.0]  # [start : increment: end]
+morphologyType = 0  # 0: Euler angles 1: Vector Morphology 2: Spherical coordinate
 numX = 2048; # number of voxels in X direction
 numY = 2048;# number of voxels in Y direction
 numZ = 1;# number of voxels in Z direction
 physSize = 5.0; #Physical size
+
+#Optional options
+numThreads = 4; number of threads for execution
 RotMask = False; #Default: False
 EwaldsInterpolation = 1; # 1 : Linear Interpolation (default) 0: Nearest Neighbour 
 WriteVTI = False; # Default : False
 WindowingType = 0; # 0: None (Default) 1: Hanning 
+scatterApproach = 0  # 0 : Partial (Default) 1: Full
+kRotationType = 0 # 0: No rotation 1: kRotation
+kAngleRotation: list = [0.0, 2.0, 180.0]  # [start : increment: end]
 ``` 
 
 This code also generate the optical constants for each Energy level
