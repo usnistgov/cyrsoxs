@@ -179,12 +179,24 @@ namespace H5 {
       getScalar(file,"morphology","_Phi", voxelSize, phi);
       getScalar(file,"morphology","_Theta", voxelSize, theta);
       getScalar(file,"morphology","_vfrac", voxelSize, vfrac);
+      if(morphologyType == MorphologyType::SPHERICAL_COORDINATES){
       for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
         for (UINT i = 0; i < numVoxel; i++) {
-          voxelData[i].s1[matID].x = s[matID][i]*cos(theta[matID][i]);
-          voxelData[i].s1[matID].y = s[matID][i]*sin(theta[matID][i])*sin(phi[matID][i]);
-          voxelData[i].s1[matID].z = s[matID][i]*sin(theta[matID][i])*cos(phi[matID][i]);
+          voxelData[i].s1[matID].x = s[matID][i] * cos(theta[matID][i]);
+          voxelData[i].s1[matID].y = s[matID][i] * sin(theta[matID][i]) * sin(phi[matID][i]);
+          voxelData[i].s1[matID].z = s[matID][i] * sin(theta[matID][i]) * cos(phi[matID][i]);
           voxelData[i].s1[matID].w = vfrac[matID][i] - s[matID][i];
+        }
+      }
+      }
+      else if(morphologyType == MorphologyType::EULER_ANGLES){
+        for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
+          for (UINT i = 0; i < numVoxel; i++) {
+            voxelData[i].s1[matID].x = s[matID][i] * cos(theta[matID][i]);
+            voxelData[i].s1[matID].y = s[matID][i] * sin(theta[matID][i]) * cos(phi[matID][i]);
+            voxelData[i].s1[matID].z = s[matID][i] * sin(theta[matID][i]) * sin(phi[matID][i]);
+            voxelData[i].s1[matID].w = vfrac[matID][i] - s[matID][i];
+          }
         }
       }
     }

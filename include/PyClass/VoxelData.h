@@ -97,7 +97,7 @@ public:
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
                          const UINT matID) {
         if(morphologyType_ != MorphologyType::EULER_ANGLES){
-          py::print("Error: [Expected]: Euler Angles. [Found:] VectorMorphology\n");
+          py::print("Error: [Expected]: Euler Angles / Spherical Coordinates. [Found:] VectorMorphology\n");
           return;
         }
         if (matID >= NUM_MATERIAL) {
@@ -108,12 +108,21 @@ public:
             return;
         }
         const BigUINT numVoxels = inputData_.numX * inputData_.numY * inputData_.numZ;
-
-        for (BigUINT i = 0; i < numVoxels; i++) {
-            voxel[i].s1[matID].x = matSVector.data()[i]*cos(matThetaVector.data()[i]);
-            voxel[i].s1[matID].y = matSVector.data()[i]*sin(matThetaVector.data()[i])*sin(matPhiVector.data()[i]);
-            voxel[i].s1[matID].z = matSVector.data()[i]*sin(matThetaVector.data()[i])*cos(matPhiVector.data()[i]);
+        if(morphologyType_ == MorphologyType::SPHERICAL_COORDINATES) {
+          for (BigUINT i = 0; i < numVoxels; i++) {
+            voxel[i].s1[matID].x = matSVector.data()[i] * cos(matThetaVector.data()[i]);
+            voxel[i].s1[matID].y = matSVector.data()[i] * sin(matThetaVector.data()[i]) * sin(matPhiVector.data()[i]);
+            voxel[i].s1[matID].z = matSVector.data()[i] * sin(matThetaVector.data()[i]) * cos(matPhiVector.data()[i]);
             voxel[i].s1[matID].w = matVfracVector.data()[i] - matSVector.data()[i];
+          }
+        }
+        else if(morphologyType_ == MorphologyType::EULER_ANGLES) {
+          for (BigUINT i = 0; i < numVoxels; i++) {
+            voxel[i].s1[matID].x = matSVector.data()[i] * cos(matThetaVector.data()[i]);
+            voxel[i].s1[matID].y = matSVector.data()[i] * sin(matThetaVector.data()[i]) * cos(matPhiVector.data()[i]);
+            voxel[i].s1[matID].z = matSVector.data()[i] * sin(matThetaVector.data()[i]) * sin(matPhiVector.data()[i]);
+            voxel[i].s1[matID].w = matVfracVector.data()[i] - matSVector.data()[i];
+          }
         }
         validData_.set(matID, true);
     }

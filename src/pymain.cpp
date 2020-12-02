@@ -138,6 +138,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .export_values();
   py::enum_<MorphologyType>(module, "MorphologyType")
     .value("EulerAngles", MorphologyType::EULER_ANGLES)
+    .value("SphericalCoordinates", MorphologyType::SPHERICAL_COORDINATES)
     .value("VectorMorphology", MorphologyType::VECTOR_MORPHOLOGY)
     .export_values();
 

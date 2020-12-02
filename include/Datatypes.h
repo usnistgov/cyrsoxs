@@ -105,9 +105,10 @@ static_assert(sizeof(scatterApproachName)/sizeof(char*) == ScatterApproach::MAX_
 enum MorphologyType:UINT{
     EULER_ANGLES = 0,
     VECTOR_MORPHOLOGY = 1,
-    MAX_MORPHOLOGY_TYPE = 2
+    SPHERICAL_COORDINATES=2,
+    MAX_MORPHOLOGY_TYPE = 3
 };
-static const char *morphologyTypeName[]{"EulerAngles","VectorMorphology"};
+static const char *morphologyTypeName[]{"EulerAngles","VectorMorphology","Spherical Coordinates"};
 static_assert(sizeof(morphologyTypeName)/sizeof(char*) == MorphologyType::MAX_MORPHOLOGY_TYPE,
               "sizes dont match");
 #endif
