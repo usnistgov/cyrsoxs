@@ -17,21 +17,21 @@ D = nper*sx*sx + npar*sy*sy + nper*sz*sz;
 E = -(nper - npar)*sy*sz;
 F = nper*sx*sx + nper*sy*sy + npar*sz*sz;
 denom = sqrt((sx*sx+sy*sy +sz*sz));
-Mat = [A B C; 
-     B D E;
+Mat = [A B C;      B D E;
      C E F];
 % Mat = [A 0 0; 
 %      0 D 0;
 %      0 0 F];
 Mat = Mat./denom;
-res = Mat*Mat;% - eye(3);
-simplify(res);
+res =  -eye(3); %Mat*Mat;% - eye(3);
+%simplify(res);
 Ele = [b*cos(-theta) -b*sin(-theta) 0]';
 p = res*Ele;
-simplify(p);
+psimp = simplify(p)
 RotationMatrix = [cos(-theta) -sin(-theta) 0; sin(-theta) cos(-theta) 0; 0 0 1];
-final =simplify(RotationMatrix*p)
+final = simplify(RotationMatrix*p)
 %% Rotated computation
+% assume(theta==pi/2)
 temp = sy;
 sy = sy*cos(theta) - sin(theta)*sx;
 sx = temp*sin(theta) + cos(theta)*sx;
@@ -50,7 +50,7 @@ Mat = [A B C;
 %      0 D 0;
 %      0 0 F];
 Mat = Mat./denom;
-res = Mat*Mat;% - eye(3);
+res = - eye(3);%Mat*Mat;%- eye(3);
 simplify(res);
 Ele = [b 0 0]';
 p = res*Ele;

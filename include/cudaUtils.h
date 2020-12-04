@@ -296,4 +296,18 @@ __device__ inline Real computeMagVec1TimesVec1TTimesVec2(const Real *vec1 ,const
 }
 
 
+
+__device__ inline void RotateZ(Complex & pX, Complex & pY, Complex & pZ, const Real & angle){
+  Complex temp;
+  temp.x = pX.x*cos(angle) + pY.x*sin(angle);
+  temp.y = pX.y*cos(angle) + pY.y*sin(angle);
+
+  pY.x = pY.x*cos(angle) - pX.x*sin(angle);
+  pY.y = pY.y*cos(angle) - pX.y*sin(angle);
+
+  pX = temp;
+
+
+}
+
 #endif //WRITER_CUDAUTILS_H
