@@ -57,8 +57,7 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
                                             const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
                                             Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
 
-  Complex pX, pY, pZ, npar[NUM_MATERIAL], nper[NUM_MATERIAL];
-  Real4 s1[NUM_MATERIAL];
+  Complex pX, pY, pZ;
 
   pX.x = 0;
   pX.y = 0;
@@ -81,40 +80,43 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
   memset(rotatedNr,0,sizeof(Complex)*5);
   /// TODO: This loop is redundant and can be pre-computed over all the energy level at the cost of communication.
   for (int i = 0; i < NUM_MATERIAL; i++) {
-    const Real &sx = s1[i].x;
-    const Real &sy = s1[i].y;
-    const Real &sz = s1[i].z;
-    const Real &phi_ui = s1[i].w;
+    const Real4 & s1 = voxelInput[threadID].s1[i];
+    Complex  npar = material->npara[i];
+    Complex  nper = material->nperp[i];
+    const Real &sx = s1.x;
+    const Real &sy = s1.y;
+    const Real &sz = s1.z;
+    const Real &phi_ui = s1.w;
 
     Real phi = phi_ui + sx * sx + sy * sy + sz * sz;
 
-    nsum.x = npar[i].x + 2 * nper[i].x;
-    nsum.y = npar[i].y + 2 * nper[i].y;
+    nsum.x = npar.x + 2 * nper.x;
+    nsum.y = npar.y + 2 * nper.y;
 
     computeComplexSquare(nsum);
-    computeComplexSquare(npar[i]);
-    computeComplexSquare(nper[i]);
+    computeComplexSquare(npar);
+    computeComplexSquare(nper);
 
-    rotatedNr[0].x += (npar[i].x*sx*sx + nper[i].x*sy*sy + nper[i].x*sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[0].y += (npar[i].x*sx*sx + nper[i].x*sy*sy + nper[i].x*sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr[0].x += (npar.x*sx*sx + nper.x*sy*sy + nper.x*sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr[0].y += (npar.y*sx*sx + nper.y*sy*sy + nper.y*sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-    rotatedNr[1].x +=  (npar[i].x - nper[i].x)*sx*sy;
-    rotatedNr[1].y +=  (npar[i].y - nper[i].y)*sx*sy;
+    rotatedNr[1].x +=  (npar.x - nper.x)*sx*sy;
+    rotatedNr[1].y +=  (npar.y - nper.y)*sx*sy;
 
-    rotatedNr[2].x +=  (npar[i].x - nper[i].x)*sx*sz;
-    rotatedNr[2].y +=  (npar[i].y - nper[i].y)*sx*sz;
+    rotatedNr[2].x +=  (npar.x - nper.x)*sx*sz;
+    rotatedNr[2].y +=  (npar.y - nper.y)*sx*sz;
 
-    rotatedNr[3].x +=  npar[i].x*sy*sy + nper[i].x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[3].y +=  npar[i].y*sy*sy + nper[i].y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr[3].x +=  npar.x*sy*sy + nper.x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr[3].y +=  npar.y*sy*sy + nper.y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-    rotatedNr[4].x +=  (npar[i].x - nper[i].x)*sy*sz;
-    rotatedNr[4].y +=  (npar[i].x - nper[i].x)*sy*sz;
+    rotatedNr[4].x +=  (npar.x - nper.x)*sy*sz;
+    rotatedNr[4].y +=  (npar.y - nper.y)*sy*sz;
   }
   pX.x = rotatedNr[MATINDEXID[0][0]].x*cosAngle + rotatedNr[MATINDEXID[0][1]].x*sinAngle;
   pX.y = rotatedNr[MATINDEXID[0][0]].y*cosAngle + rotatedNr[MATINDEXID[0][1]].y*sinAngle;
 
-  pX.x = rotatedNr[MATINDEXID[1][0]].x*cosAngle + rotatedNr[MATINDEXID[1][1]].x*sinAngle;
-  pX.y = rotatedNr[MATINDEXID[1][0]].y*cosAngle + rotatedNr[MATINDEXID[1][1]].y*sinAngle;
+  pY.x = rotatedNr[MATINDEXID[1][0]].x*cosAngle + rotatedNr[MATINDEXID[1][1]].x*sinAngle;
+  pY.y = rotatedNr[MATINDEXID[1][0]].y*cosAngle + rotatedNr[MATINDEXID[1][1]].y*sinAngle;
 
   pZ.x = rotatedNr[MATINDEXID[2][0]].x*cosAngle + rotatedNr[MATINDEXID[2][1]].x*sinAngle;
   pZ.y = rotatedNr[MATINDEXID[2][0]].y*cosAngle + rotatedNr[MATINDEXID[2][1]].y*sinAngle;
@@ -127,7 +129,8 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
 
   pZ.x *= OneBy4Pi;
   pZ.y *= OneBy4Pi;
-
+//  if(threadID == 0)
+//    printf("Rotated (%f %f %f %f %f %f %f)\n" ,rotatedNr[0].x,rotatedNr[1].x,rotatedNr[2].x,rotatedNr[3].x,rotatedNr[4].x,cosAngle,sinAngle);
   RotateZ(pX,pY,pZ,angle);
   polarizationX[threadID] = pX;
   polarizationY[threadID] = pY;

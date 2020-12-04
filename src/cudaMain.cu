@@ -78,7 +78,17 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
   }
 
 #ifndef BIAXIAL
-    computePolarizationUniaxial(&materialInput,angle,voxelInput,threadID,polarizationX,polarizationY,polarizationZ);
+    _computePolarizationUniaxial(&materialInput,angle,voxelInput,threadID,polarizationX,polarizationY,polarizationZ);
+  if(threadID == 14669)
+    printf("%d , Px = (%f, %f); Py = (%f, %f); Pz = (%f, %f);\n", threadID, polarizationX[threadID].x,polarizationX[threadID].y,
+                                                                          polarizationY[threadID].x,polarizationY[threadID].y,
+                                                                          polarizationZ[threadID].x,polarizationZ[threadID].y);
+
+  computePolarizationUniaxial(&materialInput,angle,voxelInput,threadID,polarizationX,polarizationY,polarizationZ);
+  if(threadID == 14669)
+  printf("%d , Px = (%f, %f); Py = (%f, %f); Pz = (%f, %f);\n", threadID, polarizationX[threadID].x,polarizationX[threadID].y,
+         polarizationY[threadID].x,polarizationY[threadID].y,
+         polarizationZ[threadID].x,polarizationZ[threadID].y);
 #else
     printf("Kernel not spported\n");
 #endif
