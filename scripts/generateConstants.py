@@ -191,7 +191,7 @@ if __name__ == "__main__":
     f.write("WriteVTI = " + str(writeVTI) + ";\n")
     f.write("WindowingType = " + str(windowingType) + ";\n")
     f.write("MorphologyType = " + str(morphologyType) + ";\n")
-    f.write("scatterApproach = " + str(scatterApproach) + ";\n")
+    f.write("ScatterApproach = " + str(scatterApproach) + ";\n")
     f.write("KRotationType = " + str(kRotationType) + ";\n")
     writeList("KAngleRotation=", value=kAngleRotation, file=f)
     f.close()
