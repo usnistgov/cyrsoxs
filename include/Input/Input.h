@@ -61,6 +61,18 @@ struct Voxel {
   /// s1[i].w = fraction of unaligned component (\f$\phi_{ua}\f$)
 
   Real4 s1[num_component];
+  __host__ __device__ inline Real  s(const UINT & id) const{
+    return s1[id].x;
+  }
+  __host__ __device__ inline Real  phi(const UINT & id) const{
+    return s1[id].y;
+  }
+  __host__ __device__ inline Real  theta(const UINT & id) const{
+    return s1[id].z;
+  }
+  __host__ __device__ inline Real  vFrac(const UINT & id) const{
+    return s1[id].w;
+  }
 
   Voxel(){
       std::memset (s1, 0, sizeof (Real4)*num_component);

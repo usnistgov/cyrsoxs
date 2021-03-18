@@ -76,20 +76,26 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
  * [2 4 5]
  */
   static constexpr  UINT MATINDEXID[3][3]{{0,1,2}, {1,3,4},{2,4,5}};
-  Complex rotatedNr[5]; // Only storing what is required
-  memset(rotatedNr,0,sizeof(Complex)*5);
+  Complex rotatedNr[6]; // Only storing what is required
+  memset(rotatedNr,0,sizeof(Complex)*6);
   /// TODO: This loop is redundant and can be pre-computed over all the energy level at the cost of communication.
   for (int i = 0; i < NUM_MATERIAL; i++) {
-    const Real4 & s1 = voxelInput[threadID].s1[i];
+    const Real & S     = voxelInput[threadID].s(i);
+    const Real & Phi   = voxelInput[threadID].phi(i);
+    const Real & Theta = voxelInput[threadID].theta(i);
+    const Real & Vfrac = voxelInput[threadID].vFrac(i);
+
     Complex  npar = material->npara[i];
     Complex  nper = material->nperp[i];
-    const Real &sx = s1.x;
-    const Real &sy = s1.y;
-    const Real &sz = s1.z;
-    const Real &phi_ui = s1.w;
+    const Real &sx = S*cos(Phi);
+    const Real &sy = S*sin(Phi)*cos(Theta);
+    const Real &sz = S*sin(Phi)*sin(Theta);
+    const Real &phi_ui = Vfrac - S;
 
-    Real phi = phi_ui + sx * sx + sy * sy + sz * sz;
-
+    const Real & phi = Vfrac;
+    if(threadID == 14669) {
+      printf("New: %d MatId = %d, S1 = (%f, %f %f %f &f %f )\n", threadID, i, sx, sy, sz, phi_ui,phi);
+    }
     nsum.x = npar.x + 2 * nper.x;
     nsum.y = npar.y + 2 * nper.y;
 
@@ -97,20 +103,23 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
     computeComplexSquare(npar);
     computeComplexSquare(nper);
 
-    rotatedNr[0].x += (npar.x*sx*sx + nper.x*sy*sy + nper.x*sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[0].y += (npar.y*sx*sx + nper.y*sy*sy + nper.y*sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr[0].x += npar.x*sx*sx + nper.x*(sy*sy + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr[0].y += npar.y*sx*sx + nper.y*(sy*sy + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-    rotatedNr[1].x +=  (npar.x - nper.x)*sx*sy;
-    rotatedNr[1].y +=  (npar.y - nper.y)*sx*sy;
+    rotatedNr[1].x += (npar.x - nper.x)*sx*sy;
+    rotatedNr[1].y += (npar.y - nper.y)*sx*sy;
 
-    rotatedNr[2].x +=  (npar.x - nper.x)*sx*sz;
-    rotatedNr[2].y +=  (npar.y - nper.y)*sx*sz;
+    rotatedNr[2].x += (npar.x - nper.x)*sx*sz;
+    rotatedNr[2].y += (npar.y - nper.y)*sx*sz;
 
-    rotatedNr[3].x +=  npar.x*sy*sy + nper.x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[3].y +=  npar.y*sy*sy + nper.y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr[3].x += npar.x*sy*sy + nper.x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr[3].y += npar.y*sy*sy + nper.y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-    rotatedNr[4].x +=  (npar.x - nper.x)*sy*sz;
-    rotatedNr[4].y +=  (npar.y - nper.y)*sy*sz;
+    rotatedNr[4].x += (npar.x - nper.x)*sy*sz;
+    rotatedNr[4].y += (npar.y - nper.y)*sy*sz;
+
+    rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  + ((phi_ui * nsum.y) / (Real) 9.0);
   }
   pX.x = rotatedNr[MATINDEXID[0][0]].x*cosAngle + rotatedNr[MATINDEXID[0][1]].x*sinAngle;
   pX.y = rotatedNr[MATINDEXID[0][0]].y*cosAngle + rotatedNr[MATINDEXID[0][1]].y*sinAngle;
@@ -148,7 +157,7 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
  * @param [out] polarizationY
  * @param [out] polarizationZ
  */
-
+[[deprecated]]
 __device__ void _computePolarizationUniaxial(const Material<NUM_MATERIAL> *material, const Real angle,
                                             const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
                                             Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
@@ -183,7 +192,9 @@ __device__ void _computePolarizationUniaxial(const Material<NUM_MATERIAL> *mater
     const Real &phi_ui = s1[i].w;
 
     Real phi = phi_ui + sx * sx + sy * sy + sz * sz;
-
+    if(threadID == 14669) {
+      printf("New: %d MatId = %d, S1 = (%f, %f %f %f &f %f )\n", threadID, i, sx, sy, sz, phi_ui,phi);
+    }
     nsum.x = npar[i].x + 2 * nper[i].x;
     nsum.y = npar[i].y + 2 * nper[i].y;
 

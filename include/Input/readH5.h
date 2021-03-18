@@ -172,33 +172,42 @@ namespace H5 {
           }
         }
       }
+//      for (UINT numMat = 0; numMat < NUM_MATERIAL; numMat++) {
+//        for (UINT i = 0; i < numVoxel; i++) {
+//          const Real S = sqrt(voxelData[i].s1[numMat].x*voxelData[i].s1[numMat].x + voxelData[i].s1[numMat].y*voxelData[i].s1[numMat].y + voxelData[i].s1[numMat].z*voxelData[i].s1[numMat].z);
+//          Real phi = acos(voxelData[i].s1[numMat].x/S);
+//          Real theta = atan2(voxelData[i].s1[numMat].z,voxelData[i].s1[numMat].y);
+//          if(FEQUALS(S,0)){
+//            phi = 0;
+//            theta = 0;
+//          }
+//          const Real Vfrac = S*S + voxelData[i].s1[numMat].w;
+//          voxelData[i].s1[numMat].x = S;
+//          voxelData[i].s1[numMat].y = phi;
+//          voxelData[i].s1[numMat].z = theta;
+//          voxelData[i].s1[numMat].w = Vfrac;
+//        }
+//      }
     }
-    else{
+    else if(morphologyType == MorphologyType::EULER_ANGLES){
       std::vector<std::vector<Real> > s, phi, theta, vfrac;
       getScalar(file,"morphology","_S", voxelSize, s);
       getScalar(file,"morphology","_Phi", voxelSize, phi);
       getScalar(file,"morphology","_Theta", voxelSize, theta);
       getScalar(file,"morphology","_vfrac", voxelSize, vfrac);
-      if(morphologyType == MorphologyType::SPHERICAL_COORDINATES){
-      for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
-        for (UINT i = 0; i < numVoxel; i++) {
-          voxelData[i].s1[matID].x = s[matID][i] * cos(theta[matID][i]);
-          voxelData[i].s1[matID].y = s[matID][i] * sin(theta[matID][i]) * sin(phi[matID][i]);
-          voxelData[i].s1[matID].z = s[matID][i] * sin(theta[matID][i]) * cos(phi[matID][i]);
-          voxelData[i].s1[matID].w = vfrac[matID][i] - s[matID][i];
-        }
-      }
-      }
-      else if(morphologyType == MorphologyType::EULER_ANGLES){
+      {
         for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
           for (UINT i = 0; i < numVoxel; i++) {
-            voxelData[i].s1[matID].x = s[matID][i] * cos(phi[matID][i]);
-            voxelData[i].s1[matID].y = s[matID][i] * sin(phi[matID][i]) * cos(theta[matID][i]);
-            voxelData[i].s1[matID].z = s[matID][i] * sin(phi[matID][i]) * sin(theta[matID][i]);
-            voxelData[i].s1[matID].w = vfrac[matID][i] - s[matID][i];
+            voxelData[i].s1[matID].x = s[matID][i];
+            voxelData[i].s1[matID].y = phi[matID][i];
+            voxelData[i].s1[matID].z = theta[matID][i];
+            voxelData[i].s1[matID].w = vfrac[matID][i];
           }
         }
       }
+    }
+    else{
+      throw std::runtime_error("Wrong type of morphology");
     }
   }
 }
