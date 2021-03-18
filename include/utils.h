@@ -114,6 +114,7 @@ static void printCopyrightInfo(){
   std::cout << "|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
   std::cout << " -------------------------------------------------------------------------------------------------- \n";
 
+  std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
   std::cout << "\n";
 }
 
