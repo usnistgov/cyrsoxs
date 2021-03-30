@@ -44,6 +44,9 @@
 
 
 int warmup(){
+  Real3 k{0.0,1.0,0.0};
+  Real rotationMatrix[3][3];
+  getRotationMatrixBaseConfiguration(k,rotationMatrix);
   double *d_warmup, *warmup;
   warmup = new double[1000];
   CUDA_CHECK_RETURN(cudaMalloc((void **) &d_warmup, sizeof(double) * 1000));

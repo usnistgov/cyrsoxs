@@ -111,6 +111,7 @@ set(CyRSoXS_INC
         include/Input/Input.h
         include/Output/writeH5.h
         include/utils.h
+        include/Rotation.h
         )
 
 

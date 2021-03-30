@@ -115,6 +115,7 @@ static void printCopyrightInfo(){
   std::cout << " -------------------------------------------------------------------------------------------------- \n";
 
   std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  std::cout << "Git patch : " << GIT_HASH << "\n";
   std::cout << "\n";
 }
 

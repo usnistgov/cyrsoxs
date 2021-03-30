@@ -28,6 +28,7 @@
 #include <cstdio>
 #include <cinttypes>
 #include <vector_types.h>
+#include <cassert>
 
 #ifdef DOUBLE_PRECISION
 typedef double Real;

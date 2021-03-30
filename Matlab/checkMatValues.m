@@ -1,26 +1,19 @@
 clear all;
 clc;
 close all;
-syms nper npar sx sy sz a b theta phi theta2
-assume(a,'rational')
-assume(b,'rational')
-% assume(npar==nper)
-% assume(sx == sy)
-% assume(sx == sz)
-% assume(theta == 0)
-% assume(phi == 0)
-% assume(theta2 == pi/2)
-% assume(theta2,'rational')
-Rz = [cos(theta) -sin(theta) 0 ; sin(theta) cos(theta) 0; 0 0 1];
-Rx = [1 0 0; 0 cos(phi) -sin(phi); 0 sin(phi) cos(phi)];
-Ry = [cos(theta2) 0 sin(theta2); 0 1 0; -sin(theta2) 0 cos(theta2)];
-R =  Rz*Rx*Ry;
 
-% R = simplify(inv(R));
+%%
+R = [0.99277301,0.00042392,0.12000655;...
+  -0.07656701,0.77225279,0.63068464;...
+  -0.09240804,-0.63531523,0.76670419];
+sx = rand;
+sy = rand;
+sz = rand;
 
-
-
-%% Original
+npar = rand;
+nper = rand;
+b = rand;
+%%
 
 A = npar*sx*sx + nper*sy*sy + nper*sz*sz;
 B = -(nper - npar)*sx*sy;
@@ -40,12 +33,12 @@ res =  Mat*Mat - eye(3);
 %simplify(res);
 Ele = R*[b;0;0];
 p = res*Ele;
-psimp = simplify(p)
+psimp = p;
 % RotationMatrix = [cos(-theta) -sin(-theta) 0; sin(-theta) cos(-theta) 0; 0 0 1];
-final = simplify(inv(R)*p)
+final = (inv(R)*p)
 %% Rotated computation
 % assume(theta==pi/2)
-S = simplify(inv(R))*[sx;sy;sz];
+S = (inv(R))*[sx;sy;sz];
 sx = S(1);
 sy = S(2);
 sz = S(3);
@@ -68,11 +61,10 @@ Mat = [A B C;
 %      0 0 F];
 Mat = Mat./denom;
 res = Mat*Mat- eye(3);
-simplify(res);
+% simplify(res);
 Ele = [b 0 0]';
 p = res*Ele;
-valr = simplify(p)
+valr = (p)
 
 %%
-diff = simplify(final - valr)
-
+diff = (final - valr)

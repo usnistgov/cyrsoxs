@@ -32,6 +32,7 @@
 #include <cmath>
 #include <complex>
 #include <math.h>
+#include <Rotation.h>
 
 #ifdef EOC
 #include <opencv2/opencv.hpp>
@@ -855,6 +856,23 @@ __global__ void radialIntegrate(Real *integrate,
   } else {
     integrate[threadID] = 0;
   }
+}
+
+__host__ void getRotationMatrixBaseConfiguration(const Real3 & k, Real rotationMatrix[][3]){
+
+  static constexpr Real3 origK{0,0,1};
+  computeRotationMatrix(origK,k,rotationMatrix);
+  for(int i = 0; i < 3; i++){
+    for(int j = 0; j < 3; j++){
+      std::cout << rotationMatrix[i][j] << " ";
+    }
+    std::cout << "\n";
+  }
+
+#ifdef DEBUG
+
+#endif
+
 }
 
 #endif //WRITER_UNIAXIAL_H

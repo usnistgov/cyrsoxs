@@ -78,6 +78,7 @@
 #include <iomanip>
 #include <utils.h>
 
+
 /**
  * main function
  * @param argc
@@ -85,41 +86,44 @@
  * @return EXIT_SUCCESS on successful completion.
  */
 int main(int argc, char **argv) {
-
-    if(argc < 2){
-        std::cout << "Usage : " << argv[0] << " "<< "HDF5FileName" << "[optional] HDF5OutputDirname";
-        exit(EXIT_FAILURE);
-    }
-    std::vector<Material<NUM_MATERIAL> > materialInput;
-    InputData inputData(materialInput);
-    inputData.validate();
-    if(argc > 2){
-        inputData.HDF5DirName = argv[2];
-    }
-    inputData.print();
-    const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
-
-    std::string fname = argv[1];
-    Voxel<NUM_MATERIAL> *voxelData;
-    H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType));
-    Real *projectionGPUAveraged;
-    const UINT
-      numEnergyLevel = inputData.energies.size();
-    projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
-    printCopyrightInfo();
-    cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, voxelData);
-    if(inputData.writeHDF5) {
-      writeH5(inputData, voxelSize, projectionGPUAveraged,inputData.HDF5DirName);
-    }
-    if(inputData.writeVTI) {
-      writeVTI(inputData, voxelSize, projectionGPUAveraged,inputData.VTIDirName);
-    }
-    printMetaData(inputData);
-    delete[] projectionGPUAveraged;
-    delete[] voxelData;
-    std::cout << "Complete. Exiting \n";
-
-    return EXIT_SUCCESS;
+  warmup();
+//  Real rotationMatrix[3][3];
+//  Real3 e{1.0,0.0,0.0};
+//  getRotationMatrixBaseConfiguration(e,rotationMatrix);
+//    if(argc < 2){
+//        std::cout << "Usage : " << argv[0] << " "<< "HDF5FileName" << "[optional] HDF5OutputDirname";
+//        exit(EXIT_FAILURE);
+//    }
+//    std::vector<Material<NUM_MATERIAL> > materialInput;
+//    InputData inputData(materialInput);
+//    inputData.validate();
+//    if(argc > 2){
+//        inputData.HDF5DirName = argv[2];
+//    }
+//    inputData.print();
+//    const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
+//
+//    std::string fname = argv[1];
+//    Voxel<NUM_MATERIAL> *voxelData;
+//    H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType));
+//    Real *projectionGPUAveraged;
+//    const UINT
+//      numEnergyLevel = inputData.energies.size();
+//    projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
+//    printCopyrightInfo();
+//    cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, voxelData);
+//    if(inputData.writeHDF5) {
+//      writeH5(inputData, voxelSize, projectionGPUAveraged,inputData.HDF5DirName);
+//    }
+//    if(inputData.writeVTI) {
+//      writeVTI(inputData, voxelSize, projectionGPUAveraged,inputData.VTIDirName);
+//    }
+//    printMetaData(inputData);
+//    delete[] projectionGPUAveraged;
+//    delete[] voxelData;
+//    std::cout << "Complete. Exiting \n";
+//
+//    return EXIT_SUCCESS;
 
 }
 
