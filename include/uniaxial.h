@@ -862,17 +862,24 @@ __host__ void getRotationMatrixBaseConfiguration(const Real3 & k, Real rotationM
 
   static constexpr Real3 origK{0,0,1};
   computeRotationMatrix(origK,k,rotationMatrix);
-  for(int i = 0; i < 3; i++){
-    for(int j = 0; j < 3; j++){
-      std::cout << rotationMatrix[i][j] << " ";
-    }
-    std::cout << "\n";
-  }
 
-#ifdef DEBUG
 
-#endif
+//#ifdef DEBUG
+//  for(int i = 0; i < 3; i++){
+//    for(int j = 0; j < 3; j++){
+//      std::cout << rotationMatrix[i][j] << " ";
+//    }
+//    std::cout << "\n";
+//  }
+//
+//#endif
 
+}
+
+__host__ void doMatVec(const Real matrix[][3], const Real3 & vec, Real3 & matVec){
+    matVec.x = matrix[0][0]*vec.x + matrix[1][0]*vec.y + matrix[2][0]*vec.z;
+    matVec.y = matrix[0][1]*vec.x + matrix[1][1]*vec.y + matrix[2][1]*vec.z;
+    matVec.z = matrix[0][2]*vec.x + matrix[1][2]*vec.y + matrix[2][2]*vec.z;
 }
 
 #endif //WRITER_UNIAXIAL_H
