@@ -144,7 +144,7 @@ namespace H5 {
  * @param isAllocated true if the size of voxelData is allocated
  */
 
-  static void readFile(const std::string &hdf5file, const UINT *voxelSize, Voxel<NUM_MATERIAL> *&voxelData,
+  static int readFile(const std::string &hdf5file, const UINT *voxelSize, Voxel<NUM_MATERIAL> *&voxelData,
                       const MorphologyType & morphologyType, bool isAllocated = false) {
     H5::H5File file(hdf5file, H5F_ACC_RDONLY);
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
@@ -209,6 +209,7 @@ namespace H5 {
     else{
       throw std::runtime_error("Wrong type of morphology");
     }
+    return EXIT_SUCCESS;
   }
 }
 #endif //PRS_READH5_H

@@ -63,10 +63,10 @@ if (PYBIND)
     message("WARNING: Compiling for PyBind. This will not produce any executable")
 endif ()
 
-if(ENABLE_TEST)
+if (ENABLE_TEST)
     add_definitions(-DENABLE_TEST)
     message("Test enabled")
-endif()
+endif ()
 
 find_package(CUDA 9 REQUIRED)
 find_package(OpenMP REQUIRED)
@@ -134,6 +134,7 @@ if (NUM_MATERIAL)
     add_definitions(-DNUM_MATERIAL=${NUM_MATERIAL})
 endif ()
 
+
 if (PYBIND)
 
     set(PYBIND_INC
@@ -185,22 +186,24 @@ endif ()
 set_property(TARGET CyRSoXS PROPERTY CUDA_ARCHITECTURES 30 35 37 50 52 53 60 61 62 70 72)
 
 if (ENABLE_TEST)
-    if(PYBIND)
+    if (PYBIND)
         message("No tests with pybind with gtest framework")
-    else()
-    add_subdirectory(external/googletest)
-    set(TEST_SRC
-            tests/tests.cpp
-            )
-    set(TEST_INC
-            tests/include/sample.h
-            )
-    add_executable(test ${CyRSoXS_INC} ${CyRSoXS_SRC} ${TEST_SRC} ${TEST_INC})
-    target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include tests/include ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-    target_include_directories(test PRIVATE ${PROJECT_BINARY_DIR}/generated)
-    target_link_libraries(test gtest gtest_main
-            ${HDF5_CXX_LIBRARIES} -lcufft -lcublas "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
-        endif()
+    else ()
+        add_definitions(-DCMAKE_ROOT=\"${CMAKE_SOURCE_DIR}\")
+        add_subdirectory(external/googletest)
+        set(TEST_SRC
+                tests/tests.cpp
+                )
+        set(TEST_INC
+                tests/include/basicFramework.h
+                tests/include/testUtils.h
+                )
+        add_executable(test ${CyRSoXS_INC} ${CyRSoXS_SRC} ${TEST_SRC} ${TEST_INC})
+        target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include tests/include ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+        target_include_directories(test PRIVATE ${PROJECT_BINARY_DIR}/generated)
+        target_link_libraries(test gtest gtest_main
+                ${HDF5_CXX_LIBRARIES} -lcufft -lcublas "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
+    endif ()
 endif ()
 
 if (BUILD_DOCS)
