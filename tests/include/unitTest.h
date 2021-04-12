@@ -30,14 +30,40 @@ TEST(CyRSoXS, polarization) {
   std::vector<Material<NUM_MATERIAL>> refractiveIndexData;
   InputData inputData(refractiveIndexData);
   const UINT voxelSize[3]{32,32,16};
-  Voxel<NUM_MATERIAL> * voxelData;
+  Voxel<NUM_MATERIAL> * voxelData,*d_voxelData;
+  const uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
 
 
   H5::readFile(fname,voxelSize,voxelData,MorphologyType::VECTOR_MORPHOLOGY,false);
   const BigUINT  numVoxels = voxelSize[0]*voxelSize[1]*voxelSize[2];
   Complex *polarizationX, *polarizationY,*polarizationZ;
-  computePolarization(refractiveIndexData[0],voxelData,inputData,polarizationX,polarizationY,polarizationZ);
+  Complex *d_polarizationX, *d_polarizationY,*d_polarizationZ;
 
+  mallocGPU(d_voxelData,numVoxels);
+  mallocGPU(d_polarizationX,numVoxels);
+  mallocGPU(d_polarizationY,numVoxels);
+  mallocGPU(d_polarizationZ,numVoxels);
+  mallocCPU(polarizationX,numVoxels);
+  mallocCPU(polarizationY,numVoxels);
+  mallocCPU(polarizationZ,numVoxels);
+
+  hostDeviceExcange(d_voxelData,voxelData,numVoxels,cudaMemcpyHostToDevice);
+
+  ElectricField eleField;
+  eleField.e.x = 1;
+  eleField.e.y = 0;
+  eleField.e.z = 0;
+  Real wavelength = static_cast<Real>(1239.84197 / inputData.energies[0]);
+  eleField.k.x = 0;
+  eleField.k.y = 0;
+  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
+  UINT blockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
+
+  computePolarization(refractiveIndexData[0],d_voxelData,eleField,0.0,vx,d_polarizationX,d_polarizationY,d_polarizationZ,FFT::FFTWindowing::NONE,
+                      false, MorphologyType::VECTOR_MORPHOLOGY,blockSize);
+  hostDeviceExcange(polarizationX,d_polarizationX,numVoxels,cudaMemcpyDeviceToHost);
+  hostDeviceExcange(polarizationY,d_polarizationY,numVoxels,cudaMemcpyDeviceToHost);
+  hostDeviceExcange(polarizationZ,d_polarizationZ,numVoxels,cudaMemcpyDeviceToHost);
   Complex *pXOracle = new Complex [numVoxels];
   Complex *pYOracle = new Complex [numVoxels];
   Complex *pZOracle = new Complex [numVoxels];
@@ -56,6 +82,10 @@ TEST(CyRSoXS, polarization) {
   EXPECT_LE(linfError.x,TOLERANCE_CHECK);
   EXPECT_LE(linfError.y,TOLERANCE_CHECK);
 
+  freeCudaMemory(d_voxelData);
+  freeCudaMemory(d_polarizationX);
+  freeCudaMemory(d_polarizationY);
+  freeCudaMemory(d_polarizationZ);
   delete [] pXOracle;
   delete [] pYOracle;
   delete [] pZOracle;

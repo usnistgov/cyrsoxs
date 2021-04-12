@@ -54,7 +54,7 @@
  * @param [out] polarizationZ
  */
 
-__device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *material, const Real angle,
+__device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *material, const Real angle,
                                             const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
                                             Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
 
@@ -139,8 +139,6 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
 
   pZ.x *= OneBy4Pi;
   pZ.y *= OneBy4Pi;
-//  if(threadID == 0)
-//    printf("Rotated (%f %f %f %f %f %f %f)\n" ,rotatedNr[0].x,rotatedNr[1].x,rotatedNr[2].x,rotatedNr[3].x,rotatedNr[4].x,cosAngle,sinAngle);
   RotateZ(pX,pY,pZ,angle);
   polarizationX[threadID] = pX;
   polarizationY[threadID] = pY;
@@ -158,8 +156,8 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
  * @param [out] polarizationY
  * @param [out] polarizationZ
  */
-[[deprecated]]
-__device__ void _computePolarizationUniaxial(const Material<NUM_MATERIAL> *material, const Real angle,
+
+__device__ void computePolarizationVectorMorphology(const Material<NUM_MATERIAL> *material, const Real angle,
                                             const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
                                             Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
 
@@ -193,9 +191,6 @@ __device__ void _computePolarizationUniaxial(const Material<NUM_MATERIAL> *mater
     const Real &phi_ui = s1[i].w;
 
     Real phi = phi_ui + sx * sx + sy * sy + sz * sz;
-    if(threadID == 14669) {
-      printf("New: %d MatId = %d, S1 = (%f, %f %f %f &f %f )\n", threadID, i, sx, sy, sz, phi_ui,phi);
-    }
     nsum.x = npar[i].x + 2 * nper[i].x;
     nsum.y = npar[i].y + 2 * nper[i].y;
 

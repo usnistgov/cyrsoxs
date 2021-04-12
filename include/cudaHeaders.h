@@ -74,6 +74,12 @@ __host__ inline void mallocGPU(T *& d_data, const GI & size){
 }
 
 template <typename T, typename GI>
+__host__ inline void mallocCPU(T *& data, const GI & size){
+  data = new T[size];
+
+}
+
+template <typename T, typename GI>
 __host__ inline void cudaZeroEntries(T * d_data, const GI & size){
   cudaMemset(d_data,0,sizeof(T)*size);
 }

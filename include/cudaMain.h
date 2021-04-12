@@ -80,10 +80,26 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     Complex *polarizationY,
                                     Complex *polarizationZ,
                                     FFT::FFTWindowing windowing,
-                                    const bool enable2D
+                                    const bool enable2D,
+                                    const MorphologyType morphologyType
 );
 
 
+
+
+__host__ int computePolarization(const Material<NUM_MATERIAL> & materialInput,
+                                  const Voxel<NUM_MATERIAL> *voxelInput,
+                                  const ElectricField  & elefield,
+                                  const Real & angle,
+                                  const uint3 & voxel,
+                                  Complex *d_polarizationX,
+                                  Complex *d_polarizationY,
+                                  Complex *d_polarizationZ,
+                                  FFT::FFTWindowing windowing,
+                                  const bool & enable2D,
+                                  const MorphologyType & morphologyType,
+                                  const UINT & blockSize
+);
 
 
 __host__ inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan) {
