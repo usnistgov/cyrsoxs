@@ -95,9 +95,9 @@ __host__ inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan
 #endif
 }
 
-__host__ void performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx);
+__host__ int performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx);
 
-__host__ void performScatter3DComputation(const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
+__host__ int performScatter3DComputation(const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
                                           Real * d_scatter3D,
                                           const ElectricField & eleField,
                                           const Real & eAngle,
@@ -107,3 +107,27 @@ __host__ void performScatter3DComputation(const Complex * d_polarizationX, const
                                           const Real & physSize,
                                           const bool & enable2D,
                                           const UINT & blockSize);
+
+__host__ int peformEwaldProjectionGPU(Real * d_projection,
+                                      const Real * d_scatter,
+                                      const Real & k,
+                                      const uint3 & vx,
+                                      const Real & eAngle,
+                                      const Real & kAngle,
+                                      const Real & physSize,
+                                      const Interpolation::EwaldsInterpolation & interpolation,
+                                      const bool & enable2D,
+                                      const UINT & blockSize);
+
+__host__ int peformEwaldProjectionGPU(Real * projection,
+                                      const Complex * d_polarizationX,
+                                      const Complex * d_polarizationY,
+                                      const Complex * d_polarizationZ,
+                                      const Real & k,
+                                      const uint3 & vx,
+                                      const Real & eAngle,
+                                      const Real & kAngle,
+                                      const Real & physSize,
+                                      const Interpolation::EwaldsInterpolation & interpolation,
+                                      const bool & enable2D,
+                                      const UINT & blockSize);

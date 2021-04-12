@@ -54,13 +54,14 @@ int warmup(){
   return EXIT_SUCCESS;
 }
 
-__host__ void performFFTShift(Complex *polarization,  const UINT & blockSize, const uint3 & vx){
+__host__ int performFFTShift(Complex *polarization,  const UINT & blockSize, const uint3 & vx){
   FFTIgor<<<blockSize,NUM_THREADS>>>(polarization,vx);
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
+  return EXIT_SUCCESS;
 }
 
-__host__ void performScatter3DComputation(const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
+__host__  int performScatter3DComputation(const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
                                           Real * d_scatter3D,
                                           const ElectricField & eleField,
                                           const Real & eAngle,
@@ -76,6 +77,49 @@ __host__ void performScatter3DComputation(const Complex * d_polarizationX, const
                                                   enable2D);
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
+  return EXIT_SUCCESS;
+}
+
+__host__ int peformEwaldProjectionGPU(Real * d_projection,
+                                      const Real * d_scatter,
+                                      const Real & k,
+                                      const uint3 & vx,
+                                      const Real & eAngle,
+                                      const Real & kAngle,
+                                      const Real & physSize,
+                                      const Interpolation::EwaldsInterpolation & interpolation,
+                                      const bool & enable2D,
+                                      const UINT & blockSize){
+  computeEwaldProjectionGPU <<< blockSize, NUM_THREADS >>>(d_projection, d_scatter, vx,
+                                                            k, eAngle, kAngle,physSize,
+                                                            interpolation,
+                                                            enable2D);
+  cudaDeviceSynchronize();
+  gpuErrchk(cudaPeekAtLastError());
+
+  return EXIT_SUCCESS;
+
+
+}
+
+__host__ int peformEwaldProjectionGPU(Real * d_projection,
+                                      const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
+                                      const Real & k,
+                                      const uint3 & vx,
+                                      const Real & eAngle,
+                                      const Real & kAngle,
+                                      const Real & physSize,
+                                      const Interpolation::EwaldsInterpolation & interpolation,
+                                      const bool & enable2D,
+                                      const UINT & blockSize){
+  computeEwaldProjectionGPU <<< blockSize, NUM_THREADS >>>(d_projection, d_polarizationX,d_polarizationY,d_polarizationZ, vx,
+                                                           k, eAngle, kAngle,physSize,
+                                                           interpolation,
+                                                           enable2D);
+  cudaDeviceSynchronize();
+  gpuErrchk(cudaPeekAtLastError());
+  return EXIT_SUCCESS;
+
 }
 
 __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,

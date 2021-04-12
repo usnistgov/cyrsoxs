@@ -90,14 +90,20 @@ TEST(CyRSoXS, FFT) {
   cufftHandle plan;
   cufftPlan3d(&plan, voxelSize[2], voxelSize[1], voxelSize[0], fftType);
 
-  performFFT(d_pX,plan);
-  performFFT(d_pY,plan);
-  performFFT(d_pZ,plan);
+  auto res1 = performFFT(d_pX,plan);
+  auto res2 = performFFT(d_pY,plan);
+  auto res3 = performFFT(d_pZ,plan);
+  EXPECT_EQ(res1,CUFFT_SUCCESS);
+  EXPECT_EQ(res2,CUFFT_SUCCESS);
+  EXPECT_EQ(res3,CUFFT_SUCCESS);
   UINT blockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
   const uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
-  performFFTShift(d_pX,blockSize,vx);
-  performFFTShift(d_pY,blockSize,vx);
-  performFFTShift(d_pZ,blockSize,vx);
+  int suc1 = performFFTShift(d_pX,blockSize,vx);
+  int suc2 = performFFTShift(d_pY,blockSize,vx);
+  int suc3 = performFFTShift(d_pZ,blockSize,vx);
+  EXPECT_EQ(suc1,EXIT_SUCCESS);
+  EXPECT_EQ(suc2,EXIT_SUCCESS);
+  EXPECT_EQ(suc3,EXIT_SUCCESS);
   hostDeviceExcange(pX,d_pX,numVoxels,cudaMemcpyDeviceToHost);
   hostDeviceExcange(pY,d_pY,numVoxels,cudaMemcpyDeviceToHost);
   hostDeviceExcange(pZ,d_pZ,numVoxels,cudaMemcpyDeviceToHost);
@@ -165,7 +171,7 @@ TEST(CyRSoXS, scatter) {
   Real wavelength = static_cast<Real>(1239.84197 / energy);
   eleField.k.x = 0;
   eleField.k.y = 0;
-  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
+  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
 
   mallocGPU(d_polarizationX,numVoxel);
   mallocGPU(d_polarizationY,numVoxel);
@@ -178,8 +184,8 @@ TEST(CyRSoXS, scatter) {
 
   const UINT blockSize = static_cast<UINT>(ceil(numVoxel * 1.0 / NUM_THREADS));
 
-  performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,eleField,0,0,numVoxel,vx,5.0,false,blockSize);
-
+  int suc1 = performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,eleField,0,0,numVoxel,vx,5.0,false,blockSize);
+  EXPECT_EQ(suc1,EXIT_SUCCESS);
   hostDeviceExcange(scatter_3D,d_scatter3D,numVoxel,cudaMemcpyDeviceToHost);
   const std::string pathOfScatter = root+"/Data/regressionData/Scatter/";
   readFile(scatterOracle,pathOfScatter+"scatter_3D.dmp",numVoxel);
@@ -195,5 +201,116 @@ TEST(CyRSoXS, scatter) {
   delete [] polarizationZ;
   delete [] scatter_3D;
   delete [] scatterOracle;
+}
+
+TEST(CyRSoXS, ewaldProjectionFull){
+  const UINT voxelSize[3]{32,32,16};
+  uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
+  const BigUINT numVoxel = voxelSize[0]*voxelSize[1]*voxelSize[2];
+  const BigUINT numVoxel2D = voxelSize[0]*voxelSize[1];
+
+  const Real energy = 280.0;
+  ElectricField eleField;
+  eleField.e.x = 1;
+  eleField.e.y = 0;
+  eleField.e.z = 0;
+  Real wavelength = static_cast<Real>(1239.84197 / energy);
+  eleField.k.x = 0;
+  eleField.k.y = 0;
+  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
+
+  const std::string root = CMAKE_ROOT ;
+  const std::string pathOfScatter = root+"/Data/regressionData/Scatter/";
+  const std::string pathOfEwaldGPU = root+"/Data/regressionData/Ewald/";
+  Real * scatter = new Real [numVoxel];
+  Real * projection = new Real[numVoxel2D];
+  Real * projectionOracle = new Real[numVoxel2D];
+  Real * d_scatter, *d_projection;
+
+  readFile(scatter,pathOfScatter+"scatter_3D.dmp",numVoxel);
+  mallocGPU(d_scatter,numVoxel);
+  mallocGPU(d_projection,numVoxel2D);
+  hostDeviceExcange(d_scatter,scatter,numVoxel,cudaMemcpyHostToDevice);
+
+  const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
+  cudaZeroEntries(d_projection,numVoxel2D);
+  int suc = peformEwaldProjectionGPU(d_projection,d_scatter,eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::LINEAR,false,blockSize);
+  EXPECT_EQ(suc,EXIT_SUCCESS);
+
+  readFile(projectionOracle,pathOfEwaldGPU+"Ewald.dmp",numVoxel2D);
+  hostDeviceExcange(projection,d_projection,numVoxel2D,cudaMemcpyDeviceToHost);
+  Real linfError = computeLinfError(projectionOracle,projection,numVoxel2D);
+  EXPECT_LE(linfError,TOLERANCE_CHECK);
+  freeCudaMemory(d_scatter);
+  freeCudaMemory(d_projection);
+  delete [] scatter;
+  delete [] projection;
+  delete [] projectionOracle;
+
+
+
+}
+TEST(CyRSoXS, ewaldProjectionPartial){
+  const UINT voxelSize[3]{32,32,16};
+  uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
+  const BigUINT numVoxel = voxelSize[0]*voxelSize[1]*voxelSize[2];
+  const BigUINT numVoxel2D = voxelSize[0]*voxelSize[1];
+
+  const Real energy = 280.0;
+  ElectricField eleField;
+  eleField.e.x = 1;
+  eleField.e.y = 0;
+  eleField.e.z = 0;
+  Real wavelength = static_cast<Real>(1239.84197 / energy);
+  eleField.k.x = 0;
+  eleField.k.y = 0;
+  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
+
+  const std::string root = CMAKE_ROOT ;
+  const std::string pathOfFFT = root+"/Data/regressionData/FFT/";
+  const std::string pathOfEwaldGPU = root+"/Data/regressionData/Ewald/";
+
+  Complex  * d_polarizationX,* d_polarizationY,* d_polarizationZ;
+  Complex  * polarizationX,* polarizationY,* polarizationZ;
+  Real *projectionOracle, *d_projection, *projection;
+
+  polarizationX = new Complex[numVoxel];
+  polarizationY = new Complex[numVoxel];
+  polarizationZ = new Complex[numVoxel];
+  projection = new Real[numVoxel2D];
+  projectionOracle = new Real[numVoxel2D];
+
+  readFile(polarizationX,pathOfFFT+"fftpolarizeX.dmp",numVoxel);
+  readFile(polarizationY,pathOfFFT+"fftpolarizeY.dmp",numVoxel);
+  readFile(polarizationZ,pathOfFFT+"fftpolarizeZ.dmp",numVoxel);
+
+  mallocGPU(d_polarizationX,numVoxel);
+  mallocGPU(d_polarizationY,numVoxel);
+  mallocGPU(d_polarizationZ,numVoxel);
+  mallocGPU(d_projection,numVoxel2D);
+
+  hostDeviceExcange(d_polarizationX,polarizationX,numVoxel,cudaMemcpyHostToDevice);
+  hostDeviceExcange(d_polarizationY,polarizationY,numVoxel,cudaMemcpyHostToDevice);
+  hostDeviceExcange(d_polarizationZ,polarizationZ,numVoxel,cudaMemcpyHostToDevice);
+  cudaZeroEntries(d_projection,numVoxel2D);
+
+  const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
+  int suc = peformEwaldProjectionGPU(d_projection,d_polarizationX,d_polarizationY,d_polarizationZ,
+                                     eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::LINEAR,false,blockSize);
+  EXPECT_EQ(suc,EXIT_SUCCESS);
+
+  hostDeviceExcange(projection,d_projection,numVoxel2D,cudaMemcpyDeviceToHost);
+  readFile(projectionOracle,pathOfEwaldGPU+"Ewald.dmp",numVoxel2D);
+  Real linfError = computeLinfError(projection,projectionOracle,numVoxel2D);
+  EXPECT_LE(linfError,TOLERANCE_CHECK);
+  freeCudaMemory(d_polarizationX);
+  freeCudaMemory(d_polarizationY);
+  freeCudaMemory(d_polarizationZ);
+  freeCudaMemory(d_projection);
+  delete [] polarizationX;
+  delete [] polarizationY;
+  delete [] polarizationZ;
+  delete [] projection;
+  delete [] projectionOracle;
 }
 #endif //CY_RSOXS_UNITTEST_H
