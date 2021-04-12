@@ -393,6 +393,15 @@ int cudaMain(const UINT *voxel,
                                      cudaMemcpyDeviceToHost));
         gpuErrchk(cudaPeekAtLastError());
         {
+          FILE* pX = fopen("polarizeX.dmp", "wb");
+          fwrite(polarizationX, sizeof(Complex), voxelSize, pX);
+          fclose(pX);
+          FILE* pY = fopen("polarizeY.dmp", "wb");
+          fwrite(polarizationY, sizeof(Complex), voxelSize, pY);
+          fclose(pY);
+          FILE* pZ = fopen("polarizeZ.dmp", "wb");
+          fwrite(polarizationZ, sizeof(Complex), voxelSize, pZ);
+          fclose(pZ);
           std::string dirname = "Polarize/";
           std::string fname = dirname + "polarizationX" + std::to_string(i);
           VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeX");
