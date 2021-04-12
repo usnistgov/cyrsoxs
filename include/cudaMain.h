@@ -34,6 +34,11 @@
 
 #include <cufft.h>
 
+#ifdef DOUBLE_PRECISION
+static constexpr cufftType_t fftType = CUFFT_Z2Z;
+#else
+static constexpr cufftType_t fftType = CUFFT_C2C;
+#endif
 /**
  * @brief calls for the cuda kernel are made through this function.
  * @param voxel array of size 3 which states the dimension along each axis
@@ -86,5 +91,8 @@ __host__ inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan
     return (cufftExecZ2Z(plan, polarization, polarization, CUFFT_FORWARD));
 #else
     return (cufftExecC2C(plan, polarization, polarization, CUFFT_FORWARD));
+
 #endif
 }
+
+__host__ void performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx);

@@ -28,7 +28,6 @@
 #include <bits/ios_base.h>
 #include <math.h>
 #include <cuda_runtime.h>
-#include <cufft.h>
 #include <Output/writeVTI.h>
 #include <uniaxial.h>
 #include <cublas_v2.h>
@@ -55,7 +54,11 @@ int warmup(){
   return EXIT_SUCCESS;
 }
 
-
+__host__ void performFFTShift(Complex *polarization,  const UINT & blockSize, const uint3 & vx){
+  FFTIgor<<<blockSize,NUM_THREADS>>>(polarization,vx);
+  cudaDeviceSynchronize();
+  gpuErrchk(cudaPeekAtLastError());
+}
 
 
 
@@ -393,15 +396,6 @@ int cudaMain(const UINT *voxel,
                                      cudaMemcpyDeviceToHost));
         gpuErrchk(cudaPeekAtLastError());
         {
-          FILE* pX = fopen("polarizeX.dmp", "wb");
-          fwrite(polarizationX, sizeof(Complex), voxelSize, pX);
-          fclose(pX);
-          FILE* pY = fopen("polarizeY.dmp", "wb");
-          fwrite(polarizationY, sizeof(Complex), voxelSize, pY);
-          fclose(pY);
-          FILE* pZ = fopen("polarizeZ.dmp", "wb");
-          fwrite(polarizationZ, sizeof(Complex), voxelSize, pZ);
-          fclose(pZ);
           std::string dirname = "Polarize/";
           std::string fname = dirname + "polarizationX" + std::to_string(i);
           VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeX");
@@ -444,18 +438,9 @@ int cudaMain(const UINT *voxel,
 
 
 #pragma message "Make me callbacks"
-        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationX,vx);
-        cudaDeviceSynchronize();
-        gpuErrchk(cudaPeekAtLastError());
-
-        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationY,vx);
-        cudaDeviceSynchronize();
-        gpuErrchk(cudaPeekAtLastError());
-
-        FFTIgor<<<BlockSize,NUM_THREADS>>>(d_polarizationZ,vx);
-        cudaDeviceSynchronize();
-        gpuErrchk(cudaPeekAtLastError());
-
+        performFFTShift(d_polarizationX,BlockSize,vx);
+        performFFTShift(d_polarizationY,BlockSize,vx);
+        performFFTShift(d_polarizationZ,BlockSize,vx);
 #ifdef DUMP_FILES
         CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
                                      d_polarizationX,
@@ -473,6 +458,15 @@ int cudaMain(const UINT *voxel,
                                      cudaMemcpyDeviceToHost));
         gpuErrchk(cudaPeekAtLastError());
         {
+//          FILE* pX = fopen("fftpolarizeX.dmp", "wb");
+//          fwrite(polarizationX, sizeof(Complex), voxelSize, pX);
+//          fclose(pX);
+//          FILE* pY = fopen("fftpolarizeY.dmp", "wb");
+//          fwrite(polarizationY, sizeof(Complex), voxelSize, pY);
+//          fclose(pY);
+//          FILE* pZ = fopen("fftpolarizeZ.dmp", "wb");
+//          fwrite(polarizationZ, sizeof(Complex), voxelSize, pZ);
+//          fclose(pZ);
           std::string dirname = "FFT/";
           std::string fname = dirname + "polarizationXfft" + std::to_string(i);
           VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeXfft");

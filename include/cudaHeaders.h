@@ -60,7 +60,18 @@ static void CheckCudaErrorAux (const char *file, unsigned line, const char *stat
     exit (1);
 }
 
+template <typename T, typename GI>
+__host__ inline void hostDeviceExcange(T * dest, const T * src, const GI & size, const cudaMemcpyKind direction){
+  CUDA_CHECK_RETURN(cudaMemcpy(dest,src,sizeof(T) * size ,direction));
+  gpuErrchk(cudaPeekAtLastError());
 
+}
+template <typename T, typename GI>
+__host__ inline void mallocGPU(T *& d_data, const GI & size){
+  CUDA_CHECK_RETURN(cudaMalloc((void **) &d_data, sizeof(T) * size));
+  gpuErrchk(cudaPeekAtLastError());
+
+}
 
 
 #endif //CUDA_BASE_CUDAHEADERS_H

@@ -65,6 +65,7 @@ namespace Interpolation{
 
 
 namespace FFT {
+
     enum FFTWindowing : UINT {
         HANNING = 1,
         NONE = 0,
