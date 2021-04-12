@@ -60,7 +60,23 @@ __host__ void performFFTShift(Complex *polarization,  const UINT & blockSize, co
   gpuErrchk(cudaPeekAtLastError());
 }
 
-
+__host__ void performScatter3DComputation(const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
+                                          Real * d_scatter3D,
+                                          const ElectricField & eleField,
+                                          const Real & eAngle,
+                                          const Real & kAngle,
+                                          const BigUINT & voxelSize,
+                                          const uint3 & vx,
+                                          const Real & physSize,
+                                          const bool & enable2D,
+                                          const UINT & blockSize){
+  computeScatter3D <<< blockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
+                                                  d_scatter3D, eleField, eAngle, kAngle, voxelSize, vx,
+                                                  physSize,
+                                                  enable2D);
+  cudaDeviceSynchronize();
+  gpuErrchk(cudaPeekAtLastError());
+}
 
 __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     const Voxel<NUM_MATERIAL> *voxelInput,
@@ -501,6 +517,9 @@ int cudaMain(const UINT *voxel,
                 CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * voxelSize, cudaMemcpyDeviceToHost));
                 gpuErrchk(cudaPeekAtLastError())
                 {
+                  FILE* scatter = fopen("scatter_3D.dmp", "wb");
+                  fwrite(scatter3D, sizeof(Real), voxelSize, scatter);
+                  fclose(scatter);
                   std::string dirname = "Scatter/";
                   std::string fname = dirname + "scatter" + std::to_string(i);
                   VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
@@ -526,6 +545,12 @@ int cudaMain(const UINT *voxel,
                                                                           idata.if2DComputation());
                 cudaDeviceSynchronize();
                 gpuErrchk(cudaPeekAtLastError());
+#ifdef DUMP_FILES
+                hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
+                FILE* projection = fopen("projection_scatterFull.dmp", "wb");
+                fwrite(projectionGPUAveraged, sizeof(Real), voxelSize, projection);
+                fclose(projection);
+#endif
             }
             else{
                 computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection,d_polarizationX,d_polarizationY, d_polarizationZ, vx,
@@ -534,6 +559,13 @@ int cudaMain(const UINT *voxel,
                                                                           idata.if2DComputation());
                 cudaDeviceSynchronize();
                 gpuErrchk(cudaPeekAtLastError());
+#ifdef DUMP_FILES
+
+              hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
+              FILE* projection = fopen("projection_scatterPartial.dmp", "wb");
+              fwrite(projectionGPUAveraged, sizeof(Real), voxelSize, projection);
+              fclose(projection);
+#endif
             }
         }
 

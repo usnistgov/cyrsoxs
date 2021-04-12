@@ -133,4 +133,67 @@ TEST(CyRSoXS, FFT) {
   freeCudaMemory(d_pY);
   freeCudaMemory(d_pZ);
 }
+
+TEST(CyRSoXS, scatter) {
+  const UINT voxelSize[3]{32,32,16};
+  uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
+  const BigUINT numVoxel = voxelSize[0]*voxelSize[1]*voxelSize[2];
+
+  Complex  * d_polarizationX,* d_polarizationY,* d_polarizationZ;
+  Complex  * polarizationX,* polarizationY,* polarizationZ;
+  Real * scatter_3D, * d_scatter3D, *scatterOracle;
+
+  polarizationX = new Complex[numVoxel];
+  polarizationY = new Complex[numVoxel];
+  polarizationZ = new Complex[numVoxel];
+  scatter_3D = new Real[numVoxel];
+  scatterOracle = new Real[numVoxel];
+
+  const std::string root = CMAKE_ROOT ;
+  const std::string pathOfFFT = root+"/Data/regressionData/FFT/";
+
+  readFile(polarizationX,pathOfFFT+"fftpolarizeX.dmp",numVoxel);
+  readFile(polarizationY,pathOfFFT+"fftpolarizeY.dmp",numVoxel);
+  readFile(polarizationZ,pathOfFFT+"fftpolarizeZ.dmp",numVoxel);
+
+
+  const Real energy = 280.0;
+  ElectricField eleField;
+  eleField.e.x = 1;
+  eleField.e.y = 0;
+  eleField.e.z = 0;
+  Real wavelength = static_cast<Real>(1239.84197 / energy);
+  eleField.k.x = 0;
+  eleField.k.y = 0;
+  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
+
+  mallocGPU(d_polarizationX,numVoxel);
+  mallocGPU(d_polarizationY,numVoxel);
+  mallocGPU(d_polarizationZ,numVoxel);
+  mallocGPU(d_scatter3D,numVoxel);
+
+  hostDeviceExcange(d_polarizationX,polarizationX,numVoxel,cudaMemcpyHostToDevice);
+  hostDeviceExcange(d_polarizationY,polarizationY,numVoxel,cudaMemcpyHostToDevice);
+  hostDeviceExcange(d_polarizationZ,polarizationZ,numVoxel,cudaMemcpyHostToDevice);
+
+  const UINT blockSize = static_cast<UINT>(ceil(numVoxel * 1.0 / NUM_THREADS));
+
+  performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,eleField,0,0,numVoxel,vx,5.0,false,blockSize);
+
+  hostDeviceExcange(scatter_3D,d_scatter3D,numVoxel,cudaMemcpyDeviceToHost);
+  const std::string pathOfScatter = root+"/Data/regressionData/Scatter/";
+  readFile(scatterOracle,pathOfScatter+"scatter_3D.dmp",numVoxel);
+  Real linfError = computeLinfError(scatterOracle,scatter_3D,numVoxel);
+  EXPECT_LE(linfError,TOLERANCE_CHECK);
+  freeCudaMemory(d_polarizationX);
+  freeCudaMemory(d_polarizationY);
+  freeCudaMemory(d_polarizationZ);
+  freeCudaMemory(d_scatter3D);
+
+  delete [] polarizationX;
+  delete [] polarizationY;
+  delete [] polarizationZ;
+  delete [] scatter_3D;
+  delete [] scatterOracle;
+}
 #endif //CY_RSOXS_UNITTEST_H

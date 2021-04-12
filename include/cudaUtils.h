@@ -308,16 +308,4 @@ __device__ inline void RotateZ(Complex & pX, Complex & pY, Complex & pZ, const R
   pX = temp;
 }
 
-template <typename T, typename GI>
-__host__ inline void hostDeviceExcange(T * data, T * d_data, const GI & size, const cudaMemcpyKind direction){
-  CUDA_CHECK_RETURN(cudaMemcpy(data,d_data,sizeof(T) * size ,direction));
-  gpuErrchk(cudaPeekAtLastError());
-
-}
-template <typename T, typename GI>
-__host__ inline void mallocGPU(T * d_data, const GI & size){
-  CUDA_CHECK_RETURN(cudaMalloc((void **) &d_data, sizeof(T) * size));
-  gpuErrchk(cudaPeekAtLastError());
-
-}
 #endif //WRITER_CUDAUTILS_H

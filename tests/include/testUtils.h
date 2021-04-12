@@ -8,7 +8,7 @@
 #include <Datatypes.h>
 #include <limits>
 
-static constexpr Real TOLERANCE_CHECK = 1E-6;
+static constexpr Real TOLERANCE_CHECK = 1E-3;
 
 static inline Real computeLinfError(const Real * vec1, const Real * vec2, const BigUINT size){
   Real maxDifference = -std::numeric_limits<Real>::infinity();
@@ -31,9 +31,10 @@ static inline Complex computeLinfError(const Complex * vec1, const Complex * vec
   return maxDifference;
 }
 
-static inline void readFile(Complex * vec1, const std::string & filename, const BigUINT size){
+template<typename T>
+static inline void readFile(T * vec1, const std::string & filename, const BigUINT size){
   FILE *fstream = fopen(filename.c_str(),"rb");
-  fread(vec1, sizeof(Complex),size,fstream);
+  fread(vec1, sizeof(T),size,fstream);
   fclose(fstream);
 
 }

@@ -96,3 +96,14 @@ __host__ inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan
 }
 
 __host__ void performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx);
+
+__host__ void performScatter3DComputation(const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
+                                          Real * d_scatter3D,
+                                          const ElectricField & eleField,
+                                          const Real & eAngle,
+                                          const Real & kAngle,
+                                          const BigUINT & voxelSize,
+                                          const uint3 & vx,
+                                          const Real & physSize,
+                                          const bool & enable2D,
+                                          const UINT & blockSize);
