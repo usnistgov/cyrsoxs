@@ -73,5 +73,7 @@ __host__ inline void mallocGPU(T *& d_data, const GI & size){
 
 }
 
+#define freeCudaMemory(X) CUDA_CHECK_RETURN(cudaFree(X)); gpuErrchk(cudaPeekAtLastError());
+
 
 #endif //CUDA_BASE_CUDAHEADERS_H

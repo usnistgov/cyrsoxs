@@ -8,19 +8,6 @@
 #include <Input/InputData.h>
 #include "testUtils.h"
 #include "kernels.h"
-//#include "cudaUtils.h"
-//template <typename T, typename GI>
-//__host__ inline void hostDeviceExcange(T * dest, const T * src, const GI & size, const cudaMemcpyKind direction){
-//  CUDA_CHECK_RETURN(cudaMemcpy(dest,src,sizeof(T) * size ,direction));
-//  gpuErrchk(cudaPeekAtLastError());
-//
-//}
-//template <typename T, typename GI>
-//__host__ inline void mallocGPU(T *& d_data, const GI & size){
-//  CUDA_CHECK_RETURN(cudaMalloc((void **) &d_data, sizeof(T) * size));
-//  gpuErrchk(cudaPeekAtLastError());
-//
-//}
 
 #ifdef _WIN32
 #include <direct.h>
@@ -111,8 +98,6 @@ TEST(CyRSoXS, FFT) {
   performFFTShift(d_pX,blockSize,vx);
   performFFTShift(d_pY,blockSize,vx);
   performFFTShift(d_pZ,blockSize,vx);
-//  CUDA_CHECK_RETURN(cudaMemcpy(data,d_data,sizeof(T) * size ,direction));
-//  gpuErrchk(cudaPeekAtLastError());
   hostDeviceExcange(pX,d_pX,numVoxels,cudaMemcpyDeviceToHost);
   hostDeviceExcange(pY,d_pY,numVoxels,cudaMemcpyDeviceToHost);
   hostDeviceExcange(pZ,d_pZ,numVoxels,cudaMemcpyDeviceToHost);
@@ -143,6 +128,9 @@ TEST(CyRSoXS, FFT) {
   delete [] fftPX;
   delete [] fftPY;
   delete [] fftPZ;
-
+  cufftDestroy(plan);
+  freeCudaMemory(d_pX);
+  freeCudaMemory(d_pY);
+  freeCudaMemory(d_pZ);
 }
 #endif //CY_RSOXS_UNITTEST_H
