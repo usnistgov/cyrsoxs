@@ -1,0 +1,12 @@
+Energies=[280.0]
+EAngleRotation=[0.0,1.0,0.0];
+NumThreads = 4;
+NumX = 32;
+NumY = 32;
+NumZ = 16;
+PhysSize = 5.0;
+KRotationType= 0;
+KAngleRotation=[0.0,20.0,360.0];
+ScatterApproach=1;
+MorphologyType=1
+
