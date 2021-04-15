@@ -470,6 +470,15 @@ int cudaMain(const UINT *voxel,
                                      cudaMemcpyDeviceToHost));
         gpuErrchk(cudaPeekAtLastError());
         {
+          FILE* pX = fopen("polarizeX.dmp", "wb");
+          fwrite(polarizationX, sizeof(Complex), voxelSize, pX);
+          fclose(pX);
+          FILE* pY = fopen("polarizeY.dmp", "wb");
+          fwrite(polarizationY, sizeof(Complex), voxelSize, pY);
+          fclose(pY);
+          FILE* pZ = fopen("polarizeZ.dmp", "wb");
+          fwrite(polarizationZ, sizeof(Complex), voxelSize, pZ);
+          fclose(pZ);
           std::string dirname = "Polarize/";
           std::string fname = dirname + "polarizationX" + std::to_string(i);
           VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeX");
@@ -510,7 +519,41 @@ int cudaMain(const UINT *voxel,
           exit(EXIT_FAILURE);
         }
 
-
+#ifdef DUMP_FILES
+        CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
+                                     d_polarizationX,
+                                     sizeof(Complex) * voxelSize,
+                                     cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaPeekAtLastError());
+        CUDA_CHECK_RETURN(cudaMemcpy(polarizationY,
+                                     d_polarizationY,
+                                     sizeof(Complex) * voxelSize,
+                                     cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaPeekAtLastError());
+        CUDA_CHECK_RETURN(cudaMemcpy(polarizationZ,
+                                     d_polarizationZ,
+                                     sizeof(Complex) * voxelSize,
+                                     cudaMemcpyDeviceToHost));
+        gpuErrchk(cudaPeekAtLastError());
+        {
+          FILE* pX = fopen("fftpolarizeXbshift.dmp", "wb");
+          fwrite(polarizationX, sizeof(Complex), voxelSize, pX);
+          fclose(pX);
+          FILE* pY = fopen("fftpolarizeYbshift.dmp", "wb");
+          fwrite(polarizationY, sizeof(Complex), voxelSize, pY);
+          fclose(pY);
+          FILE* pZ = fopen("fftpolarizeZbshift.dmp", "wb");
+          fwrite(polarizationZ, sizeof(Complex), voxelSize, pZ);
+          fclose(pZ);
+          std::string dirname = "FFT/";
+          std::string fname = dirname + "polarizationXfftbshift" + std::to_string(i);
+          VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeXfft");
+          fname = dirname + "polarizationYfftbshift" + std::to_string(i);
+          VTI::writeDataScalar(polarizationY, voxel, fname.c_str(), "polarizeYfft");
+          fname = dirname + "polarizationZfftbshift" + std::to_string(i);
+          VTI::writeDataScalar(polarizationZ, voxel, fname.c_str(), "polarizeZfft");
+        }
+#endif
 #pragma message "Make me callbacks"
         performFFTShift(d_polarizationX,BlockSize,vx);
         performFFTShift(d_polarizationY,BlockSize,vx);
@@ -532,15 +575,15 @@ int cudaMain(const UINT *voxel,
                                      cudaMemcpyDeviceToHost));
         gpuErrchk(cudaPeekAtLastError());
         {
-//          FILE* pX = fopen("fftpolarizeX.dmp", "wb");
-//          fwrite(polarizationX, sizeof(Complex), voxelSize, pX);
-//          fclose(pX);
-//          FILE* pY = fopen("fftpolarizeY.dmp", "wb");
-//          fwrite(polarizationY, sizeof(Complex), voxelSize, pY);
-//          fclose(pY);
-//          FILE* pZ = fopen("fftpolarizeZ.dmp", "wb");
-//          fwrite(polarizationZ, sizeof(Complex), voxelSize, pZ);
-//          fclose(pZ);
+          FILE* pX = fopen("fftpolarizeX.dmp", "wb");
+          fwrite(polarizationX, sizeof(Complex), voxelSize, pX);
+          fclose(pX);
+          FILE* pY = fopen("fftpolarizeY.dmp", "wb");
+          fwrite(polarizationY, sizeof(Complex), voxelSize, pY);
+          fclose(pY);
+          FILE* pZ = fopen("fftpolarizeZ.dmp", "wb");
+          fwrite(polarizationZ, sizeof(Complex), voxelSize, pZ);
+          fclose(pZ);
           std::string dirname = "FFT/";
           std::string fname = dirname + "polarizationXfft" + std::to_string(i);
           VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeXfft");
