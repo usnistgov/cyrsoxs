@@ -23,7 +23,7 @@
 TEST(CyRSoXS, polarization) {
   const std::string root = CMAKE_ROOT ;
   const std::string fname = root + "/Data/sample.h5";
-  const std::string configPath = root + "/Data/regressionData/SingleAngle/config/";
+  const std::string configPath = root + "/Data/config/";
   if(cd(configPath.c_str()) != 0){
     throw std::runtime_error("Wrong path for config");
   }
@@ -67,7 +67,7 @@ TEST(CyRSoXS, polarization) {
   Complex *pXOracle = new Complex [numVoxels];
   Complex *pYOracle = new Complex [numVoxels];
   Complex *pZOracle = new Complex [numVoxels];
-  std::string pathOfOracle = root+"/Data/regressionData/SingleAngle/polarization/";
+  std::string pathOfOracle = root+"/Data/regressionData/SingleAngle/0degree/polarization/";
   readFile(pXOracle,pathOfOracle+"polarizeX.dmp",numVoxels);
   readFile(pYOracle,pathOfOracle+"polarizeY.dmp",numVoxels);
   readFile(pZOracle,pathOfOracle+"polarizeZ.dmp",numVoxels);
@@ -105,7 +105,8 @@ TEST(CyRSoXS, FFT) {
   Complex *pX = new Complex [numVoxels];
   Complex *pY = new Complex [numVoxels];
   Complex *pZ = new Complex [numVoxels];
-  const std::string pathOfpolarization = root+"/Data/regressionData/SingleAngle/polarization/";
+  const std::string pathOfpolarization = root+"/Data/regressionData/SingleAngle/0degree/polarization/";
+  const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/0degree/FFT/";
   readFile(pX,pathOfpolarization+"polarizeX.dmp",numVoxels);
   readFile(pY,pathOfpolarization+"polarizeY.dmp",numVoxels);
   readFile(pZ,pathOfpolarization+"polarizeZ.dmp",numVoxels);
@@ -116,6 +117,9 @@ TEST(CyRSoXS, FFT) {
   hostDeviceExcange(d_pX,pX,numVoxels,cudaMemcpyHostToDevice);
   hostDeviceExcange(d_pY,pY,numVoxels,cudaMemcpyHostToDevice);
   hostDeviceExcange(d_pZ,pZ,numVoxels,cudaMemcpyHostToDevice);
+  Complex *fftPX = new Complex [numVoxels];
+  Complex *fftPY = new Complex [numVoxels];
+  Complex *fftPZ = new Complex [numVoxels];
 
   cufftHandle plan;
   cufftPlan3d(&plan, voxelSize[2], voxelSize[1], voxelSize[0], fftType);
@@ -123,9 +127,27 @@ TEST(CyRSoXS, FFT) {
   auto res1 = performFFT(d_pX,plan);
   auto res2 = performFFT(d_pY,plan);
   auto res3 = performFFT(d_pZ,plan);
+
   EXPECT_EQ(res1,CUFFT_SUCCESS);
   EXPECT_EQ(res2,CUFFT_SUCCESS);
   EXPECT_EQ(res3,CUFFT_SUCCESS);
+
+  hostDeviceExcange(pX,d_pX,numVoxels,cudaMemcpyDeviceToHost);
+  hostDeviceExcange(pY,d_pY,numVoxels,cudaMemcpyDeviceToHost);
+  hostDeviceExcange(pZ,d_pZ,numVoxels,cudaMemcpyDeviceToHost);
+  readFile(fftPX,pathOfFFT+"fftpolarizeXbshift.dmp",numVoxels);
+  readFile(fftPY,pathOfFFT+"fftpolarizeYbshift.dmp",numVoxels);
+  readFile(fftPZ,pathOfFFT+"fftpolarizeZbshift.dmp",numVoxels);
+  Complex linfError;
+  linfError = computeLinfError(pX,fftPX,numVoxels);
+  EXPECT_LE(linfError.x,TOLERANCE_CHECK);
+  EXPECT_LE(linfError.y,TOLERANCE_CHECK);
+  linfError = computeLinfError(pY,fftPY,numVoxels);
+  EXPECT_LE(linfError.x,TOLERANCE_CHECK);
+  EXPECT_LE(linfError.y,TOLERANCE_CHECK);
+  linfError = computeLinfError(pZ,fftPZ,numVoxels);
+  EXPECT_LE(linfError.x,TOLERANCE_CHECK);
+  EXPECT_LE(linfError.y,TOLERANCE_CHECK);
   UINT blockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
   const uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
   int suc1 = performFFTShift(d_pX,blockSize,vx);
@@ -138,15 +160,10 @@ TEST(CyRSoXS, FFT) {
   hostDeviceExcange(pY,d_pY,numVoxels,cudaMemcpyDeviceToHost);
   hostDeviceExcange(pZ,d_pZ,numVoxels,cudaMemcpyDeviceToHost);
 
-  const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/FFT/";
-  Complex *fftPX = new Complex [numVoxels];
-  Complex *fftPY = new Complex [numVoxels];
-  Complex *fftPZ = new Complex [numVoxels];
-
   readFile(fftPX,pathOfFFT+"fftpolarizeX.dmp",numVoxels);
   readFile(fftPY,pathOfFFT+"fftpolarizeY.dmp",numVoxels);
   readFile(fftPZ,pathOfFFT+"fftpolarizeZ.dmp",numVoxels);
-  Complex linfError;
+
   linfError = computeLinfError(pX,fftPX,numVoxels);
   EXPECT_LE(linfError.x,TOLERANCE_CHECK);
   EXPECT_LE(linfError.y,TOLERANCE_CHECK);
@@ -186,7 +203,7 @@ TEST(CyRSoXS, scatter) {
   scatterOracle = new Real[numVoxel];
 
   const std::string root = CMAKE_ROOT ;
-  const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/FFT/";
+  const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/0degree/FFT/";
 
   readFile(polarizationX,pathOfFFT+"fftpolarizeX.dmp",numVoxel);
   readFile(polarizationY,pathOfFFT+"fftpolarizeY.dmp",numVoxel);
@@ -217,7 +234,7 @@ TEST(CyRSoXS, scatter) {
   int suc1 = performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,eleField,0,0,numVoxel,vx,5.0,false,blockSize);
   EXPECT_EQ(suc1,EXIT_SUCCESS);
   hostDeviceExcange(scatter_3D,d_scatter3D,numVoxel,cudaMemcpyDeviceToHost);
-  const std::string pathOfScatter = root+"/Data/regressionData/SingleAngle/Scatter/";
+  const std::string pathOfScatter = root+"/Data/regressionData/SingleAngle/0degree/Scatter/";
   readFile(scatterOracle,pathOfScatter+"scatter_3D.dmp",numVoxel);
   Real linfError = computeLinfError(scatterOracle,scatter_3D,numVoxel);
   EXPECT_LE(linfError,TOLERANCE_CHECK);
@@ -250,8 +267,8 @@ TEST(CyRSoXS, ewaldProjectionFull){
   eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
 
   const std::string root = CMAKE_ROOT ;
-  const std::string pathOfScatter = root+"/Data/regressionData/SingleAngle/Scatter/";
-  const std::string pathOfEwaldGPU = root+"/Data/regressionData/SingleAngle/Ewald/";
+  const std::string pathOfScatter = root+"/Data/regressionData/SingleAngle/0degree/Scatter/";
+  const std::string pathOfEwaldGPU = root+"/Data/regressionData/SingleAngle/0degree/Ewald/";
   Real * scatter = new Real [numVoxel];
   Real * projection = new Real[numVoxel2D];
   Real * projectionOracle = new Real[numVoxel2D];
@@ -297,8 +314,8 @@ TEST(CyRSoXS, ewaldProjectionPartial){
   eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
 
   const std::string root = CMAKE_ROOT ;
-  const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/FFT/";
-  const std::string pathOfEwaldGPU = root+"/Data/regressionData/SingleAngle/Ewald/";
+  const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/0degree/FFT/";
+  const std::string pathOfEwaldGPU = root+"/Data/regressionData/SingleAngle/0degree/Ewald/";
 
   Complex  * d_polarizationX,* d_polarizationY,* d_polarizationZ;
   Complex  * polarizationX,* polarizationY,* polarizationZ;
