@@ -648,6 +648,9 @@ int cudaMain(const UINT *voxel,
                 gpuErrchk(cudaPeekAtLastError());
 #ifdef DUMP_FILES
                 hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
+                std::string dirname = "Ewald/";
+                std::string fname = dirname + "ewlad" + std::to_string(i);
+                VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
                 FILE* projection = fopen("projection_scatterFull.dmp", "wb");
                 fwrite(projectionGPUAveraged, sizeof(Real), voxelSize, projection);
                 fclose(projection);
@@ -663,6 +666,9 @@ int cudaMain(const UINT *voxel,
 #ifdef DUMP_FILES
 
               hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
+              std::string dirname = "Ewald/";
+              std::string fname = dirname + "ewlad" + std::to_string(i);
+              VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
               FILE* projection = fopen("projection_scatterPartial.dmp", "wb");
               fwrite(projectionGPUAveraged, sizeof(Real), voxelSize, projection);
               fclose(projection);

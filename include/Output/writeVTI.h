@@ -492,7 +492,13 @@ static void writeDataScalar2D(Real * data,const UINT *voxelSize,
   }
 #else
   for(int i = 0; i < totalSize; i++){
-    fout << data[i]<< " "  << " ";
+    if(std::isnan(data[i])) {
+      fout << 0 << "\n";
+    }
+    else {
+      fout << data[i]<< " "  << " ";
+    }
+
   }
 #endif
   writeVariableFooter(fout);
@@ -569,7 +575,12 @@ static void writeDataScalar2DFP(Real * data,const UINT *voxelSize,
   }
 #else
   for(int i = 0; i < totalSize; i++){
-    fprintf(fp,"%f ", data[i]);
+    if(std::isnan(data[i])) {
+      fprintf(fp, "%e ", 0.0);
+    }
+    else {
+      fprintf(fp, "%e ", data[i]);
+    }
   }
 #endif
   writeVariableFooter(fp);
