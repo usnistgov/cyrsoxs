@@ -93,7 +93,8 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
     std::vector<Material<NUM_MATERIAL> > materialInput;
-    InputData inputData(materialInput);
+    InputData inputData;
+    inputData.readRefractiveIndexData(materialInput);
     inputData.validate();
     if(argc > 2){
         inputData.HDF5DirName = argv[2];

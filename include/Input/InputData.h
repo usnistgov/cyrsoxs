@@ -229,7 +229,7 @@ private:
    * @param refractiveIndex material input
    * @param filename filename, default is config.txt
    */
-  InputData(std::vector<Material<NUM_MATERIAL> > &refractiveIndex, std::string filename = "config.txt") {
+  InputData(std::string filename = "config.txt") {
     libconfig::Config cfg;
     cfg.readFile(filename.c_str());
     ReadArrayRequired(cfg, "Energies", energies);
@@ -276,6 +276,10 @@ private:
 
     check2D();
 
+
+  }
+  void readRefractiveIndexData(std::vector<Material<NUM_MATERIAL> > &refractiveIndex) const {
+    libconfig::Config cfg;
     refractiveIndex.resize(energies.size());
     const UINT & numEnergy = energies.size();
     for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
@@ -292,22 +296,21 @@ private:
           exit(EXIT_FAILURE);
         }
 
-          /** Diagonal enteries **/
-          Real deltaPara = global["DeltaPara"];
-          Real betaPara = global["BetaPara"];
-          Real deltaPerp = global["DeltaPerp"];
-          Real betaPerp = global["BetaPerp"];
-          /** Diagonal enteries **/
-          refractiveIndex[i].npara[numMaterial].x = 1 - deltaPara;
-          refractiveIndex[i].npara[numMaterial].y = betaPara;
+        /** Diagonal enteries **/
+        Real deltaPara = global["DeltaPara"];
+        Real betaPara = global["BetaPara"];
+        Real deltaPerp = global["DeltaPerp"];
+        Real betaPerp = global["BetaPerp"];
+        /** Diagonal enteries **/
+        refractiveIndex[i].npara[numMaterial].x = 1 - deltaPara;
+        refractiveIndex[i].npara[numMaterial].y = betaPara;
 
-          refractiveIndex[i].nperp[numMaterial].x = 1 - deltaPerp;
-          refractiveIndex[i].nperp[numMaterial].y = betaPerp;
+        refractiveIndex[i].nperp[numMaterial].x = 1 - deltaPerp;
+        refractiveIndex[i].nperp[numMaterial].y = betaPerp;
       }
 
     }
   }
-
   void validate() const{
       validate("FFT Windowing",windowingType,FFT::FFTWindowing::MAX_SIZE);
       validate("K Rotation",kRotationType,KRotationType::MAX_ROTATION_TYPE);
