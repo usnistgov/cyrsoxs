@@ -193,13 +193,11 @@ if (ENABLE_TEST)
         add_subdirectory(external/googletest)
         set(TEST_SRC
                 tests/tests.cpp
-                tests/src/kernel.cu
                 )
         set(TEST_INC
                 tests/include/basicFramework.h
                 tests/include/testUtils.h
                 tests/include/unitTest.h
-                tests/include/kernels.h
                 tests/include/fullFramework.h
                 )
         add_executable(test ${CyRSoXS_INC} ${CyRSoXS_SRC} ${TEST_SRC} ${TEST_INC})

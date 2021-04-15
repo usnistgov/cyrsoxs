@@ -7,8 +7,6 @@
 
 #include <Input/InputData.h>
 #include "testUtils.h"
-#include "kernels.h"
-
 #ifdef _WIN32
 #include <direct.h>
 // MSDN recommends against using getcwd & chdir names
