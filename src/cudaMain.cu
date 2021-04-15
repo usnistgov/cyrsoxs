@@ -140,7 +140,7 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
 #ifndef BIAXIAL
   if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-    computePolarizationVectorMorphology(&materialInput, angle, voxelInput, threadID, polarizationX, polarizationY,
+    computePolarizationVectorMorphologyOptimized(&materialInput, angle, voxelInput, threadID, polarizationX, polarizationY,
                                         polarizationZ);
   } else {
     computePolarizationEulerAngles(&materialInput, angle, voxelInput, threadID, polarizationX, polarizationY,
@@ -583,8 +583,8 @@ int cudaMain(const UINT *voxel,
             START_TIMER(TIMERS::SCATTER3D)
         }
 #endif
-        cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
-        cudaMemset(d_projection, 0, voxel[0] * voxel[1] * sizeof(Real));
+        cudaZeroEntries(d_rotProjection,numVoxel2D);
+        cudaZeroEntries(d_projection,numVoxel2D);
 
         if (idata.scatterApproach == ScatterApproach::FULL) {
           /** Scatter 3D computation **/
