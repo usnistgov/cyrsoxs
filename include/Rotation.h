@@ -68,7 +68,7 @@ __host__ inline void computeInverseMatrix(const Real  matrixA [][3], Real  inver
                matrixA[0][2] * (matrixA[1][0] * matrixA[2][1] - matrixA[1][1] * matrixA[2][0]);
 
   assert(not(FEQUALS(det,0.0)));
-  Real invdet = 1 / det;
+  Real invdet = 1. / det;
 
   inverseMatrix[0][0] = (matrixA[1][1] * matrixA[2][2] - matrixA[2][1] * matrixA[1][2]) * invdet;
   inverseMatrix[0][1] = (matrixA[0][2] * matrixA[2][1] - matrixA[0][1] * matrixA[2][2]) * invdet;
