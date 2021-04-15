@@ -767,12 +767,7 @@ int cudaMain(const UINT *voxel,
       }
 #endif
 
-      CUDA_CHECK_RETURN(cudaMemcpy(&projectionGPUAveraged[j * voxel[0] * voxel[1]],
-                                   d_projectionAverage,
-                                   sizeof(Real) * (voxel[0] * voxel[1]),
-                                   cudaMemcpyDeviceToHost));
-      gpuErrchk(cudaPeekAtLastError());
-
+      hostDeviceExcange(&projectionGPUAveraged[j * numVoxel2D],d_projectionAverage,numVoxel2D,cudaMemcpyDeviceToHost);
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::MEMCOPY_GPU_CPU)
@@ -782,31 +777,20 @@ int cudaMain(const UINT *voxel,
     }
 
     /** Freeing bunch of memories not required now **/
-    CUDA_CHECK_RETURN(cudaFree(d_polarizationZ));
-    gpuErrchk(cudaPeekAtLastError());
-    CUDA_CHECK_RETURN(cudaFree(d_polarizationY));
-    gpuErrchk(cudaPeekAtLastError());
-    CUDA_CHECK_RETURN(cudaFree(d_polarizationX));
-    gpuErrchk(cudaPeekAtLastError());
+    freeCudaMemory(d_polarizationX);
+    freeCudaMemory(d_polarizationY);
+    freeCudaMemory(d_polarizationZ);
     if(idata.scatterApproach == ScatterApproach::FULL) {
-        CUDA_CHECK_RETURN(cudaFree(d_scatter3D));
-        gpuErrchk(cudaPeekAtLastError());
+        freeCudaMemory(d_scatter3D);
     }
-    CUDA_CHECK_RETURN(cudaFree(d_voxelInput));
-    gpuErrchk(cudaPeekAtLastError());
-
-
+    freeCudaMemory(d_voxelInput);
 
 #ifndef EOC
-    CUDA_CHECK_RETURN(cudaFree(d_projection));
-    gpuErrchk(cudaPeekAtLastError());
-    CUDA_CHECK_RETURN(cudaFree(d_projectionAverage));
-    gpuErrchk(cudaPeekAtLastError());
-    CUDA_CHECK_RETURN(cudaFree(d_rotProjection));
-    gpuErrchk(cudaPeekAtLastError());
+    freeCudaMemory(d_projection);
+    freeCudaMemory(d_projectionAverage);
+    freeCudaMemory(d_rotProjection);
     if(idata.rotMask) {
-      CUDA_CHECK_RETURN(cudaFree(d_mask));
-      gpuErrchk(cudaPeekAtLastError());
+      freeCudaMemory(d_mask);
     }
 #endif
 #ifdef DUMP_FILES
