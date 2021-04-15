@@ -42,7 +42,7 @@
                      timings[X] +=  (static_cast<std::chrono::duration<Real>>(timerArrayEnd[X] - timerArrayStart[X])).count();
 
 
-int warmup(){
+int warmup() {
   double *d_warmup, *warmup;
   warmup = new double[1000];
   CUDA_CHECK_RETURN(cudaMalloc((void **) &d_warmup, sizeof(double) * 1000));
@@ -54,23 +54,24 @@ int warmup(){
   return EXIT_SUCCESS;
 }
 
-__host__ int performFFTShift(Complex *polarization,  const UINT & blockSize, const uint3 & vx){
-  FFTIgor<<<blockSize,NUM_THREADS>>>(polarization,vx);
+__host__ int performFFTShift(Complex *polarization, const UINT &blockSize, const uint3 &vx) {
+  FFTIgor<<<blockSize, NUM_THREADS>>>(polarization, vx);
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
   return EXIT_SUCCESS;
 }
 
-__host__  int performScatter3DComputation(const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
-                                          Real * d_scatter3D,
-                                          const ElectricField & eleField,
-                                          const Real & eAngle,
-                                          const Real & kAngle,
-                                          const BigUINT & voxelSize,
-                                          const uint3 & vx,
-                                          const Real & physSize,
-                                          const bool & enable2D,
-                                          const UINT & blockSize){
+__host__  int performScatter3DComputation(const Complex *d_polarizationX, const Complex *d_polarizationY,
+                                          const Complex *d_polarizationZ,
+                                          Real *d_scatter3D,
+                                          const ElectricField &eleField,
+                                          const Real &eAngle,
+                                          const Real &kAngle,
+                                          const BigUINT &voxelSize,
+                                          const uint3 &vx,
+                                          const Real &physSize,
+                                          const bool &enable2D,
+                                          const UINT &blockSize) {
   computeScatter3D <<< blockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
                                                   d_scatter3D, eleField, eAngle, kAngle, voxelSize, vx,
                                                   physSize,
@@ -80,20 +81,20 @@ __host__  int performScatter3DComputation(const Complex * d_polarizationX, const
   return EXIT_SUCCESS;
 }
 
-__host__ int peformEwaldProjectionGPU(Real * d_projection,
-                                      const Real * d_scatter,
-                                      const Real & k,
-                                      const uint3 & vx,
-                                      const Real & eAngle,
-                                      const Real & kAngle,
-                                      const Real & physSize,
-                                      const Interpolation::EwaldsInterpolation & interpolation,
-                                      const bool & enable2D,
-                                      const UINT & blockSize){
+__host__ int peformEwaldProjectionGPU(Real *d_projection,
+                                      const Real *d_scatter,
+                                      const Real &k,
+                                      const uint3 &vx,
+                                      const Real &eAngle,
+                                      const Real &kAngle,
+                                      const Real &physSize,
+                                      const Interpolation::EwaldsInterpolation &interpolation,
+                                      const bool &enable2D,
+                                      const UINT &blockSize) {
   computeEwaldProjectionGPU <<< blockSize, NUM_THREADS >>>(d_projection, d_scatter, vx,
-                                                            k, eAngle, kAngle,physSize,
-                                                            interpolation,
-                                                            enable2D);
+                                                           k, eAngle, kAngle, physSize,
+                                                           interpolation,
+                                                           enable2D);
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
 
@@ -102,18 +103,20 @@ __host__ int peformEwaldProjectionGPU(Real * d_projection,
 
 }
 
-__host__ int peformEwaldProjectionGPU(Real * d_projection,
-                                      const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
-                                      const Real & k,
-                                      const uint3 & vx,
-                                      const Real & eAngle,
-                                      const Real & kAngle,
-                                      const Real & physSize,
-                                      const Interpolation::EwaldsInterpolation & interpolation,
-                                      const bool & enable2D,
-                                      const UINT & blockSize){
-  computeEwaldProjectionGPU <<< blockSize, NUM_THREADS >>>(d_projection, d_polarizationX,d_polarizationY,d_polarizationZ, vx,
-                                                           k, eAngle, kAngle,physSize,
+__host__ int peformEwaldProjectionGPU(Real *d_projection,
+                                      const Complex *d_polarizationX, const Complex *d_polarizationY,
+                                      const Complex *d_polarizationZ,
+                                      const Real &k,
+                                      const uint3 &vx,
+                                      const Real &eAngle,
+                                      const Real &kAngle,
+                                      const Real &physSize,
+                                      const Interpolation::EwaldsInterpolation &interpolation,
+                                      const bool &enable2D,
+                                      const UINT &blockSize) {
+  computeEwaldProjectionGPU <<< blockSize, NUM_THREADS >>>(d_projection, d_polarizationX, d_polarizationY,
+                                                           d_polarizationZ, vx,
+                                                           k, eAngle, kAngle, physSize,
                                                            interpolation,
                                                            enable2D);
   cudaDeviceSynchronize();
@@ -136,59 +139,59 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 ) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
 #ifndef BIAXIAL
-  if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
+  if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
     computePolarizationVectorMorphology(&materialInput, angle, voxelInput, threadID, polarizationX, polarizationY,
                                         polarizationZ);
-  }
-  else {
+  } else {
     computePolarizationEulerAngles(&materialInput, angle, voxelInput, threadID, polarizationX, polarizationY,
                                    polarizationZ);
   }
 #else
-    printf("Kernel not spported\n");
+  printf("Kernel not spported\n");
 #endif
 
 
-if(windowing == FFT::FFTWindowing::HANNING) {
-  UINT Z = static_cast<UINT>(threadID / (voxel.y * voxel.x * 1.0));
-  UINT Y = static_cast<UINT>((threadID - Z * voxel.y * voxel.x) / (voxel.x * 1.0));
-  UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
-  Real3 hanningWeight;
-  hanningWeight.x = static_cast<Real> (0.5 * (1 - cos(2 * M_PI * X / (voxel.x))));
-  hanningWeight.y = static_cast<Real> (0.5 * (1 - cos(2 * M_PI * Y / (voxel.y))));
-  hanningWeight.z = static_cast<Real>(1.0);
-  if(not(enable2D)){
-    hanningWeight.z = static_cast<Real>(0.5 * (1 - cos(2 * M_PI * Z / (voxel.z))));
+  if (windowing == FFT::FFTWindowing::HANNING) {
+    UINT Z = static_cast<UINT>(threadID / (voxel.y * voxel.x * 1.0));
+    UINT Y = static_cast<UINT>((threadID - Z * voxel.y * voxel.x) / (voxel.x * 1.0));
+    UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
+    Real3 hanningWeight;
+    hanningWeight.x = static_cast<Real> (0.5 * (1 - cos(2 * M_PI * X / (voxel.x))));
+    hanningWeight.y = static_cast<Real> (0.5 * (1 - cos(2 * M_PI * Y / (voxel.y))));
+    hanningWeight.z = static_cast<Real>(1.0);
+    if (not(enable2D)) {
+      hanningWeight.z = static_cast<Real>(0.5 * (1 - cos(2 * M_PI * Z / (voxel.z))));
+    }
+    Real totalHanningWeight = hanningWeight.x * hanningWeight.y * hanningWeight.z;
+    polarizationX[threadID].x *= totalHanningWeight;
+    polarizationX[threadID].y *= totalHanningWeight;
+    polarizationY[threadID].x *= totalHanningWeight;
+    polarizationY[threadID].y *= totalHanningWeight;
+    polarizationZ[threadID].x *= totalHanningWeight;
+    polarizationZ[threadID].y *= totalHanningWeight;
+
   }
-  Real totalHanningWeight = hanningWeight.x * hanningWeight.y * hanningWeight.z;
-  polarizationX[threadID].x *= totalHanningWeight;
-  polarizationX[threadID].y *= totalHanningWeight;
-  polarizationY[threadID].x *= totalHanningWeight;
-  polarizationY[threadID].y *= totalHanningWeight;
-  polarizationZ[threadID].x *= totalHanningWeight;
-  polarizationZ[threadID].y *= totalHanningWeight;
 
 }
 
-}
-
-__host__ int computePolarization(const Material<NUM_MATERIAL> & materialInput,
-                                  const Voxel<NUM_MATERIAL> *d_voxelInput,
-                                  const ElectricField  & elefield,
-                                  const Real & angle,
-                                  const uint3 & vx,
-                                  Complex *d_polarizationX,
-                                  Complex *d_polarizationY,
-                                  Complex *d_polarizationZ,
-                                  FFT::FFTWindowing windowing,
-                                  const bool & enable2D,
-                                  const MorphologyType & morphologyType,
-                                  const UINT & blockSize
-){
-  computePolarization <<< blockSize, NUM_THREADS >>> (materialInput, d_voxelInput, elefield, angle, vx, d_polarizationX, d_polarizationY, d_polarizationZ,
-                                                      windowing,
-                                                      enable2D,
-                                                      morphologyType);
+__host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
+                                 const Voxel<NUM_MATERIAL> *d_voxelInput,
+                                 const ElectricField &elefield,
+                                 const Real &angle,
+                                 const uint3 &vx,
+                                 Complex *d_polarizationX,
+                                 Complex *d_polarizationY,
+                                 Complex *d_polarizationZ,
+                                 FFT::FFTWindowing windowing,
+                                 const bool &enable2D,
+                                 const MorphologyType &morphologyType,
+                                 const UINT &blockSize
+) {
+  computePolarization <<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, elefield, angle, vx, d_polarizationX,
+                                                     d_polarizationY, d_polarizationZ,
+                                                     windowing,
+                                                     enable2D,
+                                                     morphologyType);
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
   return EXIT_SUCCESS;
@@ -198,34 +201,31 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> & materialInput,
 int cudaMain(const UINT *voxel,
              const InputData &idata,
              const std::vector<Material<NUM_MATERIAL> > &materialInput,
-             Real * projectionGPUAveraged,
+             Real *projectionGPUAveraged,
              const Voxel<NUM_MATERIAL> *voxelInput) {
 
-    if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()){
-        std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
-        exit(EXIT_FAILURE);
-    }
+  if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()) {
+    std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
+    exit(EXIT_FAILURE);
+  }
 
   const BigUINT numVoxels = voxel[0] * voxel[1] * voxel[2]; /// Voxel size
   const UINT numVoxel2D = voxel[0] * voxel[1];
-  const uint3 vx{voxel[0],voxel[1],voxel[2]};
+  const uint3 vx{voxel[0], voxel[1], voxel[2]};
   const UINT
-      numAnglesRotation = static_cast<UINT>(std::round((idata.endAngle - idata.startAngle) / idata.incrementAngle + 1));
-  const UINT & numEnergyLevel = idata.energies.size();
+    numAnglesRotation = static_cast<UINT>(std::round((idata.endAngle - idata.startAngle) / idata.incrementAngle + 1));
+  const UINT &numEnergyLevel = idata.energies.size();
   const UINT numKRotation = static_cast<UINT>(std::round((idata.kEnd - idata.kStart) / idata.kIncrement + 1));
-
 
 
   int num_gpu;
   cudaGetDeviceCount(&num_gpu);
   std::cout << "Number of CUDA devices:" << num_gpu << "\n";
 
-  if(num_gpu < 1){
+  if (num_gpu < 1) {
     std::cout << "No GPU found. Exiting" << "\n";
     return (EXIT_FAILURE);
   }
-
-
 
 
 #ifdef PROFILING
@@ -322,19 +322,18 @@ int cudaMain(const UINT *voxel,
 
 
     const UINT ompThreadID = omp_get_thread_num();
-    const UINT numEnergyPerGPU = static_cast<UINT>(std::ceil(numEnergyLevel*1.0/num_gpu));
-    const UINT numStart = (numEnergyPerGPU*ompThreadID);
-    UINT numEnd   = (numEnergyPerGPU*(ompThreadID + 1));
-    numEnd = std::min(numEnd,numEnergyLevel);
+    const UINT numEnergyPerGPU = static_cast<UINT>(std::ceil(numEnergyLevel * 1.0 / num_gpu));
+    const UINT numStart = (numEnergyPerGPU * ompThreadID);
+    UINT numEnd = (numEnergyPerGPU * (ompThreadID + 1));
+    numEnd = std::min(numEnd, numEnergyLevel);
 
-    const Real & energyStart = numStart < numEnergyLevel ? idata.energies[numStart] : 0;
-    const Real & energyEnd   = idata.energies[numEnd - 1] ;
+    const Real &energyStart = numStart < numEnergyLevel ? idata.energies[numStart] : 0;
+    const Real &energyEnd = idata.energies[numEnd - 1];
 
-    if(numStart >= numEnergyLevel){
-      std::cout << "[INFO] [GPU = " << dprop.name  << "] -> No computation. Idle\n";
-    }
-    else{
-      std::cout << "[INFO] [GPU = " << dprop.name  << "] : " << energyStart << "eV -> " << energyEnd << "eV\n" ;
+    if (numStart >= numEnergyLevel) {
+      std::cout << "[INFO] [GPU = " << dprop.name << "] -> No computation. Idle\n";
+    } else {
+      std::cout << "[INFO] [GPU = " << dprop.name << "] : " << energyStart << "eV -> " << energyEnd << "eV\n";
     }
 
 
@@ -359,26 +358,26 @@ int cudaMain(const UINT *voxel,
 #endif
 
     Voxel<NUM_MATERIAL> *d_voxelInput;
-    mallocGPU(d_voxelInput,numVoxels);
+    mallocGPU(d_voxelInput, numVoxels);
 
     Complex *d_polarizationZ, *d_polarizationX, *d_polarizationY;
     Real *d_scatter3D;
-    UINT * d_mask;
-    mallocGPU(d_polarizationX,numVoxels);
-    mallocGPU(d_polarizationY,numVoxels);
-    mallocGPU(d_polarizationZ,numVoxels);
+    UINT *d_mask;
+    mallocGPU(d_polarizationX, numVoxels);
+    mallocGPU(d_polarizationY, numVoxels);
+    mallocGPU(d_polarizationZ, numVoxels);
 
-    if(idata.scatterApproach == ScatterApproach::FULL) {
-      mallocGPU(d_scatter3D,numVoxels);
+    if (idata.scatterApproach == ScatterApproach::FULL) {
+      mallocGPU(d_scatter3D, numVoxels);
     }
 #ifndef EOC
     Real *d_projection, *d_rotProjection, *d_projectionAverage;
-    mallocGPU(d_projection,numVoxel2D);
-    mallocGPU(d_rotProjection,numVoxel2D);
-    if(idata.rotMask){
-      mallocGPU(d_mask,numVoxel2D);
+    mallocGPU(d_projection, numVoxel2D);
+    mallocGPU(d_rotProjection, numVoxel2D);
+    if (idata.rotMask) {
+      mallocGPU(d_mask, numVoxel2D);
     }
-    mallocGPU(d_projectionAverage,numVoxel2D);
+    mallocGPU(d_projectionAverage, numVoxel2D);
 #endif
 
 
@@ -389,7 +388,7 @@ int cudaMain(const UINT *voxel,
     }
 #endif
 
-    hostDeviceExcange(d_voxelInput,voxelInput,numVoxels,cudaMemcpyHostToDevice);
+    hostDeviceExcange(d_voxelInput, voxelInput, numVoxels, cudaMemcpyHostToDevice);
 
 #ifdef PROFILING
     {
@@ -398,16 +397,16 @@ int cudaMain(const UINT *voxel,
 #endif
 
     UINT BlockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
-    UINT BlockSize2 = static_cast<UINT>(ceil(numVoxel2D* 1.0 / NUM_THREADS));
+    UINT BlockSize2 = static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
 
     for (UINT j = numStart; j < numEnd; j++) {
 
-      const Real & energy = (idata.energies[j]);
-      std::cout << " [STAT] Energy = " << energy << " starting "  << "\n";
+      const Real &energy = (idata.energies[j]);
+      std::cout << " [STAT] Energy = " << energy << " starting " << "\n";
 
-      cudaZeroEntries(d_projectionAverage,numVoxel2D);
-      if(idata.rotMask) {
-        cudaZeroEntries(d_mask,numVoxel2D);
+      cudaZeroEntries(d_projectionAverage, numVoxel2D);
+      if (idata.rotMask) {
+        cudaZeroEntries(d_mask, numVoxel2D);
       }
 
 #ifdef  PROFILING
@@ -424,15 +423,18 @@ int cudaMain(const UINT *voxel,
       eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
       Real Eangle;
       for (UINT i = 0; i < numAnglesRotation; i++) {
-        Eangle = static_cast<Real>((idata.startAngle + i*idata.incrementAngle) * M_PI / 180.0);
+        Eangle = static_cast<Real>((idata.startAngle + i * idata.incrementAngle) * M_PI / 180.0);
 #ifdef PROFILING
         {
           START_TIMER(TIMERS::POLARIZATION)
         }
 #endif
 
-        computePolarization <<< BlockSize, NUM_THREADS >>> (materialInput[j], d_voxelInput, eleField, Eangle, vx, d_polarizationX, d_polarizationY, d_polarizationZ,
-                static_cast<FFT::FFTWindowing >(idata.windowingType), idata.if2DComputation(),static_cast<MorphologyType>(idata.morphologyType));
+        computePolarization <<< BlockSize, NUM_THREADS >>>(materialInput[j], d_voxelInput, eleField, Eangle, vx,
+                                                           d_polarizationX, d_polarizationY, d_polarizationZ,
+                                                           static_cast<FFT::FFTWindowing >(idata.windowingType),
+                                                           idata.if2DComputation(),
+                                                           static_cast<MorphologyType>(idata.morphologyType));
 
         gpuErrchk(cudaPeekAtLastError());
         cudaDeviceSynchronize();
@@ -480,21 +482,21 @@ int cudaMain(const UINT *voxel,
         }
 #endif
         /** FFT Computation **/
-        result = performFFT(d_polarizationX,plan);
+        result = performFFT(d_polarizationX, plan);
         if (result != CUFFT_SUCCESS) {
           std::cout << "CUFFT failed with result " << result << "\n";
-          #pragma omp cancel parallel
+#pragma omp cancel parallel
           exit(EXIT_FAILURE);
         }
 
-        result = performFFT(d_polarizationY,plan);
+        result = performFFT(d_polarizationY, plan);
         if (result != CUFFT_SUCCESS) {
           std::cout << "CUFFT failed with result " << result << "\n";
-          #pragma omp cancel parallel
+#pragma omp cancel parallel
           exit(EXIT_FAILURE);
         }
 
-        result = performFFT(d_polarizationZ,plan);
+        result = performFFT(d_polarizationZ, plan);
         if (result != CUFFT_SUCCESS) {
           std::cout << "CUFFT failed with result " << result << "\n";
           exit(EXIT_FAILURE);
@@ -536,9 +538,9 @@ int cudaMain(const UINT *voxel,
         }
 #endif
 #pragma message "Make me callbacks"
-        performFFTShift(d_polarizationX,BlockSize,vx);
-        performFFTShift(d_polarizationY,BlockSize,vx);
-        performFFTShift(d_polarizationZ,BlockSize,vx);
+        performFFTShift(d_polarizationX, BlockSize, vx);
+        performFFTShift(d_polarizationY, BlockSize, vx);
+        performFFTShift(d_polarizationZ, BlockSize, vx);
 #ifdef DUMP_FILES
         CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
                                      d_polarizationX,
@@ -576,83 +578,83 @@ int cudaMain(const UINT *voxel,
 #endif
 
 #ifdef PROFILING
-          {
-              END_TIMER(TIMERS::FFT)
-              START_TIMER(TIMERS::SCATTER3D)
-          }
+        {
+            END_TIMER(TIMERS::FFT)
+            START_TIMER(TIMERS::SCATTER3D)
+        }
 #endif
         cudaMemset(d_rotProjection, 0, voxel[0] * voxel[1] * sizeof(Real));
         cudaMemset(d_projection, 0, voxel[0] * voxel[1] * sizeof(Real));
 
-            if(idata.scatterApproach == ScatterApproach::FULL) {
-                /** Scatter 3D computation **/
-                computeScatter3D <<< BlockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
-                                                                d_scatter3D, eleField, 0.0, 0.0, numVoxels, vx,
-                                                                idata.physSize,
-                                                                idata.if2DComputation());
-                cudaDeviceSynchronize();
-                gpuErrchk(cudaPeekAtLastError());
+        if (idata.scatterApproach == ScatterApproach::FULL) {
+          /** Scatter 3D computation **/
+          computeScatter3D <<< BlockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
+                                                          d_scatter3D, eleField, 0.0, 0.0, numVoxels, vx,
+                                                          idata.physSize,
+                                                          idata.if2DComputation());
+          cudaDeviceSynchronize();
+          gpuErrchk(cudaPeekAtLastError());
 
 #ifdef DUMP_FILES
-                CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * numVoxels, cudaMemcpyDeviceToHost));
-                gpuErrchk(cudaPeekAtLastError())
-                {
-                  FILE* scatter = fopen("scatter_3D.dmp", "wb");
-                  fwrite(scatter3D, sizeof(Real), numVoxels, scatter);
-                  fclose(scatter);
-                  std::string dirname = "Scatter/";
-                  std::string fname = dirname + "scatter" + std::to_string(i);
-                  VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
-                }
+          CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * numVoxels, cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError())
+          {
+            FILE* scatter = fopen("scatter_3D.dmp", "wb");
+            fwrite(scatter3D, sizeof(Real), numVoxels, scatter);
+            fclose(scatter);
+            std::string dirname = "Scatter/";
+            std::string fname = dirname + "scatter" + std::to_string(i);
+            VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
+          }
 
 #endif
 
 
 #ifdef EOC
-                CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * numVoxels, cudaMemcpyDeviceToHost));
-                gpuErrchk(cudaPeekAtLastError());
+          CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * numVoxels, cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
 
 #ifdef PROFILING
-                {
+          {
 
-                }
+          }
 #endif
-                computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
+          computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
 #else
-                computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_scatter3D, vx,
-                                                                          eleField.k.z, 0.0, 0.0, idata.physSize,
-                                                                          static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
-                                                                          idata.if2DComputation());
-                cudaDeviceSynchronize();
-                gpuErrchk(cudaPeekAtLastError());
+          computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_scatter3D, vx,
+                                                                    eleField.k.z, 0.0, 0.0, idata.physSize,
+                                                                    static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
+                                                                    idata.if2DComputation());
+          cudaDeviceSynchronize();
+          gpuErrchk(cudaPeekAtLastError());
 #ifdef DUMP_FILES
-                hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
-                std::string dirname = "Ewald/";
-                std::string fname = dirname + "ewlad" + std::to_string(i);
-                VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
-                FILE* projection = fopen("projection_scatterFull.dmp", "wb");
-                fwrite(projectionGPUAveraged, sizeof(Real), numVoxels, projection);
-                fclose(projection);
+          hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
+          std::string dirname = "Ewald/";
+          std::string fname = dirname + "ewlad" + std::to_string(i);
+          VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
+          FILE* projection = fopen("projection_scatterFull.dmp", "wb");
+          fwrite(projectionGPUAveraged, sizeof(Real), numVoxels, projection);
+          fclose(projection);
 #endif
-            }
-            else{
-                computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection,d_polarizationX,d_polarizationY, d_polarizationZ, vx,
-                                                                          eleField.k.z, 0.0, 0.0, idata.physSize,
-                                                                          static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
-                                                                          idata.if2DComputation());
-                cudaDeviceSynchronize();
-                gpuErrchk(cudaPeekAtLastError());
+        } else {
+          computeEwaldProjectionGPU <<< BlockSize2, NUM_THREADS >>>(d_projection, d_polarizationX, d_polarizationY,
+                                                                    d_polarizationZ, vx,
+                                                                    eleField.k.z, 0.0, 0.0, idata.physSize,
+                                                                    static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
+                                                                    idata.if2DComputation());
+          cudaDeviceSynchronize();
+          gpuErrchk(cudaPeekAtLastError());
 #ifdef DUMP_FILES
 
-              hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
-              std::string dirname = "Ewald/";
-              std::string fname = dirname + "ewlad" + std::to_string(i);
-              VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
-              FILE* projection = fopen("projection_scatterPartial.dmp", "wb");
-              fwrite(projectionGPUAveraged, sizeof(Real), numVoxels, projection);
-              fclose(projection);
+          hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
+          std::string dirname = "Ewald/";
+          std::string fname = dirname + "ewlad" + std::to_string(i);
+          VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
+          FILE* projection = fopen("projection_scatterPartial.dmp", "wb");
+          fwrite(projectionGPUAveraged, sizeof(Real), numVoxels, projection);
+          fclose(projection);
 #endif
-            }
+        }
 
 
         Real _factor;
@@ -664,12 +666,12 @@ int cudaMain(const UINT *voxel,
         stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
 #else
         stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
-        _factor= static_cast<Real>(1.0/(numKRotation*1.0));
+        _factor = static_cast<Real>(1.0 / (numKRotation * 1.0));
         stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
 #endif
         if (stat != CUBLAS_STATUS_SUCCESS) {
-            std::cout << "CUBLAS during scaling failed  with status " << stat << "\n";
-            exit(EXIT_FAILURE);
+          std::cout << "CUBLAS during scaling failed  with status " << stat << "\n";
+          exit(EXIT_FAILURE);
         }
 
 
@@ -684,8 +686,8 @@ int cudaMain(const UINT *voxel,
 
         /**https://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html?highlight=warpaffine**/
         const double coeffs[2][3]{
-            alpha, beta, static_cast<Real>(((1 - alpha) * voxel[0] / 2 - beta * voxel[1] / 2.)),
-            -beta, alpha, static_cast<Real>(beta * voxel[0] / 2. + (1 - alpha) * voxel[1] / 2.)
+          alpha, beta, static_cast<Real>(((1 - alpha) * voxel[0] / 2 - beta * voxel[1] / 2.)),
+          -beta, alpha, static_cast<Real>(beta * voxel[0] / 2. + (1 - alpha) * voxel[1] / 2.)
         };
 
 #ifdef DOUBLE_PRECISION
@@ -715,12 +717,12 @@ int cudaMain(const UINT *voxel,
           std::cout << "Image rotation failed with error = " << status << "\n";
           exit(-1);
         }
-        if(status != NPP_SUCCESS){
-          std::cout << YLW << "[WARNING] Image rotation warning = " << status << NRM <<"\n";
+        if (status != NPP_SUCCESS) {
+          std::cout << YLW << "[WARNING] Image rotation warning = " << status << NRM << "\n";
         }
 
-        if(idata.rotMask){
-          computeRotationMask<<< BlockSize2, NUM_THREADS >>>(d_rotProjection,d_mask,vx);
+        if (idata.rotMask) {
+          computeRotationMask<<< BlockSize2, NUM_THREADS >>>(d_rotProjection, d_mask, vx);
           cudaDeviceSynchronize();
         }
 
@@ -743,12 +745,11 @@ int cudaMain(const UINT *voxel,
 #endif
       }
 
-      if(idata.rotMask){
-        averageRotation<<<BlockSize2,NUM_THREADS>>>(d_projectionAverage,d_mask,vx);
+      if (idata.rotMask) {
+        averageRotation<<<BlockSize2, NUM_THREADS>>>(d_projectionAverage, d_mask, vx);
         cudaDeviceSynchronize();
         gpuErrchk(cudaPeekAtLastError());
-      }
-      else {
+      } else {
         /// The averaging out for all angles
         const Real alphaFac = static_cast<Real>(1.0 / numAnglesRotation);
 #ifdef DOUBLE_PRECISION
@@ -767,7 +768,8 @@ int cudaMain(const UINT *voxel,
       }
 #endif
 
-      hostDeviceExcange(&projectionGPUAveraged[j * numVoxel2D],d_projectionAverage,numVoxel2D,cudaMemcpyDeviceToHost);
+      hostDeviceExcange(&projectionGPUAveraged[j * numVoxel2D], d_projectionAverage, numVoxel2D,
+                        cudaMemcpyDeviceToHost);
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::MEMCOPY_GPU_CPU)
@@ -780,8 +782,8 @@ int cudaMain(const UINT *voxel,
     freeCudaMemory(d_polarizationX);
     freeCudaMemory(d_polarizationY);
     freeCudaMemory(d_polarizationZ);
-    if(idata.scatterApproach == ScatterApproach::FULL) {
-        freeCudaMemory(d_scatter3D);
+    if (idata.scatterApproach == ScatterApproach::FULL) {
+      freeCudaMemory(d_scatter3D);
     }
     freeCudaMemory(d_voxelInput);
 
@@ -789,7 +791,7 @@ int cudaMain(const UINT *voxel,
     freeCudaMemory(d_projection);
     freeCudaMemory(d_projectionAverage);
     freeCudaMemory(d_rotProjection);
-    if(idata.rotMask) {
+    if (idata.rotMask) {
       freeCudaMemory(d_mask);
     }
 #endif
@@ -808,10 +810,9 @@ int cudaMain(const UINT *voxel,
     cublasDestroy(handle);
 
 #ifdef EOC
-        delete[] projectionCPU;
+    delete[] projectionCPU;
 #endif
-    }
-
+  }
 
 
 #ifdef PROFILING
@@ -821,7 +822,6 @@ int cudaMain(const UINT *voxel,
   }
   std::cout << "\n\n";
 #endif
-
 
 
   return (EXIT_SUCCESS);
