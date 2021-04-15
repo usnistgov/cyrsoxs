@@ -1,10 +1,10 @@
 EnergyData0:
 {
 Energy = 280.0;
-BetaPara = 6.14099496339307e-05;
-BetaPerp = 6.167824254028258e-05;
-DeltaPara = 0.0006176237584968544;
-DeltaPerp = 0.000734597091143308;
+BetaPara = 0.00042089;
+BetaPerp = 0.00042103;
+DeltaPara = 0.0008513;
+DeltaPerp = 0.0011596;
 }
 EnergyData1:
 {

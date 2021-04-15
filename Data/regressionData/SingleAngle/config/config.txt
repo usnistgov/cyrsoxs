@@ -9,4 +9,4 @@ KRotationType= 0;
 KAngleRotation=[0.0,20.0,360.0];
 ScatterApproach=1;
 MorphologyType=1
-
+EwaldsInterpolation=0

@@ -22,8 +22,8 @@
 
 TEST(CyRSoXS, polarization) {
   const std::string root = CMAKE_ROOT ;
-  const std::string fname = root + "/Data/edgespheres32.hd5";
-  const std::string configPath = root + "/Data/regressionData/config/";
+  const std::string fname = root + "/Data/sample.h5";
+  const std::string configPath = root + "/Data/regressionData/SingleAngle/config/";
   if(cd(configPath.c_str()) != 0){
     throw std::runtime_error("Wrong path for config");
   }
@@ -67,7 +67,7 @@ TEST(CyRSoXS, polarization) {
   Complex *pXOracle = new Complex [numVoxels];
   Complex *pYOracle = new Complex [numVoxels];
   Complex *pZOracle = new Complex [numVoxels];
-  std::string pathOfOracle = root+"/Data/regressionData/polarization/";
+  std::string pathOfOracle = root+"/Data/regressionData/SingleAngle/polarization/";
   readFile(pXOracle,pathOfOracle+"polarizeX.dmp",numVoxels);
   readFile(pYOracle,pathOfOracle+"polarizeY.dmp",numVoxels);
   readFile(pZOracle,pathOfOracle+"polarizeZ.dmp",numVoxels);
@@ -105,7 +105,7 @@ TEST(CyRSoXS, FFT) {
   Complex *pX = new Complex [numVoxels];
   Complex *pY = new Complex [numVoxels];
   Complex *pZ = new Complex [numVoxels];
-  const std::string pathOfpolarization = root+"/Data/regressionData/polarization/";
+  const std::string pathOfpolarization = root+"/Data/regressionData/SingleAngle/polarization/";
   readFile(pX,pathOfpolarization+"polarizeX.dmp",numVoxels);
   readFile(pY,pathOfpolarization+"polarizeY.dmp",numVoxels);
   readFile(pZ,pathOfpolarization+"polarizeZ.dmp",numVoxels);
@@ -138,7 +138,7 @@ TEST(CyRSoXS, FFT) {
   hostDeviceExcange(pY,d_pY,numVoxels,cudaMemcpyDeviceToHost);
   hostDeviceExcange(pZ,d_pZ,numVoxels,cudaMemcpyDeviceToHost);
 
-  const std::string pathOfFFT = root+"/Data/regressionData/FFT/";
+  const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/FFT/";
   Complex *fftPX = new Complex [numVoxels];
   Complex *fftPY = new Complex [numVoxels];
   Complex *fftPZ = new Complex [numVoxels];
@@ -186,7 +186,7 @@ TEST(CyRSoXS, scatter) {
   scatterOracle = new Real[numVoxel];
 
   const std::string root = CMAKE_ROOT ;
-  const std::string pathOfFFT = root+"/Data/regressionData/FFT/";
+  const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/FFT/";
 
   readFile(polarizationX,pathOfFFT+"fftpolarizeX.dmp",numVoxel);
   readFile(polarizationY,pathOfFFT+"fftpolarizeY.dmp",numVoxel);
@@ -217,7 +217,7 @@ TEST(CyRSoXS, scatter) {
   int suc1 = performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,eleField,0,0,numVoxel,vx,5.0,false,blockSize);
   EXPECT_EQ(suc1,EXIT_SUCCESS);
   hostDeviceExcange(scatter_3D,d_scatter3D,numVoxel,cudaMemcpyDeviceToHost);
-  const std::string pathOfScatter = root+"/Data/regressionData/Scatter/";
+  const std::string pathOfScatter = root+"/Data/regressionData/SingleAngle/Scatter/";
   readFile(scatterOracle,pathOfScatter+"scatter_3D.dmp",numVoxel);
   Real linfError = computeLinfError(scatterOracle,scatter_3D,numVoxel);
   EXPECT_LE(linfError,TOLERANCE_CHECK);
@@ -250,8 +250,8 @@ TEST(CyRSoXS, ewaldProjectionFull){
   eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
 
   const std::string root = CMAKE_ROOT ;
-  const std::string pathOfScatter = root+"/Data/regressionData/Scatter/";
-  const std::string pathOfEwaldGPU = root+"/Data/regressionData/Ewald/";
+  const std::string pathOfScatter = root+"/Data/regressionData/SingleAngle/Scatter/";
+  const std::string pathOfEwaldGPU = root+"/Data/regressionData/SingleAngle/Ewald/";
   Real * scatter = new Real [numVoxel];
   Real * projection = new Real[numVoxel2D];
   Real * projectionOracle = new Real[numVoxel2D];
@@ -264,7 +264,7 @@ TEST(CyRSoXS, ewaldProjectionFull){
 
   const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
   cudaZeroEntries(d_projection,numVoxel2D);
-  int suc = peformEwaldProjectionGPU(d_projection,d_scatter,eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::LINEAR,false,blockSize);
+  int suc = peformEwaldProjectionGPU(d_projection,d_scatter,eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize);
   EXPECT_EQ(suc,EXIT_SUCCESS);
 
   readFile(projectionOracle,pathOfEwaldGPU+"Ewald.dmp",numVoxel2D);
@@ -297,8 +297,8 @@ TEST(CyRSoXS, ewaldProjectionPartial){
   eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
 
   const std::string root = CMAKE_ROOT ;
-  const std::string pathOfFFT = root+"/Data/regressionData/FFT/";
-  const std::string pathOfEwaldGPU = root+"/Data/regressionData/Ewald/";
+  const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/FFT/";
+  const std::string pathOfEwaldGPU = root+"/Data/regressionData/SingleAngle/Ewald/";
 
   Complex  * d_polarizationX,* d_polarizationY,* d_polarizationZ;
   Complex  * polarizationX,* polarizationY,* polarizationZ;
@@ -326,7 +326,7 @@ TEST(CyRSoXS, ewaldProjectionPartial){
 
   const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
   int suc = peformEwaldProjectionGPU(d_projection,d_polarizationX,d_polarizationY,d_polarizationZ,
-                                     eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::LINEAR,false,blockSize);
+                                     eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize);
   EXPECT_EQ(suc,EXIT_SUCCESS);
 
   hostDeviceExcange(projection,d_projection,numVoxel2D,cudaMemcpyDeviceToHost);
