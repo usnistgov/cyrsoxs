@@ -200,6 +200,7 @@ if (ENABLE_TEST)
                 tests/include/testUtils.h
                 tests/include/unitTest.h
                 tests/include/kernels.h
+                tests/include/fullFramework.h
                 )
         add_executable(test ${CyRSoXS_INC} ${CyRSoXS_SRC} ${TEST_SRC} ${TEST_INC})
         target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include tests/include ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})

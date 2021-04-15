@@ -8,7 +8,7 @@
 #include <Datatypes.h>
 #include <limits>
 
-static constexpr Real TOLERANCE_CHECK = 1E-3;
+static constexpr Real TOLERANCE_CHECK = 1E-4;
 
 static inline Real computeLinfError(const Real * vec1, const Real * vec2, const BigUINT size){
   Real maxDifference = -std::numeric_limits<Real>::infinity();
