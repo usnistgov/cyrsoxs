@@ -34,6 +34,8 @@
 #include <numeric>
 #include <stdlib.h>
 
+#define INLINE __attribute__((always_inline))
+
 #define CUDA_CHECK_RETURN(value) CheckCudaErrorAux(__FILE__,__LINE__, #value, value)
 
 
@@ -61,26 +63,26 @@ static void CheckCudaErrorAux (const char *file, unsigned line, const char *stat
 }
 
 template <typename T, typename GI>
-__host__ inline void hostDeviceExcange(T * dest, const T * src, const GI & size, const cudaMemcpyKind direction){
+__host__ INLINE inline void hostDeviceExcange(T * dest, const T * src, const GI & size, const cudaMemcpyKind direction){
   CUDA_CHECK_RETURN(cudaMemcpy(dest,src,sizeof(T) * size ,direction));
   gpuErrchk(cudaPeekAtLastError());
 
 }
 template <typename T, typename GI>
-__host__ inline void mallocGPU(T *& d_data, const GI & size){
+__host__ INLINE inline void mallocGPU(T *& d_data, const GI & size){
   CUDA_CHECK_RETURN(cudaMalloc((void **) &d_data, sizeof(T) * size));
   gpuErrchk(cudaPeekAtLastError());
 
 }
 
 template <typename T, typename GI>
-__host__ inline void mallocCPU(T *& data, const GI & size){
+__host__ INLINE inline void mallocCPU(T *& data, const GI & size){
   data = new T[size];
 
 }
 
 template <typename T, typename GI>
-__host__ inline void cudaZeroEntries(T * d_data, const GI & size){
+__host__ INLINE inline void cudaZeroEntries(T * d_data, const GI & size){
   cudaMemset(d_data,0,sizeof(T)*size);
 }
 

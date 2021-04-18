@@ -397,7 +397,7 @@ int cudaMain(const UINT *voxel,
     }
 #endif
 
-    UINT BlockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
+    UINT BlockSize  = static_cast<UINT>(ceil(numVoxels * 1.0 / NUM_THREADS));
     UINT BlockSize2 = static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
 
     for (UINT j = numStart; j < numEnd; j++) {
