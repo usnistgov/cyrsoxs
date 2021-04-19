@@ -50,7 +50,7 @@ TEST(CyRSoXS, polarization) {
   mallocCPU(polarizationY,numVoxels);
   mallocCPU(polarizationZ,numVoxels);
 
-  hostDeviceExcange(d_voxelData,voxelData,numVoxels,cudaMemcpyHostToDevice);
+  hostDeviceExchange(d_voxelData, voxelData, numVoxels, cudaMemcpyHostToDevice);
 
   ElectricField eleField;
   eleField.e.x = 1;
@@ -70,9 +70,9 @@ TEST(CyRSoXS, polarization) {
     computePolarization(refractiveIndexData[0], d_voxelData, eleField, angle, vx, d_polarizationX, d_polarizationY,
                         d_polarizationZ, FFT::FFTWindowing::NONE,
                         false, MorphologyType::VECTOR_MORPHOLOGY, blockSize);
-    hostDeviceExcange(polarizationX, d_polarizationX, numVoxels, cudaMemcpyDeviceToHost);
-    hostDeviceExcange(polarizationY, d_polarizationY, numVoxels, cudaMemcpyDeviceToHost);
-    hostDeviceExcange(polarizationZ, d_polarizationZ, numVoxels, cudaMemcpyDeviceToHost);
+    hostDeviceExchange(polarizationX, d_polarizationX, numVoxels, cudaMemcpyDeviceToHost);
+    hostDeviceExchange(polarizationY, d_polarizationY, numVoxels, cudaMemcpyDeviceToHost);
+    hostDeviceExchange(polarizationZ, d_polarizationZ, numVoxels, cudaMemcpyDeviceToHost);
 
     std::string pathOfOracle = root + "/Data/regressionData/SingleAngle/"  + oracleDirName[i] +"/polarization/";
     readFile(pXOracle, pathOfOracle + "polarizeX.dmp", numVoxels);
@@ -136,9 +136,9 @@ TEST(CyRSoXS, FFT) {
     readFile(pY,pathOfpolarization+"polarizeY.dmp",numVoxels);
     readFile(pZ,pathOfpolarization+"polarizeZ.dmp",numVoxels);
 
-    hostDeviceExcange(d_pX,pX,numVoxels,cudaMemcpyHostToDevice);
-    hostDeviceExcange(d_pY,pY,numVoxels,cudaMemcpyHostToDevice);
-    hostDeviceExcange(d_pZ,pZ,numVoxels,cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_pX, pX, numVoxels, cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_pY, pY, numVoxels, cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_pZ, pZ, numVoxels, cudaMemcpyHostToDevice);
 
     auto res1 = performFFT(d_pX,plan);
     auto res2 = performFFT(d_pY,plan);
@@ -148,9 +148,9 @@ TEST(CyRSoXS, FFT) {
     EXPECT_EQ(res2,CUFFT_SUCCESS);
     EXPECT_EQ(res3,CUFFT_SUCCESS);
 
-    hostDeviceExcange(pX,d_pX,numVoxels,cudaMemcpyDeviceToHost);
-    hostDeviceExcange(pY,d_pY,numVoxels,cudaMemcpyDeviceToHost);
-    hostDeviceExcange(pZ,d_pZ,numVoxels,cudaMemcpyDeviceToHost);
+    hostDeviceExchange(pX, d_pX, numVoxels, cudaMemcpyDeviceToHost);
+    hostDeviceExchange(pY, d_pY, numVoxels, cudaMemcpyDeviceToHost);
+    hostDeviceExchange(pZ, d_pZ, numVoxels, cudaMemcpyDeviceToHost);
     readFile(fftPX,pathOfFFT+"fftpolarizeXbshift.dmp",numVoxels);
     readFile(fftPY,pathOfFFT+"fftpolarizeYbshift.dmp",numVoxels);
     readFile(fftPZ,pathOfFFT+"fftpolarizeZbshift.dmp",numVoxels);
@@ -172,9 +172,9 @@ TEST(CyRSoXS, FFT) {
     EXPECT_EQ(suc1,EXIT_SUCCESS);
     EXPECT_EQ(suc2,EXIT_SUCCESS);
     EXPECT_EQ(suc3,EXIT_SUCCESS);
-    hostDeviceExcange(pX,d_pX,numVoxels,cudaMemcpyDeviceToHost);
-    hostDeviceExcange(pY,d_pY,numVoxels,cudaMemcpyDeviceToHost);
-    hostDeviceExcange(pZ,d_pZ,numVoxels,cudaMemcpyDeviceToHost);
+    hostDeviceExchange(pX, d_pX, numVoxels, cudaMemcpyDeviceToHost);
+    hostDeviceExchange(pY, d_pY, numVoxels, cudaMemcpyDeviceToHost);
+    hostDeviceExchange(pZ, d_pZ, numVoxels, cudaMemcpyDeviceToHost);
 
     readFile(fftPX,pathOfFFT+"fftpolarizeX.dmp",numVoxels);
     readFile(fftPY,pathOfFFT+"fftpolarizeY.dmp",numVoxels);
@@ -249,14 +249,14 @@ TEST(CyRSoXS, scatter) {
     readFile(polarizationY,pathOfFFT+"fftpolarizeY.dmp",numVoxel);
     readFile(polarizationZ,pathOfFFT+"fftpolarizeZ.dmp",numVoxel);
 
-    hostDeviceExcange(d_polarizationX,polarizationX,numVoxel,cudaMemcpyHostToDevice);
-    hostDeviceExcange(d_polarizationY,polarizationY,numVoxel,cudaMemcpyHostToDevice);
-    hostDeviceExcange(d_polarizationZ,polarizationZ,numVoxel,cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_polarizationX, polarizationX, numVoxel, cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_polarizationY, polarizationY, numVoxel, cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_polarizationZ, polarizationZ, numVoxel, cudaMemcpyHostToDevice);
     const UINT blockSize = static_cast<UINT>(ceil(numVoxel * 1.0 / NUM_THREADS));
 
     int suc1 = performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,eleField,0,0,numVoxel,vx,5.0,false,blockSize);
     EXPECT_EQ(suc1,EXIT_SUCCESS);
-    hostDeviceExcange(scatter_3D,d_scatter3D,numVoxel,cudaMemcpyDeviceToHost);
+    hostDeviceExchange(scatter_3D, d_scatter3D, numVoxel, cudaMemcpyDeviceToHost);
 
     const std::string pathOfScatter = root+"/Data/regressionData/SingleAngle/" + oracleDirName[i] + "/Scatter/";
     readFile(scatterOracle,pathOfScatter+"scatter_3D.dmp",numVoxel);
@@ -307,14 +307,14 @@ TEST(CyRSoXS, ewaldProjectionFull){
     const std::string pathOfScatter = root+"/Data/regressionData/SingleAngle/" + oracleDirName[i] + "/Scatter/";
     const std::string pathOfEwaldGPU = root+"/Data/regressionData/SingleAngle/" + oracleDirName[i] + "/Ewald/";
     readFile(scatter,pathOfScatter+"scatter_3D.dmp",numVoxel);
-    hostDeviceExcange(d_scatter,scatter,numVoxel,cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_scatter, scatter, numVoxel, cudaMemcpyHostToDevice);
     const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
     cudaZeroEntries(d_projection,numVoxel2D);
     int suc = peformEwaldProjectionGPU(d_projection,d_scatter,eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize);
     EXPECT_EQ(suc,EXIT_SUCCESS);
 
     readFile(projectionOracle,pathOfEwaldGPU+"Ewald.dmp",numVoxel2D);
-    hostDeviceExcange(projection,d_projection,numVoxel2D,cudaMemcpyDeviceToHost);
+    hostDeviceExchange(projection, d_projection, numVoxel2D, cudaMemcpyDeviceToHost);
     Real linfError = computeLinfError(projectionOracle,projection,numVoxel2D);
     EXPECT_LE(linfError,TOLERANCE_CHECK);
   }
@@ -371,9 +371,9 @@ TEST(CyRSoXS, ewaldProjectionPartial){
     readFile(polarizationY,pathOfFFT+"fftpolarizeY.dmp",numVoxel);
     readFile(polarizationZ,pathOfFFT+"fftpolarizeZ.dmp",numVoxel);
 
-    hostDeviceExcange(d_polarizationX,polarizationX,numVoxel,cudaMemcpyHostToDevice);
-    hostDeviceExcange(d_polarizationY,polarizationY,numVoxel,cudaMemcpyHostToDevice);
-    hostDeviceExcange(d_polarizationZ,polarizationZ,numVoxel,cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_polarizationX, polarizationX, numVoxel, cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_polarizationY, polarizationY, numVoxel, cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_polarizationZ, polarizationZ, numVoxel, cudaMemcpyHostToDevice);
     cudaZeroEntries(d_projection,numVoxel2D);
 
     const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
@@ -381,7 +381,7 @@ TEST(CyRSoXS, ewaldProjectionPartial){
                                        eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize);
     EXPECT_EQ(suc,EXIT_SUCCESS);
 
-    hostDeviceExcange(projection,d_projection,numVoxel2D,cudaMemcpyDeviceToHost);
+    hostDeviceExchange(projection, d_projection, numVoxel2D, cudaMemcpyDeviceToHost);
     readFile(projectionOracle,pathOfEwaldGPU+"Ewald.dmp",numVoxel2D);
     Real linfError = computeLinfError(projection,projectionOracle,numVoxel2D);
     EXPECT_LE(linfError,TOLERANCE_CHECK);

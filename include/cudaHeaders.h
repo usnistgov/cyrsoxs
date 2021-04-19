@@ -63,7 +63,7 @@ static void CheckCudaErrorAux (const char *file, unsigned line, const char *stat
 }
 
 template <typename T, typename GI>
-__host__ INLINE inline void hostDeviceExcange(T * dest, const T * src, const GI & size, const cudaMemcpyKind direction){
+__host__ INLINE inline void hostDeviceExchange(T * dest, const T * src, const GI & size, const cudaMemcpyKind direction){
   CUDA_CHECK_RETURN(cudaMemcpy(dest,src,sizeof(T) * size ,direction));
   gpuErrchk(cudaPeekAtLastError());
 

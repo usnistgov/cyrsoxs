@@ -389,7 +389,7 @@ int cudaMain(const UINT *voxel,
     }
 #endif
 
-    hostDeviceExcange(d_voxelInput, voxelInput, numVoxels, cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_voxelInput, voxelInput, numVoxels, cudaMemcpyHostToDevice);
 
 #ifdef PROFILING
     {
@@ -753,8 +753,8 @@ int cudaMain(const UINT *voxel,
       }
 #endif
 
-      hostDeviceExcange(&projectionGPUAveraged[j * numVoxel2D], d_projectionAverage, numVoxel2D,
-                        cudaMemcpyDeviceToHost);
+      hostDeviceExchange(&projectionGPUAveraged[j * numVoxel2D], d_projectionAverage, numVoxel2D,
+                         cudaMemcpyDeviceToHost);
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::MEMCOPY_GPU_CPU)
