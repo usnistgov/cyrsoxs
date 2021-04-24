@@ -70,7 +70,7 @@ int warmup();
  * @param [out] polarizationY: polarization Y vector
  * @param [out] polarizationZ: polarization Z vector
  */
-
+template<ReferenceFrame referenceFrame>
 __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     const Voxel<NUM_MATERIAL> *voxelInput,
                                     const ElectricField elefield,
@@ -98,7 +98,8 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> & materialInput,
                                   FFT::FFTWindowing windowing,
                                   const bool & enable2D,
                                   const MorphologyType & morphologyType,
-                                  const UINT & blockSize
+                                  const UINT & blockSize,
+                                  const ReferenceFrame & referenceFrame
 );
 
 

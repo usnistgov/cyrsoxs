@@ -63,6 +63,13 @@ namespace Interpolation{
                   "sizes dont match");
 }
 
+enum ReferenceFrame:bool{
+  MATERIAL = false,
+  LAB = true
+};
+
+
+
 
 namespace FFT {
 

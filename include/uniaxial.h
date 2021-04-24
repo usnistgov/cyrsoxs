@@ -157,6 +157,7 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
  * @param [out] polarizationZ
  */
 
+template<ReferenceFrame referenceFrame>
 __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_MATERIAL> *material, const Real angle,
                                                     const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
                                                     Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
@@ -234,7 +235,9 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
 
   pZ.x *= OneBy4Pi;
   pZ.y *= OneBy4Pi;
-  RotateZ(pX,pY,pZ,angle);
+  if(referenceFrame == ReferenceFrame::MATERIAL) {
+    RotateZ(pX, pY, pZ, angle);
+  }
   polarizationX[threadID] = pX;
   polarizationY[threadID] = pY;
   polarizationZ[threadID] = pZ;

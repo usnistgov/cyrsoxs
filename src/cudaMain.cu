@@ -125,6 +125,7 @@ __host__ int peformEwaldProjectionGPU(Real *d_projection,
 
 }
 
+template<ReferenceFrame referenceFrame>
 __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     const Voxel<NUM_MATERIAL> *voxelInput,
                                     const ElectricField elefield,
@@ -140,7 +141,7 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
 #ifndef BIAXIAL
   if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-    computePolarizationVectorMorphologyOptimized(&materialInput, angle, voxelInput, threadID, polarizationX,
+    computePolarizationVectorMorphologyOptimized<referenceFrame>(&materialInput, angle, voxelInput, threadID, polarizationX,
                                                  polarizationY,
                                                  polarizationZ);
   } else {
@@ -186,13 +187,25 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
                                  FFT::FFTWindowing windowing,
                                  const bool &enable2D,
                                  const MorphologyType &morphologyType,
-                                 const UINT &blockSize
+                                 const UINT &blockSize,
+                                 const ReferenceFrame & referenceFrame
 ) {
-  computePolarization <<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, elefield, angle, vx, d_polarizationX,
-                                                     d_polarizationY, d_polarizationZ,
-                                                     windowing,
-                                                     enable2D,
-                                                     morphologyType);
+  if(referenceFrame == ReferenceFrame::MATERIAL) {
+    computePolarization<ReferenceFrame::MATERIAL><<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, elefield,
+                                                                                angle, vx, d_polarizationX,
+                                                                                d_polarizationY, d_polarizationZ,
+                                                                                windowing,
+                                                                                enable2D,
+                                                                                morphologyType);
+  }
+  else  {
+    computePolarization<ReferenceFrame::LAB><<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, elefield,
+                                                                                angle, vx, d_polarizationX,
+                                                                                d_polarizationY, d_polarizationZ,
+                                                                                windowing,
+                                                                                enable2D,
+                                                                                morphologyType);
+  }
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
   return EXIT_SUCCESS;
@@ -432,7 +445,7 @@ int cudaMain(const UINT *voxel,
 #endif
         computePolarization(materialInput[j], d_voxelInput, eleField, Eangle, vx, d_polarizationX, d_polarizationY,
                             d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
-                            idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize);
+                            idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,ReferenceFrame::MATERIAL);
 
 #ifdef DUMP_FILES
 

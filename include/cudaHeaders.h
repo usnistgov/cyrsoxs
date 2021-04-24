@@ -59,7 +59,7 @@ static void CheckCudaErrorAux (const char *file, unsigned line, const char *stat
     if (err == cudaSuccess)
         return;
     std::cerr << statement<<" returned " << cudaGetErrorString(err) << "("<<err<< ") at "<<file<<":"<<line << std::endl;
-    exit (1);
+    exit (EXIT_FAILURE);
 }
 
 template <typename T, typename GI>

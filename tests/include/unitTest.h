@@ -69,7 +69,7 @@ TEST(CyRSoXS, polarization) {
     Real angle = angleOfERotation[i]*180.0/M_PI;
     computePolarization(refractiveIndexData[0], d_voxelData, eleField, angle, vx, d_polarizationX, d_polarizationY,
                         d_polarizationZ, FFT::FFTWindowing::NONE,
-                        false, MorphologyType::VECTOR_MORPHOLOGY, blockSize);
+                        false, MorphologyType::VECTOR_MORPHOLOGY, blockSize,ReferenceFrame::MATERIAL);
     hostDeviceExchange(polarizationX, d_polarizationX, numVoxels, cudaMemcpyDeviceToHost);
     hostDeviceExchange(polarizationY, d_polarizationY, numVoxels, cudaMemcpyDeviceToHost);
     hostDeviceExchange(polarizationZ, d_polarizationZ, numVoxels, cudaMemcpyDeviceToHost);
