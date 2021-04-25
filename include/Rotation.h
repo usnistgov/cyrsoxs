@@ -6,7 +6,7 @@
 #define CY_RSOXS_ROTATION_H
 
 #include <Datatypes.h>
-
+#include <limits>
 /**
  * @brief computes dot product of two vectors
  * @param [in] vecA 3D vector A
@@ -192,21 +192,65 @@ __host__ static void doMatVec(const Real matrix[][3], const Real3 & vec, Real3 &
 __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, Real rotationMatrix[][3]){
 
   static constexpr Real3 origK{0,0,1};
+  Real rotationMatrixK[3][3];
   if((FEQUALS(k.x,origK.x)) and (FEQUALS(k.y,origK.y)) and (FEQUALS(k.z,origK.z))){
-    std::memset(rotationMatrix,0, sizeof(Real)*9);
+    std::memset(rotationMatrixK,0, sizeof(Real)*9);
     for(int i = 0; i < 3; i++){
-      rotationMatrix[i][i] = 1.0;
+      rotationMatrixK[i][i] = 1.0;
     }
   }
   else{
-    computeRotationMatrix(origK,k,rotationMatrix);
+    computeRotationMatrix(origK,k,rotationMatrixK);
   }
 
-#ifdef DEBUG
-  Real3 shiftedK;
-  doMatVec<false>(rotationMatrix,origK,shiftedK);
-  assert((FEQUALS(shiftedK.x,k.x)) and (FEQUALS(shiftedK.y,k.y)) and (FEQUALS(shiftedK.z,k.z)));
+#if DEBUG
+  {
+    Real3 shiftedK;
+    doMatVec<false>(rotationMatrixK, origK, shiftedK);
+    assert((FEQUALS(shiftedK.x, k.x)) and (FEQUALS(shiftedK.y, k.y)) and (FEQUALS(shiftedK.z, k.z)));
+  }
 #endif
+  static constexpr Real3 X{1,0,0};
+  static constexpr UINT numInterval = 100000;
+  static constexpr Real dTheta = M_PI/(numInterval*1.0);
+  Real3 shiftedX;
+  doMatVec<false>(rotationMatrixK,X,shiftedX);
+  Real3 rotatedX;
+  Real maxDiff = std::numeric_limits<Real>::infinity();
+  Real rotAngle = 0;
+  for(UINT i = 0; i < numInterval; i++){
+    performRodriguesRotation(rotatedX,shiftedX,k,i*dTheta);
+    Real diff = fabs(rotatedX.y);
+    if(maxDiff > diff){
+      maxDiff = diff;
+      rotAngle = i*dTheta;
+    }
+  }
+  assert(fabs(maxDiff) < 1E-4);
+  performRodriguesRotation(rotatedX,shiftedX,k,rotAngle);
+  rotAngle = rotatedX.x > 0 ? (rotAngle): (rotAngle)+M_PI;
+  performRodriguesRotation(rotatedX,shiftedX,k,rotAngle);
+#if DEBUG
+  {
+    static constexpr Real3 Y{0,1,0};
+    static constexpr Real3 Z{0,0,1};
+    Real3 shiftedY,shiftedZ;
+    doMatVec<false>(rotationMatrixK, Y, shiftedY);
+    doMatVec<false>(rotationMatrixK, Z, shiftedZ);
+    Real3 rotatedY, rotatedZ;
+    performRodriguesRotation(rotatedY,shiftedY,k,rotAngle);
+    performRodriguesRotation(rotatedZ,shiftedZ,k,rotAngle);
+    assert(FEQUALS(computeDotProduct(shiftedX,shiftedY),0));
+    assert(FEQUALS(computeDotProduct(shiftedX,shiftedZ),0));
+    assert(FEQUALS(computeDotProduct(shiftedY,shiftedZ),0));
+  };
+#endif
+  Real rotationMatrixX[3][3];
+  computeRotationMatrix(shiftedX,rotatedX,rotationMatrixX);
+
+  performMatrixMultiplication(rotationMatrixX,rotationMatrixK,rotationMatrix);
+
+
   return true;
 
 }
