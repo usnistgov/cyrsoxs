@@ -12,7 +12,7 @@ struct Matrix{
 private:
   Real matrix[9]{};
 public:
-  Matrix(){
+  __host__ __device__ Matrix(){
     std::memset(matrix, 0, sizeof(Real) * 9);
   }
 
