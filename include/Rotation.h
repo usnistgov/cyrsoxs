@@ -115,6 +115,13 @@ __host__ static void computeRotationMatrix(const Real3 & originalVec,const Real3
 
       UU =  F*G*inv(F);
    */
+  std::memset(RotationMatrix,0, sizeof(Real)*9);
+  if((FEQUALS(originalVec.x,transformedVec.x)) and (FEQUALS(originalVec.y,transformedVec.y)) and (FEQUALS(originalVec.z,transformedVec.z))){
+    RotationMatrix[0][0] = 1;
+    RotationMatrix[1][1] = 1;
+    RotationMatrix[2][2] = 1;
+    return;
+  }
   const Real dotProduct = computeDotProduct(originalVec,transformedVec);
   const Real3 & crossVec = computeCrossProduct(originalVec,transformedVec);
   const Real normCrossProduct = computeVecNorm(crossVec);
@@ -193,15 +200,7 @@ __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, Rea
 
   static constexpr Real3 origK{0,0,1};
   Real rotationMatrixK[3][3];
-  if((FEQUALS(k.x,origK.x)) and (FEQUALS(k.y,origK.y)) and (FEQUALS(k.z,origK.z))){
-    std::memset(rotationMatrixK,0, sizeof(Real)*9);
-    for(int i = 0; i < 3; i++){
-      rotationMatrixK[i][i] = 1.0;
-    }
-  }
-  else{
-    computeRotationMatrix(origK,k,rotationMatrixK);
-  }
+  computeRotationMatrix(origK,k,rotationMatrixK);
 
 #if DEBUG
   {

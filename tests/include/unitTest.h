@@ -402,6 +402,37 @@ TEST(CyRSoXS, ewaldProjectionPartial){
   delete [] projectionOracle;
 }
 
+TEST(CyRSoXS, RotationBaseCase) {
+
+  Real3 k{0, 0, 1};
+  normalizeVec(k);
+  Real rotationMatrix[3][3];
+  bool res = computeRotationMatrixBaseConfiguration(k, rotationMatrix);
+  EXPECT_EQ(res, true);
+  static constexpr Real3 origK{0, 0, 1};
+  Real3 shiftedK;
+  doMatVec<false>(rotationMatrix, origK, shiftedK);
+  EXPECT_LE(fabs(shiftedK.x - k.x), TOLERANCE_CHECK);
+  EXPECT_LE(fabs(shiftedK.y - k.y), TOLERANCE_CHECK);
+  EXPECT_LE(fabs(shiftedK.z - k.z), TOLERANCE_CHECK);
+  static constexpr Real3 X{1, 0, 0};
+  static constexpr Real3 Y{0, 1, 0};
+  static constexpr Real3 Z{0, 0, 1};
+  Real3 shiftedX, shiftedY, shiftedZ;
+  doMatVec<false>(rotationMatrix, X, shiftedX);
+  doMatVec<false>(rotationMatrix, Y, shiftedY);
+  doMatVec<false>(rotationMatrix, Z, shiftedZ);
+  EXPECT_LE(fabs(shiftedX.y), TOLERANCE_CHECK);
+  EXPECT_EQ(FEQUALS(computeDotProduct(shiftedX, shiftedY), 0), true);
+  EXPECT_EQ(FEQUALS(computeDotProduct(shiftedX, shiftedZ), 0), true);
+  EXPECT_EQ(FEQUALS(computeDotProduct(shiftedY, shiftedZ), 0), true);
+  EXPECT_LE(fabs(computeVecNorm(shiftedX) - 1), TOLERANCE_CHECK);
+  EXPECT_LE(fabs(computeVecNorm(shiftedY) - 1), TOLERANCE_CHECK);
+  EXPECT_LE(fabs(computeVecNorm(shiftedZ) - 1), TOLERANCE_CHECK);
+
+}
+
+
 TEST(CyRSoXS,Rotation){
   srand(123458);
   for(int i = 0; i < 1000; i++) {
