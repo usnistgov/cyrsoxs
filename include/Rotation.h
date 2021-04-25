@@ -19,6 +19,7 @@ public:
   template<UINT id1, UINT id2>
   __host__ __device__ INLINE inline Real  getValue() const{
     static constexpr UINT matID = id1*3 +id2;
+    static_assert((matID < 9),"Wrong matID");
     return matrix[matID];
   }
   template<UINT id1, UINT id2>
