@@ -430,6 +430,9 @@ TEST(CyRSoXS,Rotation){
     EXPECT_EQ(FEQUALS(computeDotProduct(shiftedX,shiftedY),0),true);
     EXPECT_EQ(FEQUALS(computeDotProduct(shiftedX,shiftedZ),0),true);
     EXPECT_EQ(FEQUALS(computeDotProduct(shiftedY,shiftedZ),0),true);
+    EXPECT_LE(fabs(computeVecNorm(shiftedX) - 1),TOLERANCE_CHECK);
+    EXPECT_LE(fabs(computeVecNorm(shiftedY) - 1),TOLERANCE_CHECK);
+    EXPECT_LE(fabs(computeVecNorm(shiftedZ) - 1),TOLERANCE_CHECK);
   }
 }
 #endif //CY_RSOXS_UNITTEST_H
