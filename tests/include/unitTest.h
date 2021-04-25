@@ -406,7 +406,7 @@ TEST(CyRSoXS, RotationBaseCase) {
 
   Real3 k{0, 0, 1};
   normalizeVec(k);
-  Real rotationMatrix[3][3];
+  Matrix rotationMatrix;
   bool res = computeRotationMatrixBaseConfiguration(k, rotationMatrix);
   EXPECT_EQ(res, true);
   static constexpr Real3 origK{0, 0, 1};
@@ -441,7 +441,8 @@ TEST(CyRSoXS,Rotation){
     Real rand3 = rand()/(RAND_MAX*1.0);
     Real3 k{rand1,rand2,rand3};
     normalizeVec(k);
-    Real rotationMatrix[3][3];
+//    Real rotationMatrix[3][3];
+    Matrix rotationMatrix;
     bool res = computeRotationMatrixBaseConfiguration(k, rotationMatrix);
     EXPECT_EQ(res, true);
     static constexpr Real3 origK{0,0,1};
