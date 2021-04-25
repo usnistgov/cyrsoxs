@@ -100,7 +100,7 @@ enum ScatterApproach:UINT{
 static const char *scatterApproachName[]{"Partial","Full"};
 static_assert(sizeof(scatterApproachName)/sizeof(char*) == ScatterApproach::MAX_SCATTER_APPROACH,
               "sizes dont match");
-#define FEQUALS(x, y) fabs((x) - (y)) < 1E-10 ? true : false
+#define FEQUALS(x, y) fabs((x) - (y)) < 1E-6 ? true : false
 
 #define RED "\e[1;31m"
 #define BLU "\e[2;34m"

@@ -13,7 +13,7 @@
  * @param [in] vecB 3D vector B
  * @return resultant dot product
  */
-__host__ inline Real computeDotProduct(const Real3 & vecA, const Real3 & vecB){
+__host__ static inline Real computeDotProduct(const Real3 & vecA, const Real3 & vecB){
   return (vecA.x*vecB.x + vecA.y*vecB.y + vecA.z*vecB.z);
 }
 
@@ -23,7 +23,7 @@ __host__ inline Real computeDotProduct(const Real3 & vecA, const Real3 & vecB){
  * @param [in] vecB 3D vector B
  * @return resultant cross product
  */
-__host__ inline Real3 computeCrossProduct(const Real3 & vecA, const Real3 & vecB){
+__host__ static inline Real3 computeCrossProduct(const Real3 & vecA, const Real3 & vecB){
   Real3 crossProduct;
   crossProduct.x =   vecA.y*vecB.z - vecA.z*vecB.y;
   crossProduct.y = -(vecA.x*vecB.z - vecA.z*vecB.x);
@@ -36,7 +36,7 @@ __host__ inline Real3 computeCrossProduct(const Real3 & vecA, const Real3 & vecB
  * @param vec vector
  * @return resultant norm
  */
-__host__ inline Real computeVecNorm(const Real3 & vec){
+__host__ static inline Real computeVecNorm(const Real3 & vec){
   return (sqrt(computeDotProduct(vec,vec)));
 }
 /**
@@ -45,7 +45,7 @@ __host__ inline Real computeVecNorm(const Real3 & vec){
  * @param [in] vecB 3D vector B
  * @return norm of cross product
  */
-__host__ inline Real computeNormCrossproduct(const Real3 & vecA, const Real3 & vecB){
+__host__ static inline Real computeNormCrossproduct(const Real3 & vecA, const Real3 & vecB){
   const Real3 & crossProduct = computeCrossProduct(vecA,vecB);
   return (sqrt(computeDotProduct(crossProduct,crossProduct)));
 }
@@ -56,13 +56,13 @@ __host__ inline Real computeNormCrossproduct(const Real3 & vecA, const Real3 & v
  * @param [out] scaledVec scaled vector
  * @param [in] scaleFactor scale Factor
  */
-__host__ inline void scaleVec(const Real3 & vecIn, Real3 & scaledVec, const Real & scaleFactor){
+__host__ static inline void scaleVec(const Real3 & vecIn, Real3 & scaledVec, const Real & scaleFactor){
   scaledVec.x = scaleFactor*vecIn.x;
   scaledVec.y = scaleFactor*vecIn.y;
   scaledVec.z = scaleFactor*vecIn.z;
 }
 
-__host__ inline void computeInverseMatrix(const Real  matrixA [][3], Real  inverseMatrix [][3]){
+__host__ static inline void computeInverseMatrix(const Real  matrixA [][3], Real  inverseMatrix [][3]){
   double det = matrixA[0][0] * (matrixA[1][1] * matrixA[2][2] - matrixA[2][1] * matrixA[1][2]) -
                matrixA[0][1] * (matrixA[1][0] * matrixA[2][2] - matrixA[1][2] * matrixA[2][0]) +
                matrixA[0][2] * (matrixA[1][0] * matrixA[2][1] - matrixA[1][1] * matrixA[2][0]);
@@ -82,7 +82,7 @@ __host__ inline void computeInverseMatrix(const Real  matrixA [][3], Real  inver
 
 }
 
-__host__ void inline performMatrixMultiplication(const Real  matA[][3], const Real  matB[][3], Real  mat[][3]){
+__host__ static void inline performMatrixMultiplication(const Real  matA[][3], const Real  matB[][3], Real  mat[][3]){
   std::memset(mat,0, sizeof(Real)*9);
 #pragma unroll 3
   for(int i = 0; i < 3; ++i)
@@ -104,7 +104,7 @@ __host__ void inline performMatrixMultiplication(const Real  matA[][3], const Re
  * @param [in] transformedVec  : 3D vector that the original Vec is transformed to.
  * @param [out] RotationMatrix : The resultant 3 X 3 rotation matrix
  */
-__host__ void computeRotationMatrix(const Real3 & originalVec,const Real3 & transformedVec , Real  RotationMatrix [][3]){
+__host__ static void computeRotationMatrix(const Real3 & originalVec,const Real3 & transformedVec , Real  RotationMatrix [][3]){
   /**
    * Matlab code: (https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d)
    * G =  [ dot(A,B) -norm(cross(A,B)) 0;...
@@ -153,7 +153,7 @@ __host__ void computeRotationMatrix(const Real3 & originalVec,const Real3 & tran
  * @param [in] angle
  *
  */
-__host__ void inline performRodriguesRotation(Real3  & rotatedVec, const Real3 & inVec,const Real3 & axis, const Real & angle){
+__host__ static void inline performRodriguesRotation(Real3  & rotatedVec, const Real3 & inVec,const Real3 & axis, const Real & angle){
   const Real cosAlpha = cos(angle);
   const Real sinAlpha = sin(angle);
   const Real3 & crossProduct = computeCrossProduct(inVec,axis);
@@ -167,5 +167,53 @@ __host__ void inline performRodriguesRotation(Real3  & rotatedVec, const Real3 &
   rotatedVec.z = term1.z + term2.z + term3.z;
 }
 
+/**
+ * @brief computes matrix times vector
+ * @tparam transpose weather to use transpose of matrix
+ * @param [in] matrix
+ * @param [in] vec
+ * @param [out] matVec
+ */
+
+template <bool transpose>
+__host__ static void doMatVec(const Real matrix[][3], const Real3 & vec, Real3 & matVec){
+  if(transpose) {
+    matVec.x = matrix[0][0] * vec.x + matrix[1][0] * vec.y + matrix[2][0] * vec.z;
+    matVec.y = matrix[0][1] * vec.x + matrix[1][1] * vec.y + matrix[2][1] * vec.z;
+    matVec.z = matrix[0][2] * vec.x + matrix[1][2] * vec.y + matrix[2][2] * vec.z;
+  }
+  else{
+    matVec.x = matrix[0][0] * vec.x + matrix[0][1] * vec.y + matrix[0][2] * vec.z;
+    matVec.y = matrix[1][0] * vec.x + matrix[1][1] * vec.y + matrix[1][2] * vec.z;
+    matVec.z = matrix[2][0] * vec.x + matrix[2][1] * vec.y + matrix[2][2] * vec.z;
+  }
+
+}
+__host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, Real rotationMatrix[][3]){
+
+  static constexpr Real3 origK{0,0,1};
+  if((FEQUALS(k.x,origK.x)) and (FEQUALS(k.y,origK.y)) and (FEQUALS(k.z,origK.z))){
+    std::memset(rotationMatrix,0, sizeof(Real)*9);
+    for(int i = 0; i < 3; i++){
+      rotationMatrix[i][i] = 1.0;
+    }
+  }
+  else{
+    computeRotationMatrix(origK,k,rotationMatrix);
+  }
+
+#ifdef DEBUG
+  Real3 shiftedK;
+  doMatVec<false>(rotationMatrix,origK,shiftedK);
+  assert((FEQUALS(shiftedK.x,k.x)) and (FEQUALS(shiftedK.y,k.y)) and (FEQUALS(shiftedK.z,k.z)));
+#endif
+  return true;
+
+}
+
+__host__ inline static void normalizeVec(Real3 & vec){
+  Real normVec =  computeVecNorm(vec);
+  scaleVec(vec,vec,1./normVec);
+}
 
 #endif //CY_RSOXS_ROTATION_H

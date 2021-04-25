@@ -2,9 +2,9 @@ clear all;
 clc;
 close all;
 
-K = rand(3,1);
+K = [0.5;0.5;0.5];
 K = K/norm(K)
-K = [0;1;0];
+% K = [0;1;0];
 
 X = [1;0;0];
 Y = [0;1;0];

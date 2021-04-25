@@ -31,7 +31,7 @@
 #include <iostream>
 #include <vector>
 #include <Input/InputData.h>
-
+#include <Rotation.h>
 #include <cufft.h>
 
 #ifdef DOUBLE_PRECISION

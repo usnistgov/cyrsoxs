@@ -6,6 +6,7 @@
 #define CY_RSOXS_UNITTEST_H
 
 #include <Input/InputData.h>
+#include <Rotation.h>
 #include "testUtils.h"
 #ifdef _WIN32
 #include <direct.h>
@@ -399,5 +400,19 @@ TEST(CyRSoXS, ewaldProjectionPartial){
   delete [] polarizationZ;
   delete [] projection;
   delete [] projectionOracle;
+}
+
+TEST(CyRSoXS,Rotation){
+  srand(123458);
+  for(int i = 0; i < 1000; i++) {
+    Real rand1 = rand()/(RAND_MAX*1.0);
+    Real rand2 = rand()/(RAND_MAX*1.0);
+    Real rand3 = rand()/(RAND_MAX*1.0);
+    Real3 k{rand1,rand2,rand3};
+    normalizeVec(k);
+    Real rotationMatrix[3][3];
+    bool res = computeRotationMatrixBaseConfiguration(k, rotationMatrix);
+    EXPECT_EQ(res, true);
+  }
 }
 #endif //CY_RSOXS_UNITTEST_H
