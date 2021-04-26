@@ -160,7 +160,8 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
 template<ReferenceFrame referenceFrame>
 __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_MATERIAL> *material, const Real angle,
                                                     const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
-                                                    Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
+                                                    Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
+                                                    const Matrix rotationMatrix) {
 
   Complex pX, pY, pZ;
   pX.x = 0;
@@ -218,14 +219,17 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
     rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
     rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  + ((phi_ui * nsum.y) / (Real) 9.0);
   }
-  pX.x = rotatedNr[MATINDEXID[0][0]].x*cosAngle + rotatedNr[MATINDEXID[0][1]].x*sinAngle;
-  pX.y = rotatedNr[MATINDEXID[0][0]].y*cosAngle + rotatedNr[MATINDEXID[0][1]].y*sinAngle;
+  static constexpr Real3 eleField{1,0,0};
+  Real3 matVec;
+  doMatVec<false>(rotationMatrix,eleField,matVec);
+  pX.x = rotatedNr[MATINDEXID[0][0]].x*matVec.x + rotatedNr[MATINDEXID[0][1]].x*matVec.y + rotatedNr[MATINDEXID[0][2]].x*matVec.z;
+  pX.y = rotatedNr[MATINDEXID[0][0]].y*matVec.x + rotatedNr[MATINDEXID[0][1]].y*matVec.y + rotatedNr[MATINDEXID[0][2]].y*matVec.z;
 
-  pY.x = rotatedNr[MATINDEXID[1][0]].x*cosAngle + rotatedNr[MATINDEXID[1][1]].x*sinAngle;
-  pY.y = rotatedNr[MATINDEXID[1][0]].y*cosAngle + rotatedNr[MATINDEXID[1][1]].y*sinAngle;
+  pY.x = rotatedNr[MATINDEXID[1][0]].x*matVec.x + rotatedNr[MATINDEXID[1][1]].x*matVec.y + rotatedNr[MATINDEXID[1][2]].x*matVec.z;
+  pY.y = rotatedNr[MATINDEXID[1][0]].y*matVec.x + rotatedNr[MATINDEXID[1][1]].y*matVec.y + rotatedNr[MATINDEXID[1][2]].y*matVec.z;
 
-  pZ.x = rotatedNr[MATINDEXID[2][0]].x*cosAngle + rotatedNr[MATINDEXID[2][1]].x*sinAngle;
-  pZ.y = rotatedNr[MATINDEXID[2][0]].y*cosAngle + rotatedNr[MATINDEXID[2][1]].y*sinAngle;
+  pZ.x = rotatedNr[MATINDEXID[2][0]].x*matVec.x + rotatedNr[MATINDEXID[2][1]].x*matVec.y + rotatedNr[MATINDEXID[2][2]].y*matVec.z;
+  pZ.y = rotatedNr[MATINDEXID[2][0]].y*matVec.x + rotatedNr[MATINDEXID[2][1]].y*matVec.y + rotatedNr[MATINDEXID[2][2]].y*matVec.z;
 
   pX.x *= OneBy4Pi;
   pX.y *= OneBy4Pi;
@@ -236,7 +240,7 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   pZ.x *= OneBy4Pi;
   pZ.y *= OneBy4Pi;
   if(referenceFrame == ReferenceFrame::MATERIAL) {
-    RotateZ(pX, pY, pZ, angle);
+    rotate<true>(rotationMatrix,pX,pY,pZ);
   }
   polarizationX[threadID] = pX;
   polarizationY[threadID] = pY;

@@ -136,14 +136,15 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     Complex *polarizationZ,
                                     FFT::FFTWindowing windowing,
                                     const bool enable2D,
-                                    const MorphologyType morphologyType
+                                    const MorphologyType morphologyType,
+                                    const Matrix rotationMatrix
 ) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
 #ifndef BIAXIAL
   if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
     computePolarizationVectorMorphologyOptimized<referenceFrame>(&materialInput, angle, voxelInput, threadID, polarizationX,
                                                  polarizationY,
-                                                 polarizationZ);
+                                                 polarizationZ,rotationMatrix);
   } else {
     computePolarizationEulerAngles(&materialInput, angle, voxelInput, threadID, polarizationX, polarizationY,
                                    polarizationZ);
@@ -188,7 +189,8 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
                                  const bool &enable2D,
                                  const MorphologyType &morphologyType,
                                  const UINT &blockSize,
-                                 const ReferenceFrame & referenceFrame
+                                 const ReferenceFrame & referenceFrame,
+                                 const Matrix & rotationMatrix
 ) {
   if(referenceFrame == ReferenceFrame::MATERIAL) {
     computePolarization<ReferenceFrame::MATERIAL><<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, elefield,
@@ -196,7 +198,7 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
                                                                                 d_polarizationY, d_polarizationZ,
                                                                                 windowing,
                                                                                 enable2D,
-                                                                                morphologyType);
+                                                                                morphologyType,rotationMatrix);
   }
   else  {
     computePolarization<ReferenceFrame::LAB><<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, elefield,
@@ -204,7 +206,7 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
                                                                                 d_polarizationY, d_polarizationZ,
                                                                                 windowing,
                                                                                 enable2D,
-                                                                                morphologyType);
+                                                                                morphologyType,rotationMatrix);
   }
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
@@ -442,8 +444,10 @@ int cudaMain(const UINT *voxel,
       eleField.k.y = 0;
       eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
       Real Eangle;
+      Matrix ERotationMatrix;
       for (UINT i = 0; i < numAnglesRotation; i++) {
-        Eangle = static_cast<Real>((idata.startAngle + i * idata.incrementAngle) * M_PI / 180.0);
+        Eangle = static_cast<Real>((baseRotAngle + i * idata.incrementAngle) * M_PI / 180.0);
+        computeRotationMatrix(kVec,rotationMatrixK,ERotationMatrix,Eangle);
 #ifdef PROFILING
         {
           START_TIMER(TIMERS::POLARIZATION)
@@ -451,7 +455,8 @@ int cudaMain(const UINT *voxel,
 #endif
         computePolarization(materialInput[j], d_voxelInput, eleField, Eangle, vx, d_polarizationX, d_polarizationY,
                             d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
-                            idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,ReferenceFrame::MATERIAL);
+                            idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
+                            ReferenceFrame::MATERIAL,ERotationMatrix);
 
 #ifdef DUMP_FILES
 

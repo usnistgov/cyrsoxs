@@ -331,7 +331,7 @@ __host__ static void doMatVec(const Real matrix[][3], const Real3 & vec, Real3 &
  * @param matVec
  */
 template <bool transpose>
-__host__ static void doMatVec(const Matrix & matrix, const Real3 & vec, Real3 & matVec){
+__host__ __device__ static void doMatVec(const Matrix & matrix, const Real3 & vec, Real3 & matVec){
   if(transpose) {
     matVec.x = matrix.template getValue<0,0>() * vec.x + matrix.template getValue<1,0>() * vec.y + matrix.template getValue<2,0>() * vec.z;
     matVec.y = matrix.template getValue<0,1>() * vec.x + matrix.template getValue<1,1>() * vec.y + matrix.template getValue<2,1>() * vec.z;
@@ -442,6 +442,7 @@ __host__ bool static computeRotationMatrix(const Real3 & k, const Matrix & rotat
   performRodriguesRotation(rotatedX,shiftedX,k,rotAngle);
   computeRotationMatrix(shiftedX,rotatedX,rotationMatrixX);
   performMatrixMultiplication(rotationMatrixX,rotationMatrixK,rotationMatrix);
+  return true;
 }
 
 __host__ inline static void normalizeVec(Real3 & vec){

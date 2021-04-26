@@ -62,15 +62,22 @@ TEST(CyRSoXS, polarization) {
   eleField.k.y = 0;
   eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
   UINT blockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
+  static constexpr Real3 kVec{0,0,1};
+  Matrix rotationMatrixK,rotationMatrix;
+  computeRotationMatrixK(kVec,rotationMatrixK);
+  Real baseRotAngle;
+  computeRotationMatrixBaseConfiguration(kVec,rotationMatrixK,rotationMatrix,baseRotAngle);
 
   Complex *pXOracle = new Complex[numVoxels];
   Complex *pYOracle = new Complex[numVoxels];
   Complex *pZOracle = new Complex[numVoxels];
+  Matrix ERotationMatrix;
   for(int i = 0; i < maxERotation; i++) {
     Real angle = angleOfERotation[i]*180.0/M_PI;
+    computeRotationMatrix(kVec,rotationMatrixK,ERotationMatrix,angle);
     computePolarization(refractiveIndexData[0], d_voxelData, eleField, angle, vx, d_polarizationX, d_polarizationY,
                         d_polarizationZ, FFT::FFTWindowing::NONE,
-                        false, MorphologyType::VECTOR_MORPHOLOGY, blockSize,ReferenceFrame::MATERIAL);
+                        false, MorphologyType::VECTOR_MORPHOLOGY, blockSize,ReferenceFrame::MATERIAL,rotationMatrix);
     hostDeviceExchange(polarizationX, d_polarizationX, numVoxels, cudaMemcpyDeviceToHost);
     hostDeviceExchange(polarizationY, d_polarizationY, numVoxels, cudaMemcpyDeviceToHost);
     hostDeviceExchange(polarizationZ, d_polarizationZ, numVoxels, cudaMemcpyDeviceToHost);
