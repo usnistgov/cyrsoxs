@@ -69,6 +69,18 @@ enum ReferenceFrame:bool{
 };
 
 
+enum CaseTypesEnums : UINT {
+  DEFAULT = 0,
+  BEAM_DIVERGENCE = 1,
+  GRAZING_INCIDENCE = 2,
+  MAX_CASE_TYPE = 3
+};
+
+static const char *caseTypenames[]{"Default", "BeamDivergence","GrazingIncidence"};
+static_assert(sizeof(caseTypenames) / sizeof(char*) == CaseTypesEnums::MAX_CASE_TYPE,
+              "sizes dont match");
+
+
 
 
 namespace FFT {

@@ -406,8 +406,10 @@ TEST(CyRSoXS, RotationBaseCase) {
 
   Real3 k{0, 0, 1};
   normalizeVec(k);
-  Matrix rotationMatrix;
-  bool res = computeRotationMatrixBaseConfiguration(k, rotationMatrix);
+  Matrix rotationMatrix,rotationMatrixK;
+  computeRotationMatrixK(k,rotationMatrixK);
+  Real rotAngle;
+  bool res = computeRotationMatrixBaseConfiguration(k, rotationMatrixK,rotationMatrix,rotAngle);
   EXPECT_EQ(res, true);
   static constexpr Real3 origK{0, 0, 1};
   Real3 shiftedK;
@@ -441,9 +443,10 @@ TEST(CyRSoXS,Rotation){
     Real rand3 = rand()/(RAND_MAX*1.0);
     Real3 k{rand1,rand2,rand3};
     normalizeVec(k);
-//    Real rotationMatrix[3][3];
-    Matrix rotationMatrix;
-    bool res = computeRotationMatrixBaseConfiguration(k, rotationMatrix);
+    Real rotAngle;
+    Matrix rotationMatrix, rotationMatrixK;
+    computeRotationMatrixK(k,rotationMatrixK);
+    bool res = computeRotationMatrixBaseConfiguration(k,rotationMatrixK, rotationMatrix,rotAngle);
     EXPECT_EQ(res, true);
     static constexpr Real3 origK{0,0,1};
     Real3 shiftedK;
@@ -465,6 +468,25 @@ TEST(CyRSoXS,Rotation){
     EXPECT_LE(fabs(computeVecNorm(shiftedX) - 1),TOLERANCE_CHECK);
     EXPECT_LE(fabs(computeVecNorm(shiftedY) - 1),TOLERANCE_CHECK);
     EXPECT_LE(fabs(computeVecNorm(shiftedZ) - 1),TOLERANCE_CHECK);
+
+    for(Real angle = rotAngle; angle < rotAngle + 2*M_PI; angle+= (M_PI/2.) ){
+      Matrix rotationMatrixX;
+      computeRotationMatrix(k,rotationMatrixK,rotationMatrixX,rotAngle);
+      static constexpr Real3 Y{0,1,0};
+      static constexpr Real3 Z{0,0,1};
+      static constexpr Real3 X{1,0,0};
+      Real3 rotatedX,rotatedY,rotatedZ,rotatedK;
+      doMatVec<false>(rotationMatrixX, X, rotatedX);
+      doMatVec<false>(rotationMatrixX, Y, rotatedY);
+      doMatVec<false>(rotationMatrixX, Z, rotatedZ);
+      doMatVec<false>(rotationMatrixX, origK, rotatedK);
+      EXPECT_EQ(FEQUALS(rotatedK.x,k.x),true);
+      EXPECT_LE(FEQUALS(rotatedK.y,k.y),true);
+      EXPECT_LE(FEQUALS(rotatedK.z,k.z),true);
+      EXPECT_EQ(FEQUALS(computeDotProduct(rotatedX,rotatedY),0),true);
+      EXPECT_EQ(FEQUALS(computeDotProduct(rotatedX,rotatedZ),0),true);
+      EXPECT_EQ(FEQUALS(computeDotProduct(rotatedY,rotatedZ),0),true);
+    }
   }
 }
 #endif //CY_RSOXS_UNITTEST_H

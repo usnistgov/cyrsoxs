@@ -289,7 +289,7 @@ __host__ static void computeRotationMatrix(const Real3 & originalVec,const Real3
 __host__ static void inline performRodriguesRotation(Real3  & rotatedVec, const Real3 & inVec,const Real3 & axis, const Real & angle){
   const Real cosAlpha = cos(angle);
   const Real sinAlpha = sin(angle);
-  const Real3 & crossProduct = computeCrossProduct(inVec,axis);
+  const Real3 & crossProduct = computeCrossProduct(axis,inVec);
   const Real & dotProduct = computeDotProduct(axis,inVec);
   Real3 term1{cosAlpha*inVec.x,cosAlpha*inVec.y,cosAlpha*inVec.z};
   Real3 term2{sinAlpha*crossProduct.x,sinAlpha*crossProduct.y,sinAlpha*crossProduct.z};
@@ -338,12 +338,9 @@ __host__ static void doMatVec(const Matrix & matrix, const Real3 & vec, Real3 & 
 
 }
 
-__host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, Matrix & rotationMatrix){
-
+__host__ bool static computeRotationMatrixK(const Real3 & k, Matrix & rotationMatrixK){
   static constexpr Real3 origK{0,0,1};
-  Matrix rotationMatrixK;
   computeRotationMatrix(origK,k,rotationMatrixK);
-
 #if DEBUG
   {
     Real3 shiftedK;
@@ -351,6 +348,8 @@ __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, Mat
     assert((FEQUALS(shiftedK.x, k.x)) and (FEQUALS(shiftedK.y, k.y)) and (FEQUALS(shiftedK.z, k.z)));
   }
 #endif
+}
+__host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, const Matrix & rotationMatrixK, Matrix & rotationMatrix, Real & rotAngle){
   static constexpr Real3 X{1,0,0};
   static constexpr UINT numInterval = 100000;
   static constexpr Real dTheta = M_PI/(numInterval*1.0);
@@ -358,7 +357,7 @@ __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, Mat
   doMatVec<false>(rotationMatrixK,X,shiftedX);
   Real3 rotatedX;
   Real maxDiff = std::numeric_limits<Real>::infinity();
-  Real rotAngle = 0;
+  rotAngle = 0;
   for(UINT i = 0; i < numInterval; i++){
     performRodriguesRotation(rotatedX,shiftedX,k,i*dTheta);
     Real diff = fabs(rotatedX.y);
@@ -393,7 +392,16 @@ __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, Mat
 
 
   return true;
-
+}
+__host__ bool static computeRotationMatrix(const Real3 & k, const Matrix & rotationMatrixK, Matrix & rotationMatrix, const Real & rotAngle){
+  static constexpr Real3 X{1,0,0};
+  Real3 shiftedX;
+  doMatVec<false>(rotationMatrixK,X,shiftedX);
+  Real3 rotatedX;
+  Matrix rotationMatrixX;
+  performRodriguesRotation(rotatedX,shiftedX,k,rotAngle);
+  computeRotationMatrix(shiftedX,rotatedX,rotationMatrixX);
+  performMatrixMultiplication(rotationMatrixX,rotationMatrixK,rotationMatrix);
 }
 
 __host__ inline static void normalizeVec(Real3 & vec){

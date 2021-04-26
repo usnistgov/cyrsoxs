@@ -218,6 +218,7 @@ int cudaMain(const UINT *voxel,
              Real *projectionGPUAveraged,
              const Voxel<NUM_MATERIAL> *voxelInput) {
 
+
   if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()) {
     std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
     exit(EXIT_FAILURE);
@@ -426,6 +427,7 @@ int cudaMain(const UINT *voxel,
 #ifdef  PROFILING
       START_TIMER(TIMERS::ENERGY)
 #endif
+      const Real3 kVector{0,0,1};
 
       ElectricField eleField;
       eleField.e.x = 1;
