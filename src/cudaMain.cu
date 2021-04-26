@@ -409,6 +409,11 @@ int cudaMain(const UINT *voxel,
       END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
     }
 #endif
+    const Real3 & kVec = idata.k;
+    Matrix rotationMatrixK,rotationMatrix;
+    computeRotationMatrixK(kVec,rotationMatrixK);
+    Real baseRotAngle;
+    computeRotationMatrixBaseConfiguration(kVec,rotationMatrixK,rotationMatrix,baseRotAngle);
 
     UINT BlockSize  = static_cast<UINT>(ceil(numVoxels * 1.0 / NUM_THREADS));
     UINT BlockSize2 = static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
