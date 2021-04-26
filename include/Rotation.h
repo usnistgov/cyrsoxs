@@ -323,6 +323,13 @@ __host__ static void doMatVec(const Real matrix[][3], const Real3 & vec, Real3 &
   }
 
 }
+/**
+ *
+ * @tparam transpose
+ * @param matrix
+ * @param vec
+ * @param matVec
+ */
 template <bool transpose>
 __host__ static void doMatVec(const Matrix & matrix, const Real3 & vec, Real3 & matVec){
   if(transpose) {
@@ -338,6 +345,38 @@ __host__ static void doMatVec(const Matrix & matrix, const Real3 & vec, Real3 & 
 
 }
 
+template <bool transpose>
+__host__ __device__ static void doMatVec(const Matrix & matrix,  Complex & vecX, Complex & vecY, Complex & vecZ, const Real3 & matVec){
+  Complex tempX, tempY, tempZ;
+  if(transpose) {
+    tempX.x = matrix.template getValue<0,0>() * vecX.x + matrix.template getValue<1,0>() * vecY.x + matrix.template getValue<2,0>() * vecZ.x;
+    tempY.x = matrix.template getValue<0,1>() * vecX.x + matrix.template getValue<1,1>() * vecY.x + matrix.template getValue<2,1>() * vecZ.x;
+    tempZ.x = matrix.template getValue<0,2>() * vecX.x + matrix.template getValue<1,2>() * vecY.x + matrix.template getValue<2,2>() * vecZ.x;
+
+    tempX.y = matrix.template getValue<0,0>() * vecX.y + matrix.template getValue<1,0>() * vecY.y + matrix.template getValue<2,0>() * vecZ.y;
+    tempY.y = matrix.template getValue<0,1>() * vecX.y + matrix.template getValue<1,1>() * vecY.y + matrix.template getValue<2,1>() * vecZ.y;
+    tempZ.y = matrix.template getValue<0,2>() * vecX.y + matrix.template getValue<1,2>() * vecY.y + matrix.template getValue<2,2>() * vecZ.y;
+  }
+  else {
+    tempX.x = matrix.template getValue<0,0>() * vecX.x + matrix.template getValue<0,1>() * vecY.x + matrix.template getValue<0,2>() * vecZ.x;
+    tempY.x = matrix.template getValue<1,0>() * vecX.x + matrix.template getValue<1,1>() * vecY.x + matrix.template getValue<1,2>() * vecZ.x;
+    tempZ.x = matrix.template getValue<2,0>() * vecX.x + matrix.template getValue<2,1>() * vecY.x + matrix.template getValue<2,2>() * vecZ.x;
+
+    tempX.y = matrix.template getValue<0,0>() * vecX.y + matrix.template getValue<0,1>() * vecY.y + matrix.template getValue<0,2>() * vecZ.y;
+    tempY.y = matrix.template getValue<1,0>() * vecX.y + matrix.template getValue<1,1>() * vecY.y + matrix.template getValue<1,2>() * vecZ.y;
+    tempZ.y = matrix.template getValue<2,0>() * vecX.y + matrix.template getValue<2,1>() * vecY.y + matrix.template getValue<2,2>() * vecZ.y;
+  }
+  vecX = tempX;
+  vecY = tempY;
+  vecZ = tempZ;
+}
+
+/**
+ *
+ * @param k
+ * @param rotationMatrixK
+ * @return
+ */
 __host__ bool static computeRotationMatrixK(const Real3 & k, Matrix & rotationMatrixK){
   static constexpr Real3 origK{0,0,1};
   computeRotationMatrix(origK,k,rotationMatrixK);
@@ -348,6 +387,7 @@ __host__ bool static computeRotationMatrixK(const Real3 & k, Matrix & rotationMa
     assert((FEQUALS(shiftedK.x, k.x)) and (FEQUALS(shiftedK.y, k.y)) and (FEQUALS(shiftedK.z, k.z)));
   }
 #endif
+  return true;
 }
 __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, const Matrix & rotationMatrixK, Matrix & rotationMatrix, Real & rotAngle){
   static constexpr Real3 X{1,0,0};
