@@ -346,25 +346,25 @@ __host__ static void doMatVec(const Matrix & matrix, const Real3 & vec, Real3 & 
 }
 
 template <bool transpose>
-__host__ __device__ static void doMatVec(const Matrix & matrix,  Complex & vecX, Complex & vecY, Complex & vecZ, const Real3 & matVec){
+__host__ __device__ static void rotate(const Matrix & rotationMatrix,  Complex & vecX, Complex & vecY, Complex & vecZ){
   Complex tempX, tempY, tempZ;
   if(transpose) {
-    tempX.x = matrix.template getValue<0,0>() * vecX.x + matrix.template getValue<1,0>() * vecY.x + matrix.template getValue<2,0>() * vecZ.x;
-    tempY.x = matrix.template getValue<0,1>() * vecX.x + matrix.template getValue<1,1>() * vecY.x + matrix.template getValue<2,1>() * vecZ.x;
-    tempZ.x = matrix.template getValue<0,2>() * vecX.x + matrix.template getValue<1,2>() * vecY.x + matrix.template getValue<2,2>() * vecZ.x;
+    tempX.x = rotationMatrix.template getValue<0,0>() * vecX.x + rotationMatrix.template getValue<1,0>() * vecY.x + rotationMatrix.template getValue<2,0>() * vecZ.x;
+    tempY.x = rotationMatrix.template getValue<0,1>() * vecX.x + rotationMatrix.template getValue<1,1>() * vecY.x + rotationMatrix.template getValue<2,1>() * vecZ.x;
+    tempZ.x = rotationMatrix.template getValue<0,2>() * vecX.x + rotationMatrix.template getValue<1,2>() * vecY.x + rotationMatrix.template getValue<2,2>() * vecZ.x;
 
-    tempX.y = matrix.template getValue<0,0>() * vecX.y + matrix.template getValue<1,0>() * vecY.y + matrix.template getValue<2,0>() * vecZ.y;
-    tempY.y = matrix.template getValue<0,1>() * vecX.y + matrix.template getValue<1,1>() * vecY.y + matrix.template getValue<2,1>() * vecZ.y;
-    tempZ.y = matrix.template getValue<0,2>() * vecX.y + matrix.template getValue<1,2>() * vecY.y + matrix.template getValue<2,2>() * vecZ.y;
+    tempX.y = rotationMatrix.template getValue<0,0>() * vecX.y + rotationMatrix.template getValue<1,0>() * vecY.y + rotationMatrix.template getValue<2,0>() * vecZ.y;
+    tempY.y = rotationMatrix.template getValue<0,1>() * vecX.y + rotationMatrix.template getValue<1,1>() * vecY.y + rotationMatrix.template getValue<2,1>() * vecZ.y;
+    tempZ.y = rotationMatrix.template getValue<0,2>() * vecX.y + rotationMatrix.template getValue<1,2>() * vecY.y + rotationMatrix.template getValue<2,2>() * vecZ.y;
   }
   else {
-    tempX.x = matrix.template getValue<0,0>() * vecX.x + matrix.template getValue<0,1>() * vecY.x + matrix.template getValue<0,2>() * vecZ.x;
-    tempY.x = matrix.template getValue<1,0>() * vecX.x + matrix.template getValue<1,1>() * vecY.x + matrix.template getValue<1,2>() * vecZ.x;
-    tempZ.x = matrix.template getValue<2,0>() * vecX.x + matrix.template getValue<2,1>() * vecY.x + matrix.template getValue<2,2>() * vecZ.x;
+    tempX.x = rotationMatrix.template getValue<0,0>() * vecX.x + rotationMatrix.template getValue<0,1>() * vecY.x + rotationMatrix.template getValue<0,2>() * vecZ.x;
+    tempY.x = rotationMatrix.template getValue<1,0>() * vecX.x + rotationMatrix.template getValue<1,1>() * vecY.x + rotationMatrix.template getValue<1,2>() * vecZ.x;
+    tempZ.x = rotationMatrix.template getValue<2,0>() * vecX.x + rotationMatrix.template getValue<2,1>() * vecY.x + rotationMatrix.template getValue<2,2>() * vecZ.x;
 
-    tempX.y = matrix.template getValue<0,0>() * vecX.y + matrix.template getValue<0,1>() * vecY.y + matrix.template getValue<0,2>() * vecZ.y;
-    tempY.y = matrix.template getValue<1,0>() * vecX.y + matrix.template getValue<1,1>() * vecY.y + matrix.template getValue<1,2>() * vecZ.y;
-    tempZ.y = matrix.template getValue<2,0>() * vecX.y + matrix.template getValue<2,1>() * vecY.y + matrix.template getValue<2,2>() * vecZ.y;
+    tempX.y = rotationMatrix.template getValue<0,0>() * vecX.y + rotationMatrix.template getValue<0,1>() * vecY.y + rotationMatrix.template getValue<0,2>() * vecZ.y;
+    tempY.y = rotationMatrix.template getValue<1,0>() * vecX.y + rotationMatrix.template getValue<1,1>() * vecY.y + rotationMatrix.template getValue<1,2>() * vecZ.y;
+    tempZ.y = rotationMatrix.template getValue<2,0>() * vecX.y + rotationMatrix.template getValue<2,1>() * vecY.y + rotationMatrix.template getValue<2,2>() * vecZ.y;
   }
   vecX = tempX;
   vecY = tempY;
