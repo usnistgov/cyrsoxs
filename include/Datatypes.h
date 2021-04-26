@@ -94,14 +94,6 @@ namespace FFT {
     static_assert(sizeof(windowingName)/sizeof(char*) == FFTWindowing::MAX_SIZE,
                   "sizes dont match");
 }
-enum KRotationType : UINT{
-    NOROTATION = 0,
-    ROTATION = 1,
-    MAX_ROTATION_TYPE = 2
-};
-static const char *kRotationTypeName[]{"No Rotation : (k = 0,0,1)","Rotation"};
-static_assert(sizeof(kRotationTypeName)/sizeof(char*) == KRotationType::MAX_ROTATION_TYPE,
-              "sizes dont match");
 
 enum ScatterApproach:UINT{
     PARTIAL = 0,

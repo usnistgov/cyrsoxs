@@ -197,14 +197,9 @@ private:
   int ewaldsInterpolation = Interpolation::EwaldsInterpolation::LINEAR;
   /// Windowing Type
   UINT windowingType = FFT::FFTWindowing::NONE;
-  /// Start of k rotation
-  Real kStart = 0;
-  /// End of k rotation
-  Real kEnd = 0;
-  /// k Intcrement
-  Real kIncrement = 1.0;
-  /// kRotationType
-  UINT kRotationType = KRotationType::NOROTATION;
+  /// k
+  Real3 k{0,0,1};
+
   /// scatter Approach
   UINT scatterApproach = ScatterApproach::PARTIAL;
 
@@ -249,29 +244,11 @@ private:
     if(ReadValue(cfg, "VTIDirName",VTIDirName)){}
     if(ReadValue(cfg, "HDF5DirName",HDF5DirName)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
-    if(ReadValue(cfg,"KRotationType",kRotationType)){}
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     else{
         if(numZ < 4){
             scatterApproach = ScatterApproach::FULL;
         }
-    }
-    if(kRotationType == KRotationType::ROTATION){
-        ReadArrayRequired(cfg, "KAngleRotation", _temp,3);
-        kStart = _temp[0];kIncrement = _temp[1];kEnd = _temp[2];
-        if(FEQUALS(kStart,kEnd)){
-                kIncrement = 1.0;
-        }
-        else{
-            if(FEQUALS(kIncrement,0.0)){
-                throw std::logic_error("kIncrement can not be 0\n");
-            }
-        }
-        std::cout << MAG << "[WARNING] : This is an experimental routine that you are trying to use " << NRM << "\n";
-    } else{
-        kStart = 0.0;
-        kEnd = 0.0;
-        kIncrement = 1.0;
     }
 
     check2D();
@@ -313,7 +290,6 @@ private:
   }
   void validate() const{
       validate("FFT Windowing",windowingType,FFT::FFTWindowing::MAX_SIZE);
-      validate("K Rotation",kRotationType,KRotationType::MAX_ROTATION_TYPE);
       validate("Scatter Approach",scatterApproach,ScatterApproach::MAX_SCATTER_APPROACH);
       validate("Ewalds Interpolation",ewaldsInterpolation,Interpolation::EwaldsInterpolation::MAX_SIZE);
       validate("Morphology Type",ewaldsInterpolation,MorphologyType::MAX_MORPHOLOGY_TYPE);
@@ -327,10 +303,6 @@ private:
         std::cout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
         std::cout << "PhysSize             : " << physSize << " nm \n";
         std::cout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
-        std::cout << "K RotationType       : " << kRotationTypeName[kRotationType] << "\n";
-        if(kRotationType == KRotationType::ROTATION) {
-            std::cout << "kRotationAngle       : " << kStart << " : " << kIncrement << " : " << kEnd << "\n";
-        }
         std::cout << "MorphologyType       : " << morphologyTypeName[morphologyType] << "\n";
         std::cout << "Energies simulated   : [";
         for (const auto & energy: energies) {
@@ -490,10 +462,6 @@ private:
         fout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
         fout << "PhysSize             : " << physSize << "nm \n";
         fout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
-        fout << "K RotationType       : " << kRotationTypeName[kRotationType] << "\n";
-        if(kRotationType == KRotationType::ROTATION) {
-            std::cout << "kRotationAngle       : " << kStart << " : " << kIncrement << " : " << kEnd << "\n";
-        }
         fout << "Energies simulated   : [";
         for (const auto & energy: energies) {
             fout << energy << " " ;

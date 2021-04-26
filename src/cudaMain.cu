@@ -230,7 +230,6 @@ int cudaMain(const UINT *voxel,
   const UINT
     numAnglesRotation = static_cast<UINT>(std::round((idata.endAngle - idata.startAngle) / idata.incrementAngle + 1));
   const UINT &numEnergyLevel = idata.energies.size();
-  const UINT numKRotation = static_cast<UINT>(std::round((idata.kEnd - idata.kStart) / idata.kIncrement + 1));
 
 
   int num_gpu;
@@ -427,7 +426,7 @@ int cudaMain(const UINT *voxel,
 #ifdef  PROFILING
       START_TIMER(TIMERS::ENERGY)
 #endif
-      const Real3 kVector{0,0,1};
+
 
       ElectricField eleField;
       eleField.e.x = 1;
@@ -666,7 +665,7 @@ int cudaMain(const UINT *voxel,
         stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
 #else
         stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
-        _factor = static_cast<Real>(1.0 / (numKRotation * 1.0));
+        _factor = 1.0;
         stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
 #endif
         if (stat != CUBLAS_STATUS_SUCCESS) {
