@@ -471,7 +471,8 @@ inline __device__ Real computeScatter3D(const Complex * polarizationX,
                                         const Real & physSize,
                                         const BigUINT & id,
                                         const uint3 & voxel,
-                                        const bool enable2D
+                                        const bool enable2D,
+                                        const Real3 & kVector
 ){
     const Real cosPhi   = cos(eAngle);
     const Real cosTheta = cos(kAngle);
@@ -489,9 +490,9 @@ inline __device__ Real computeScatter3D(const Complex * polarizationX,
     }
 
     Real qVec[3];
-    qVec[0] = -k*sinPhi*sinTheta + q.x;
-    qVec[1] =  k*cosPhi*sinTheta + q.y;
-    qVec[2] =  k*cosTheta + q.z;
+    qVec[0] =  k*kVector.x + q.x;
+    qVec[1] =  k*kVector.y + q.y;
+    qVec[2] =  k*kVector.z + q.z;
 
     Complex pVec[3]{polarizationX[id],polarizationY[id],polarizationZ[id]};
     return (computeMagVec1TimesVec1TTimesVec2(qVec,pVec,k));
@@ -520,7 +521,8 @@ __global__ void computeScatter3D(const Complex *polarizationX,
                                  const BigUINT voxelNum,
                                  const uint3 voxel,
                                  const Real physSize,
-                                 const bool enable2D) {
+                                 const bool enable2D,
+                                 const Real3 kVector) {
 
 
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
@@ -556,7 +558,7 @@ __global__ void computeScatter3D(const Complex *polarizationX,
 //
 // Complex pVec[3]{polarizationX[threadID],polarizationY[threadID],polarizationZ[threadID]};
 
- Scatter3D[threadID] = computeScatter3D(polarizationX,polarizationY,polarizationZ,elefield.k.z,eAngle,kAngle,dx,physSize,threadID,voxel,enable2D);
+ Scatter3D[threadID] = computeScatter3D(polarizationX,polarizationY,polarizationZ,elefield.k.z,eAngle,kAngle,dx,physSize,threadID,voxel,enable2D,kVector);
 }
 
 
@@ -661,7 +663,8 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
                                           const Real kAngle,
                                           const Real physSize,
                                           const Interpolation::EwaldsInterpolation interpolation,
-                                          const bool enable2D) {
+                                          const bool enable2D,
+                                          const Real3 kVector) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const UINT totalSize = voxel.x * voxel.y;
   if (threadID >= totalSize) {
@@ -683,14 +686,17 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   pos.y = (start + Y * dx.y) ;
   pos.x = (start + X * dx.x) ;
 
-  val = k * k - (pos.x) * (pos.x) - (pos.y ) * (pos.y);
+  const Real & kx = k*kVector.x;
+  const Real & ky = k*kVector.y;
+  const Real & kz = k*kVector.z;
+  val = k * k - (kx + pos.x) * (kx + pos.x) - (ky + pos.y ) * (ky + pos.y);
 
   if((val < 0) or (X == (voxel.x - 1)) or (Y == (voxel.y - 1))) {
     projection[threadID] = NAN;
   }
   else
   {
-    pos.z = -k + sqrt(val);
+    pos.z = -kz + sqrt(val);
     if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
       BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
       projection[threadID] += scatter3D[id];
@@ -716,7 +722,8 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
                                           const Real kAngle,
                                           const Real physSize,
                                           const Interpolation::EwaldsInterpolation interpolation,
-                                          const bool enable2D) {
+                                          const bool enable2D,
+                                          const Real3 kVector) {
     UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
     const UINT totalSize = voxel.x * voxel.y;
     if (threadID >= totalSize) {
@@ -737,23 +744,26 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
     UINT X = static_cast<UINT>(threadID - Y * voxel.x);
     pos.y = (start + Y * dx.y) ;
     pos.x = (start + X * dx.x) ;
+    const Real & kx = k*kVector.x;
+    const Real & ky = k*kVector.y;
+    const Real & kz = k*kVector.z;
 
-    val = k * k - (pos.x) * (pos.x) - (pos.y ) * (pos.y);
+    val = k * k - (kx + pos.x) * (kx + pos.x) - (ky + pos.y ) * (ky + pos.y);
 
     if((val < 0) or (X == (voxel.x - 1)) or (Y == (voxel.y - 1))) {
         projection[threadID] = NAN;
     }
     else
     {
-        pos.z = -k + sqrt(val);
+        pos.z = -kz + sqrt(val);
         if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
             BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
-            projection[threadID] += computeScatter3D(polarizationX,polarizationY,polarizationZ,k,eAngle,kAngle,dx,physSize,id,voxel,enable2D);
+            projection[threadID] += computeScatter3D(polarizationX,polarizationY,polarizationZ,k,eAngle,kAngle,dx,physSize,id,voxel,enable2D,kVector);
         }
         else {
             if (enable2D) {
                 BigUINT id = reshape3Dto1D(X,Y,0,voxel);
-                projection[threadID] += computeScatter3D(polarizationX,polarizationY,polarizationZ,k,eAngle,kAngle,dx,physSize,id,voxel,enable2D);
+                projection[threadID] += computeScatter3D(polarizationX,polarizationY,polarizationZ,k,eAngle,kAngle,dx,physSize,id,voxel,enable2D,kVector);
 
             } else {
                 UINT Z = static_cast<UINT >(((pos.z - start) / (dx.z)));
@@ -765,9 +775,9 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
                     BigUINT id2 = reshape3Dto1D(X, Y, Z + 1, voxel);
 
                     Real data1 = computeScatter3D(polarizationX, polarizationY, polarizationZ, k, eAngle, kAngle, dx,
-                                                  physSize, id1, voxel, enable2D);
+                                                  physSize, id1, voxel, enable2D,kVector);
                     Real data2 = computeScatter3D(polarizationX, polarizationY, polarizationZ, k, eAngle, kAngle, dx,
-                                                  physSize, id2, voxel, enable2D);
+                                                  physSize, id2, voxel, enable2D,kVector);
 
                     projection[threadID] += computeTrilinearInterpolation(data1, data2, pos, start, dx, X, Y, Z, voxel);
                 }

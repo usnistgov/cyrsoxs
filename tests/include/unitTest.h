@@ -250,6 +250,7 @@ TEST(CyRSoXS, scatter) {
   mallocGPU(d_polarizationY,numVoxel);
   mallocGPU(d_polarizationZ,numVoxel);
   mallocGPU(d_scatter3D,numVoxel);
+  static constexpr Real3 kVec{0,0,1};
   for(int i = 0; i < maxERotation; i++){
     const std::string pathOfFFT = root+"/Data/regressionData/SingleAngle/" + oracleDirName[i] + "/FFT/";
 
@@ -262,7 +263,7 @@ TEST(CyRSoXS, scatter) {
     hostDeviceExchange(d_polarizationZ, polarizationZ, numVoxel, cudaMemcpyHostToDevice);
     const UINT blockSize = static_cast<UINT>(ceil(numVoxel * 1.0 / NUM_THREADS));
 
-    int suc1 = performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,eleField,0,0,numVoxel,vx,5.0,false,blockSize);
+    int suc1 = performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,eleField,0,0,numVoxel,vx,5.0,false,blockSize,kVec);
     EXPECT_EQ(suc1,EXIT_SUCCESS);
     hostDeviceExchange(scatter_3D, d_scatter3D, numVoxel, cudaMemcpyDeviceToHost);
 
@@ -307,7 +308,7 @@ TEST(CyRSoXS, ewaldProjectionFull){
   Real * projectionOracle = new Real[numVoxel2D];
   Real * d_scatter, *d_projection;
 
-
+  static constexpr Real3 kVec{0,0,1};
   mallocGPU(d_scatter,numVoxel);
   mallocGPU(d_projection,numVoxel2D);
 
@@ -318,7 +319,7 @@ TEST(CyRSoXS, ewaldProjectionFull){
     hostDeviceExchange(d_scatter, scatter, numVoxel, cudaMemcpyHostToDevice);
     const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
     cudaZeroEntries(d_projection,numVoxel2D);
-    int suc = peformEwaldProjectionGPU(d_projection,d_scatter,eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize);
+    int suc = peformEwaldProjectionGPU(d_projection,d_scatter,eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize,kVec);
     EXPECT_EQ(suc,EXIT_SUCCESS);
 
     readFile(projectionOracle,pathOfEwaldGPU+"Ewald.dmp",numVoxel2D);
@@ -360,7 +361,7 @@ TEST(CyRSoXS, ewaldProjectionPartial){
   Complex  * d_polarizationX,* d_polarizationY,* d_polarizationZ;
   Complex  * polarizationX,* polarizationY,* polarizationZ;
   Real *projectionOracle, *d_projection, *projection;
-
+  static constexpr Real3 kVec{0,0,1};
   polarizationX = new Complex[numVoxel];
   polarizationY = new Complex[numVoxel];
   polarizationZ = new Complex[numVoxel];
@@ -386,7 +387,7 @@ TEST(CyRSoXS, ewaldProjectionPartial){
 
     const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
     int suc = peformEwaldProjectionGPU(d_projection,d_polarizationX,d_polarizationY,d_polarizationZ,
-                                       eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize);
+                                       eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize,kVec);
     EXPECT_EQ(suc,EXIT_SUCCESS);
 
     hostDeviceExchange(projection, d_projection, numVoxel2D, cudaMemcpyDeviceToHost);

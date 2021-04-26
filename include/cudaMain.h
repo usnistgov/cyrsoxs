@@ -124,7 +124,8 @@ __host__ int performScatter3DComputation(const Complex * d_polarizationX, const 
                                           const uint3 & vx,
                                           const Real & physSize,
                                           const bool & enable2D,
-                                          const UINT & blockSize);
+                                          const UINT & blockSize,
+                                          const Real3 & kVector);
 
 __host__ int peformEwaldProjectionGPU(Real * d_projection,
                                       const Real * d_scatter,
@@ -135,7 +136,8 @@ __host__ int peformEwaldProjectionGPU(Real * d_projection,
                                       const Real & physSize,
                                       const Interpolation::EwaldsInterpolation & interpolation,
                                       const bool & enable2D,
-                                      const UINT & blockSize);
+                                      const UINT & blockSize,
+                                      const Real3 & kVector);
 
 __host__ int peformEwaldProjectionGPU(Real * projection,
                                       const Complex * d_polarizationX,
@@ -148,4 +150,5 @@ __host__ int peformEwaldProjectionGPU(Real * projection,
                                       const Real & physSize,
                                       const Interpolation::EwaldsInterpolation & interpolation,
                                       const bool & enable2D,
-                                      const UINT & blockSize);
+                                      const UINT & blockSize,
+                                      const Real3 & kVector);

@@ -71,11 +71,12 @@ __host__  int performScatter3DComputation(const Complex *d_polarizationX, const 
                                           const uint3 &vx,
                                           const Real &physSize,
                                           const bool &enable2D,
-                                          const UINT &blockSize) {
+                                          const UINT &blockSize,
+                                          const Real3 & kVector) {
   computeScatter3D <<< blockSize, NUM_THREADS >>>(d_polarizationX, d_polarizationY, d_polarizationZ,
                                                   d_scatter3D, eleField, eAngle, kAngle, voxelSize, vx,
                                                   physSize,
-                                                  enable2D);
+                                                  enable2D, kVector);
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
   return EXIT_SUCCESS;
@@ -90,11 +91,12 @@ __host__ int peformEwaldProjectionGPU(Real *d_projection,
                                       const Real &physSize,
                                       const Interpolation::EwaldsInterpolation &interpolation,
                                       const bool &enable2D,
-                                      const UINT &blockSize) {
+                                      const UINT &blockSize,
+                                      const Real3 & kVector) {
   computeEwaldProjectionGPU <<< blockSize, NUM_THREADS >>>(d_projection, d_scatter, vx,
                                                            k, eAngle, kAngle, physSize,
                                                            interpolation,
-                                                           enable2D);
+                                                           enable2D,kVector);
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
 
@@ -113,12 +115,13 @@ __host__ int peformEwaldProjectionGPU(Real *d_projection,
                                       const Real &physSize,
                                       const Interpolation::EwaldsInterpolation &interpolation,
                                       const bool &enable2D,
-                                      const UINT &blockSize) {
+                                      const UINT &blockSize,
+                                      const Real3 & kVector) {
   computeEwaldProjectionGPU <<< blockSize, NUM_THREADS >>>(d_projection, d_polarizationX, d_polarizationY,
                                                            d_polarizationZ, vx,
                                                            k, eAngle, kAngle, physSize,
                                                            interpolation,
-                                                           enable2D);
+                                                           enable2D,kVector);
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
   return EXIT_SUCCESS;
@@ -607,8 +610,9 @@ int cudaMain(const UINT *voxel,
         cudaZeroEntries(d_projection, numVoxel2D);
 
         if (idata.scatterApproach == ScatterApproach::FULL) {
+
           performScatter3DComputation(d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, 0.0,
-                                      0.0, numVoxels, vx, idata.physSize, idata.if2DComputation(), BlockSize);
+                                      0.0, numVoxels, vx, idata.physSize, idata.if2DComputation(), BlockSize,kVec);
 
 #ifdef DUMP_FILES
           CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * numVoxels, cudaMemcpyDeviceToHost));
@@ -638,7 +642,7 @@ int cudaMain(const UINT *voxel,
 #else
           peformEwaldProjectionGPU(d_projection, d_scatter3D, eleField.k.z, vx, 0.0, 0.0, idata.physSize,
                                    static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
-                                   idata.if2DComputation(), BlockSize2);
+                                   idata.if2DComputation(), BlockSize2,kVec);
 #ifdef DUMP_FILES
           hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
           std::string dirname = "Ewald/";
@@ -652,7 +656,7 @@ int cudaMain(const UINT *voxel,
           peformEwaldProjectionGPU(d_projection, d_polarizationX, d_polarizationY, d_polarizationZ, eleField.k.z, vx,
                                    0.0, 0.0, idata.physSize,
                                    static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
-                                   idata.if2DComputation(), BlockSize2);
+                                   idata.if2DComputation(), BlockSize2,kVec);
 #ifdef DUMP_FILES
 
           hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
