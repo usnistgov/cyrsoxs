@@ -751,7 +751,32 @@ int cudaMain(const UINT *voxel,
         }
       }
       //// Rotate Image
-//      hostDeviceExchange(d_projection,d_rotProjection,numVoxel2D,cudaMemcpyDeviceToDevice);
+      hostDeviceExchange(d_projection,d_rotProjection,numVoxel2D,cudaMemcpyDeviceToDevice);
+      const double srcPoints[3][2]{{voxel[0]/2.,voxel[1]/2.},{voxel[0]*0.5,voxel[1]*1.0},{voxel[0]*1.0,voxel[1]*0.5}};
+      const double destPoints[3][2]{{voxel[0]/2.,voxel[1]/2.},{voxel[0]*0.5,voxel[1]*1.0},{voxel[0]*1.0,voxel[1]*0.5}};
+      double coeffs[2][3];
+      computeWarpAffineMatrix(srcPoints,destPoints,coeffs);
+      Real _factor;
+      _factor = NAN;
+
+      stat = cublasScale(handle, numVoxel2D, &_factor, d_rotProjection, 1);
+      NppStatus status = warpAffine(d_projection,
+                                    sizeImage,
+                                    voxel[1] * sizeof(Real),
+                                    rect,
+                                    d_rotProjection,
+                                    voxel[1] * sizeof(Real),
+                                    rect,
+                                    coeffs,
+                                    NPPI_INTER_LINEAR);
+
+      if (status < 0) {
+        std::cout << "Image rotation failed with error = " << status << "\n";
+        exit(-1);
+      }
+      if (status != NPP_SUCCESS) {
+        std::cout << YLW << "[WARNING] Image rotation warning = " << status << NRM << "\n";
+      }
 #ifdef PROFILING
       {
         START_TIMER(TIMERS::MEMCOPY_GPU_CPU)
