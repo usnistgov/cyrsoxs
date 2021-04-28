@@ -674,8 +674,7 @@ int cudaMain(const UINT *voxel,
         _factor = NAN;
 
         stat = cublasScale(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
-        _factor = 1.0;
-        stat = cublasScale(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
+
 
         if (stat != CUBLAS_STATUS_SUCCESS) {
           std::cout << "CUBLAS during scaling failed  with status " << stat << "\n";
@@ -768,9 +767,7 @@ int cudaMain(const UINT *voxel,
       const double destPoints[3][2]{{_dstPts[0].x,_dstPts[0].y},{_dstPts[1].x,_dstPts[1].y},{_dstPts[2].x,_dstPts[2].y}};
       double coeffs[2][3];
       computeWarpAffineMatrix(srcPoints,destPoints,coeffs);
-      Real _factor;
-      _factor = NAN;
-
+      Real _factor  = idata.rotMask ? 0 : NAN;
       stat = cublasScale(handle, numVoxel2D, &_factor, d_rotProjection, 1);
       NppStatus status = warpAffine(d_projection,
                                     sizeImage,
