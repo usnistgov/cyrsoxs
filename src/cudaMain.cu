@@ -753,7 +753,19 @@ int cudaMain(const UINT *voxel,
       //// Rotate Image
       hostDeviceExchange(d_projection,d_rotProjection,numVoxel2D,cudaMemcpyDeviceToDevice);
       const double srcPoints[3][2]{{voxel[0]/2.,voxel[1]/2.},{voxel[0]*0.5,voxel[1]*1.0},{voxel[0]*1.0,voxel[1]*0.5}};
-      const double destPoints[3][2]{{voxel[0]/2.,voxel[1]/2.},{voxel[0]*0.5,voxel[1]*1.0},{voxel[0]*1.0,voxel[1]*0.5}};
+      Real3 _dstPts[3],_srcPts;
+      double center[2]{voxel[0]/2.,voxel[1]/2.};
+      for(int i = 0; i < 3; i++){
+        _srcPts.x = srcPoints[i][0] - center[0];
+        _srcPts.y = srcPoints[i][1] - center[1];
+        _srcPts.z = 0;
+        doMatVec<true>(rotationMatrixK,_srcPts,_dstPts[i]);
+        _dstPts[i].x = _dstPts[i].x + center[0];
+        _dstPts[i].y = _dstPts[i].y + center[1];
+        _dstPts[i].z = 0;
+      }
+
+      const double destPoints[3][2]{{_dstPts[0].x,_dstPts[0].y},{_dstPts[1].x,_dstPts[1].y},{_dstPts[2].x,_dstPts[2].y}};
       double coeffs[2][3];
       computeWarpAffineMatrix(srcPoints,destPoints,coeffs);
       Real _factor;
