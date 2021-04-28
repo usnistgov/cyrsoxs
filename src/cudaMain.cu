@@ -673,15 +673,10 @@ int cudaMain(const UINT *voxel,
         Real _factor;
         _factor = NAN;
 
-#ifdef DOUBLE_PRECISION
-        stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
-        _factor= static_cast<Real>(1.0/(numKRotation*1.0));
-        stat = cublasDscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
-#else
-        stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
+        stat = cublasScale(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
         _factor = 1.0;
-        stat = cublasSscal(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
-#endif
+        stat = cublasScale(handle, voxel[0] * voxel[1], &_factor, d_projection, 1);
+
         if (stat != CUBLAS_STATUS_SUCCESS) {
           std::cout << "CUBLAS during scaling failed  with status " << stat << "\n";
           exit(EXIT_FAILURE);
@@ -703,28 +698,16 @@ int cudaMain(const UINT *voxel,
           -beta, alpha, static_cast<Real>(beta * voxel[0] / 2. + (1 - alpha) * voxel[1] / 2.)
         };
 
-#ifdef DOUBLE_PRECISION
-        NppStatus status = nppiWarpAffine_64f_C1R(d_projection,
-                                                  sizeImage,
-                                                  voxel[1] * sizeof(Real),
-                                                  rect,
-                                                  d_rotProjection,
-                                                  voxel[1] * sizeof(Real),
-                                                  rect,
-                                                  coeffs,
-                                                  NPPI_INTER_LINEAR);
 
-#else
-        NppStatus status = nppiWarpAffine_32f_C1R(d_projection,
-                                                  sizeImage,
-                                                  voxel[1] * sizeof(Real),
-                                                  rect,
-                                                  d_rotProjection,
-                                                  voxel[1] * sizeof(Real),
-                                                  rect,
-                                                  coeffs,
-                                                  NPPI_INTER_LINEAR);
-#endif
+        NppStatus status = warpAffine(d_projection,
+                                      sizeImage,
+                                      voxel[1] * sizeof(Real),
+                                      rect,
+                                      d_rotProjection,
+                                      voxel[1] * sizeof(Real),
+                                      rect,
+                                      coeffs,
+                                      NPPI_INTER_LINEAR);
 
         if (status < 0) {
           std::cout << "Image rotation failed with error = " << status << "\n";
@@ -740,11 +723,7 @@ int cudaMain(const UINT *voxel,
         }
 
         const Real factor = static_cast<Real>(1.0);
-#ifdef DOUBLE_PRECISION
-        stat = cublasDaxpy(handle, voxel[0] * voxel[1], &factor, d_rotProjection, 1, d_projectionAverage, 1);
-#else
-        stat = cublasSaxpy(handle, voxel[0] * voxel[1], &factor, d_rotProjection, 1, d_projectionAverage, 1);
-#endif
+        stat = cublasAXPY(handle, voxel[0] * voxel[1], &factor, d_rotProjection, 1, d_projectionAverage, 1);
         if (stat != CUBLAS_STATUS_SUCCESS) {
           std::cout << "CUBLAS during sum failed  with status " << stat << "\n";
           exit(EXIT_FAILURE);
@@ -765,18 +744,14 @@ int cudaMain(const UINT *voxel,
       } else {
         /// The averaging out for all angles
         const Real alphaFac = static_cast<Real>(1.0 / numAnglesRotation);
-#ifdef DOUBLE_PRECISION
-        stat = cublasDscal(handle, voxel[0] * voxel[1], &alphaFac, d_projectionAverage, 1);
-#else
-        stat = cublasSscal(handle, voxel[0] * voxel[1], &alphaFac, d_projectionAverage, 1);
-#endif
+        stat = cublasScale(handle, voxel[0] * voxel[1], &alphaFac, d_projectionAverage, 1);
         if (stat != CUBLAS_STATUS_SUCCESS) {
           std::cout << "CUBLAS during averaging failed  with status " << stat << "\n";
           exit(EXIT_FAILURE);
         }
       }
       //// Rotate Image
-
+//      hostDeviceExchange(d_projection,d_rotProjection,numVoxel2D,cudaMemcpyDeviceToDevice);
 #ifdef PROFILING
       {
         START_TIMER(TIMERS::MEMCOPY_GPU_CPU)

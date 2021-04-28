@@ -105,12 +105,7 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> & materialInput,
 
 
 __host__ INLINE inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan) {
-#ifdef DOUBLE_PRECISION
-    return (cufftExecZ2Z(plan, polarization, polarization, CUFFT_FORWARD));
-#else
-    return (cufftExecC2C(plan, polarization, polarization, CUFFT_FORWARD));
-
-#endif
+    return (cufftC2C(plan, polarization, polarization, CUFFT_FORWARD));
 }
 
 __host__ int performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx);
