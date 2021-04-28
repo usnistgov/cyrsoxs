@@ -27,13 +27,14 @@
 #include <string>
 #ifndef PYBIND
 #include <libconfig.h++>
+#include <array>
 #endif
 #include <iostream>
 #include <Input/Input.h>
 #include <vector>
 #include <cmath>
 #include <fstream>
-
+#include <Rotation.h>
 #ifdef PYBIND
 #include <pybind11/pybind11.h>
 #include <bitset>
@@ -73,6 +74,12 @@ private:
     if(res == false){
       std::cerr << "[Input Error] No value corresponding to " << key  << " found. Exiting\n";
       exit(EXIT_FAILURE);
+    }
+  }
+  template<typename T,int size>
+  static void ReadArray(const libconfig::Setting &setting,const std::string &key_name, std::array<T,size>  &value) {
+    for (int i = 0; i < setting.getLength(); ++i) {
+      value[i] = setting[i];
     }
   }
   /**
@@ -198,7 +205,7 @@ private:
   /// Windowing Type
   UINT windowingType = FFT::FFTWindowing::NONE;
   /// k
-  Real3 k{0,0,1};
+  std::vector<Real3> kVectors;
 
   /// scatter Approach
   UINT scatterApproach = ScatterApproach::PARTIAL;
@@ -206,6 +213,7 @@ private:
   std::string VTIDirName = "VTI";
   std::string HDF5DirName = "HDF5";
 
+  UINT caseType;
   /**
    *
    * @return gets the 2D computation flags
@@ -227,9 +235,11 @@ private:
   InputData(std::string filename = "config.txt") {
     libconfig::Config cfg;
     cfg.readFile(filename.c_str());
+    ReadValueRequired(cfg, "CaseType",caseType);
     ReadArrayRequired(cfg, "Energies", energies);
     std::vector<Real> _temp;
     ReadArrayRequired(cfg, "EAngleRotation", _temp,3);
+
     startAngle = _temp[0]; incrementAngle = _temp[1]; endAngle = _temp[2];
 
     ReadValueRequired(cfg, "NumThreads", num_threads);
@@ -250,11 +260,26 @@ private:
             scatterApproach = ScatterApproach::FULL;
         }
     }
+    if(caseType == CaseTypesEnums::DEFAULT) {
+      kVectors.resize(1,{0,0,1});
+    }
+    else if(caseType == CaseTypesEnums::BEAM_DIVERGENCE) {
+      const libconfig::Setting & listOfKVectors = cfg.getRoot()["listKVectors"];
+      kVectors.resize(listOfKVectors.getLength());
+      for(int i = 0; i < kVectors.size(); i++) {
+        const libconfig::Setting & kRoot = listOfKVectors[i].lookup("k");
+        std::array<Real,3> k;
+        ReadArray<Real,3>(kRoot,"k",k);
+        kVectors[i].x = k[0];
+        kVectors[i].y = k[1];
+        kVectors[i].z = k[2];
+        normalizeVec(kVectors[i]);
+      }
+    }
 
     check2D();
-
-
   }
+
   void readRefractiveIndexData(std::vector<Material<NUM_MATERIAL> > &refractiveIndex) const {
     libconfig::Config cfg;
     refractiveIndex.resize(energies.size());

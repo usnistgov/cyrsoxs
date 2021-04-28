@@ -10,3 +10,12 @@ KAngleRotation=[0.0,20.0,360.0];
 ScatterApproach=1;
 MorphologyType=1
 EwaldsInterpolation=0
+CaseType = 0
+listKVectors = (
+{
+k=[0.0,0.5,0.5]
+},
+{
+k=[0.0,0.5,0.5]
+}
+);

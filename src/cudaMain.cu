@@ -414,7 +414,7 @@ int cudaMain(const UINT *voxel,
       END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
     }
 #endif
-    const Real3 & kVec = idata.k;
+    const Real3 & kVec = idata.kVectors[0];
     Matrix rotationMatrixK,rotationMatrix;
     computeRotationMatrixK(kVec,rotationMatrixK);
     Real baseRotAngle;
