@@ -414,17 +414,19 @@ int cudaMain(const UINT *voxel,
       END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
     }
 #endif
-    const Real3 & kVec = idata.kVectors[0];
-    Matrix rotationMatrixK,rotationMatrix;
-    computeRotationMatrixK(kVec,rotationMatrixK);
-    Real baseRotAngle;
-    computeRotationMatrixBaseConfiguration(kVec,rotationMatrixK,rotationMatrix,baseRotAngle);
+    const auto & kVectors = idata.kVectors;
+
 
     UINT BlockSize  = static_cast<UINT>(ceil(numVoxels * 1.0 / NUM_THREADS));
     UINT BlockSize2 = static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
 
-    for (UINT j = numStart; j < numEnd; j++) {
-
+    for (UINT j = numStart; j < numEnd; j++)
+    for (UINT kID = 0; kID < kVectors.size();kID++){
+      const Real3 & kVec = kVectors[kID];
+      Matrix rotationMatrixK,rotationMatrix;
+      computeRotationMatrixK(kVec,rotationMatrixK);
+      Real baseRotAngle;
+      computeRotationMatrixBaseConfiguration(kVec,rotationMatrixK,rotationMatrix,baseRotAngle);
       const Real &energy = (idata.energies[j]);
       std::cout << " [STAT] Energy = " << energy << " starting " << "\n";
 
@@ -792,7 +794,7 @@ int cudaMain(const UINT *voxel,
       }
 #endif
 
-      hostDeviceExchange(&projectionGPUAveraged[j * numVoxel2D], d_projectionAverage, numVoxel2D,
+      hostDeviceExchange(&projectionGPUAveraged[j * numVoxel2D *kVectors.size() + kID], d_projectionAverage, numVoxel2D,
                          cudaMemcpyDeviceToHost);
 #ifdef PROFILING
       {

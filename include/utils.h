@@ -49,15 +49,21 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
     UINT endID = ((threadID + 1) * chunkSize);
 
     for (UINT csize = startID; csize < std::min(endID, numEnergyLevel); csize++) {
+
       std::stringstream stream;
       Real energy = inputData.energies[csize];
       stream << std::fixed << std::setprecision(2) << energy;
       std::string s = stream.str();
-      std::memcpy(oneEnergyData, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
-      const std::string outputFname = dirName + "/Energy_" + s;
-
-      H5::writeFile2D(outputFname, oneEnergyData, voxelSize);
+      const std::string outputFname = dirName + "/Energy_" + s + ".h5";
+      H5::H5File file(outputFname.c_str(), H5F_ACC_TRUNC);
+      for (UINT kID = startID; kID < inputData.kVectors.size(); kID++) {
+        std::memcpy(oneEnergyData, &projectionGPUAveraged[csize * voxel2DSize * inputData.kVectors.size() + kID], sizeof(Real) * voxel2DSize);
+        const std::string groupname = "K" + std::to_string(kID);
+        H5::writeFile2D(file, oneEnergyData, voxelSize,groupname);
+      }
+      file.close();
     }
+
     delete[] oneEnergyData;
 }
 /**

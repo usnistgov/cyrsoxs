@@ -34,19 +34,17 @@ namespace H5 {
  * @param data the data
  * @param dim the dimension corresponding to the X and Y
  */
-    void writeFile2D(const std::string& fname, const Real *data, const UINT *dim) {
-        const std::string filename = fname + ".h5";
-        H5::H5File file(filename.c_str(), H5F_ACC_TRUNC);
+    void writeFile2D(H5::H5File & file, const Real *data, const UINT *dim, const std::string & groupname) {
         try {
             const int RANK = 2;
             const hsize_t dims[2]{dim[1], dim[0]};
-
+            H5::Group group(file.createGroup(groupname.c_str()));
             H5::DataSpace dataspace(RANK, dims);
 #ifdef DOUBLE_PRECISION
             H5::DataSet dataset = file.createDataSet("projection", H5::PredType::NATIVE_DOUBLE, dataspace);
             dataset.write(data, H5::PredType::NATIVE_DOUBLE);
 #else
-            H5::DataSet dataset = file.createDataSet("projection", H5::PredType::NATIVE_FLOAT, dataspace);
+            H5::DataSet dataset = file.createDataSet(groupname+"/projection", H5::PredType::NATIVE_FLOAT, dataspace);
             dataset.write(data, H5::PredType::NATIVE_FLOAT);
 #endif
             dataset.close();

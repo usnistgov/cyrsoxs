@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     Real *projectionGPUAveraged;
     const UINT
       numEnergyLevel = inputData.energies.size();
-    projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
+    projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY * inputData.kVectors.size()];
     printCopyrightInfo();
     cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, voxelData);
     if(inputData.writeHDF5) {
