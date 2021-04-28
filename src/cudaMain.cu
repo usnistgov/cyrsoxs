@@ -775,6 +775,8 @@ int cudaMain(const UINT *voxel,
           exit(EXIT_FAILURE);
         }
       }
+      //// Rotate Image
+
 #ifdef PROFILING
       {
         START_TIMER(TIMERS::MEMCOPY_GPU_CPU)

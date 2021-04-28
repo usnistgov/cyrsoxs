@@ -15,12 +15,18 @@ public:
   __host__ __device__ Matrix(){
     std::memset(matrix, 0, sizeof(Real) * 9);
   }
-
+  __host__  Matrix(const Real * A){
+    std::memcpy(matrix, A, sizeof(Real) * 9);
+  }
   template<UINT id1, UINT id2>
   __host__ __device__ INLINE inline Real  getValue() const{
     static constexpr UINT matID = id1*3 +id2;
     static_assert((matID < 9),"Wrong matID");
     return matrix[matID];
+  }
+
+  __host__ INLINE inline void  getValue(Real * mat) const{
+    std::memcpy(mat,matrix, sizeof(Real)*9);
   }
   template<UINT id1, UINT id2>
   __host__ __device__ INLINE inline void  setValue(const Real & value) {
@@ -28,6 +34,7 @@ public:
     static_assert((matID < 9),"Wrong matID");
     matrix[matID] = value;
   }
+
   __host__ __device__ INLINE inline void  setIdentity(){
     std::memset(matrix, 0, sizeof(Real) * 9);
     this->setValue<0,0>(1);
@@ -38,19 +45,49 @@ public:
     std::memset(matrix, 0, sizeof(Real) * 9);
   }
 
+  template<bool transpose1, bool transpose2>
   __host__ __device__ INLINE inline void performMatrixMultiplication(const Matrix &A, const Matrix &B) {
     this->reset();
-#pragma unroll 3
-    for (int i = 0; i < 3; ++i) {
-#pragma unroll 3
-      for (int j = 0; j < 3; ++j) {
-#pragma unroll 3
-        for (int k = 0; k < 3; ++k) {
-          this->matrix[i * 3 + j] += A.matrix[i * 3 + k] * B.matrix[k * 3 + j];
+    if (not(transpose1) and not(transpose2)) {
+      for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+          for (int k = 0; k < 3; ++k) {
+            this->matrix[i * 3 + j] += A.matrix[i * 3 + k] * B.matrix[k * 3 + j];
+          }
+        }
+      }
+    }
+
+    if(not(transpose1) and transpose2){
+      for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+          for (int k = 0; k < 3; ++k) {
+            this->matrix[i * 3 + j] += A.matrix[i * 3 + k] * B.matrix[j * 3 + k];
+          }
+        }
+      }
+    }
+
+    if((transpose1) and not(transpose2)){
+      for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+          for (int k = 0; k < 3; ++k) {
+            this->matrix[i * 3 + j] += A.matrix[k * 3 + i] * B.matrix[k * 3 + j];
+          }
+        }
+      }
+    }
+    if((transpose1) and (transpose2)){
+      for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j) {
+          for (int k = 0; k < 3; ++k) {
+            this->matrix[i * 3 + j] += A.matrix[k * 3 + i] * B.matrix[j * 3 + k];
+          }
         }
       }
     }
   }
+
 };
 /**
  * @brief computes dot product of two vectors
@@ -162,9 +199,10 @@ __host__ static void inline performMatrixMultiplication(const Real  matA[][3], c
       }
 }
 
+template<bool transpose1, bool transpose2>
 __host__ static void inline performMatrixMultiplication(const Matrix &  matA, const Matrix &  matB, Matrix &  mat) {
   mat.reset();
-  mat.performMatrixMultiplication(matA,matB);
+  mat.performMatrixMultiplication<transpose1,transpose2>(matA,matB);
 
 }
 
@@ -272,8 +310,8 @@ __host__ static void computeRotationMatrix(const Real3 & originalVec,const Real3
   F.setValue<2,0>( originalVec.z);  F.setValue<2,1>( subVec.z/normSubVec); F.setValue<2,2>(-crossVec.z);
 
   computeInverseMatrix(F,invF);
-  performMatrixMultiplication(G,invF,temp1);
-  performMatrixMultiplication(F,temp1,RotationMatrix);
+  performMatrixMultiplication<false,false>(G,invF,temp1);
+  performMatrixMultiplication<false,false>(F,temp1,RotationMatrix);
 
 }
 
@@ -428,7 +466,7 @@ __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, con
   Matrix rotationMatrixX;
   computeRotationMatrix(shiftedX,rotatedX,rotationMatrixX);
 
-  performMatrixMultiplication(rotationMatrixX,rotationMatrixK,rotationMatrix);
+  performMatrixMultiplication<false,false>(rotationMatrixX,rotationMatrixK,rotationMatrix);
 
 
   return true;
@@ -441,7 +479,7 @@ __host__ bool static computeRotationMatrix(const Real3 & k, const Matrix & rotat
   Matrix rotationMatrixX;
   performRodriguesRotation(rotatedX,shiftedX,k,rotAngle);
   computeRotationMatrix(shiftedX,rotatedX,rotationMatrixX);
-  performMatrixMultiplication(rotationMatrixX,rotationMatrixK,rotationMatrix);
+  performMatrixMultiplication<false,false>(rotationMatrixX,rotationMatrixK,rotationMatrix);
   return true;
 }
 

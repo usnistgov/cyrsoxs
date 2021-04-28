@@ -515,4 +515,50 @@ TEST(CyRSoXS,Rotation){
     }
   }
 }
+
+TEST(CyRSoXS,Matrix){
+
+  static const Real A[]{1.989280944991925e-01,2.201612876712853e-01,2.353900385650833e-01,
+                        6.408539631980653e-01,8.866997439207192e-01,5.068600287362459e-01,
+                        7.338419444133517e-01,2.275676457594085e-01,3.538748695968068e-01};
+  static const Real B[]{5.349974950541927e-01, 2.435111987827461e-01,2.015348702948165e-02,
+                        2.353224419569240e-01,5.987761391373778e-01,8.715335173739702e-01,
+                        8.089931247803992e-01,5.059348436123204e-01,2.285771703331268e-01};
+
+  static const Real AXB[]{3.486638469331048e-01,2.993605669317151e-01,2.496918251458391e-01,
+                          9.615618925021381e-01,9.434279154339934e-01,9.015606198324255e-01,
+                          7.324377126737106e-01,4.939984347293485e-01,2.940100212020774e-01};
+
+  static const Real ATXB[]{8.509064395163947e-01,8.034454899806208e-01,7.302743185671113e-01,
+                           5.105467472758688e-01,6.996807895938478e-01,8.292423328563572e-01,
+                           5.314909572219765e-01,5.398534283700407e-01,5.273771500943050e-01};
+
+  static const Real AXBT[]{1.647817014284501e-01,3.837898790561351e-01,3.261235163627835e-01,
+                           5.689915796239037e-01,1.123487472457263e+00,1.082915377610618e+00,
+                           4.551506848443609e-01,6.173653645001284e-01,7.896952053188341e-01};
+
+  static const Real ATXBT[]{2.772706231844306e-01,1.070108157817134e+00,6.529013255502248e-01,
+                            3.382933366116734e-01,7.810763718273485e-01,6.787380328675401e-01,
+                            2.564909868001286e-01,6.673020595871796e-01,5.277547885573965e-01};
+
+  Matrix matrixA(A);
+  Matrix matrixB(A);
+  Real res[9];
+  Matrix G;
+  G.performMatrixMultiplication<false,false>(A,B);
+  G.getValue(res);
+  EXPECT_LE(computeLinfError(AXB,res,9),TOLERANCE_CHECK);
+  G.performMatrixMultiplication<true,false>(A,B);
+  G.getValue(res);
+  EXPECT_LE(computeLinfError(ATXB,res,9),TOLERANCE_CHECK);
+  G.performMatrixMultiplication<false,true>(A,B);
+  G.getValue(res);
+  EXPECT_LE(computeLinfError(AXBT,res,9),TOLERANCE_CHECK);
+  G.performMatrixMultiplication<true,true>(A,B);
+  G.getValue(res);
+  EXPECT_LE(computeLinfError(ATXBT,res,9),TOLERANCE_CHECK);
+
+
+
+}
 #endif //CY_RSOXS_UNITTEST_H
