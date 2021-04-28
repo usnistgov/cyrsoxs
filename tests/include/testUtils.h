@@ -9,6 +9,15 @@
 #include <limits>
 
 static constexpr Real TOLERANCE_CHECK = 1E-4;
+template<typename T, typename GI>
+static inline T computeLinfErrorReal(const T * vec1, const T * vec2, const GI size){
+  Real maxDifference = -std::numeric_limits<T>::infinity();
+  for(BigUINT i = 0; i < size; i++){
+    Real difference = fabs(vec1[i] - vec2[i]);
+    maxDifference = difference > maxDifference ? difference:maxDifference;
+  }
+  return maxDifference;
+}
 
 static inline Real computeLinfError(const Real * vec1, const Real * vec2, const BigUINT size){
   Real maxDifference = -std::numeric_limits<Real>::infinity();

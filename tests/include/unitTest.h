@@ -557,8 +557,16 @@ TEST(CyRSoXS,Matrix){
   G.performMatrixMultiplication<true,true>(A,B);
   G.getValue(res);
   EXPECT_LE(computeLinfError(ATXBT,res,9),TOLERANCE_CHECK);
+}
 
+TEST(CyRSoXS,warpAffineMatrix){
+  const double A[3][2]{{50,50},{200,50},{50,200}};
+  const double B[3][2]{{10,100},{200,50},{100,250}};
+  double warpAffineMatrix[2][3];
+  computeWarpAffineMatrix(A,B,warpAffineMatrix);
 
+  static const double res[] {1.2667,0.6000,-83.3333,-0.3333,1.0000,66.6667};
+  EXPECT_LE(computeLinfErrorReal(res,&warpAffineMatrix[0][0],6),TOLERANCE_CHECK);
 
 }
 #endif //CY_RSOXS_UNITTEST_H

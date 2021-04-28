@@ -546,4 +546,23 @@ __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, Rea
 
 }
 
+__host__ static void INLINE inline computeWarpAffineMatrix(const double  srcPoint[][2], const double  dstPoint[][2], double  warpAffineMatrix[][3]){
+  const double & x0 = srcPoint[0][0]; const double & y0 = srcPoint[0][1];
+  const double & x1 = srcPoint[1][0]; const double & y1 = srcPoint[1][1];
+  const double & x2 = srcPoint[2][0]; const double & y2 = srcPoint[2][1];
+
+  const double & u0 = dstPoint[0][0]; const double & v0 = dstPoint[0][1];
+  const double & u1 = dstPoint[1][0]; const double & v1 = dstPoint[1][1];
+  const double & u2 = dstPoint[2][0]; const double & v2 = dstPoint[2][1];
+
+  double denom = x0*y1-x1*y0-x0*y2+x2*y0+x1*y2-x2*y1;
+
+  warpAffineMatrix[0][0] = (u0*y1-u1*y0-u0*y2+u2*y0+u1*y2-u2*y1)/(denom);
+  warpAffineMatrix[0][1] = -(u0*x1-u1*x0-u0*x2+u2*x0+u1*x2-u2*x1)/(denom);
+  warpAffineMatrix[0][2] = (u0*x1*y2-u0*x2*y1-u1*x0*y2+u1*x2*y0+u2*x0*y1-u2*x1*y0)/(denom);
+  warpAffineMatrix[1][0] = (v0*y1-v1*y0-v0*y2+v2*y0+v1*y2-v2*y1)/(denom);
+  warpAffineMatrix[1][1] = -(v0*x1-v1*x0-v0*x2+v2*x0+v1*x2-v2*x1)/(denom);
+  warpAffineMatrix[1][2] = (v0*x1*y2-v0*x2*y1-v1*x0*y2+v1*x2*y0+v2*x0*y1-v2*x1*y0)/(denom);
+}
+
 #endif //CY_RSOXS_ROTATION_H
