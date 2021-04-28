@@ -673,7 +673,7 @@ int cudaMain(const UINT *voxel,
         Real _factor;
         _factor = NAN;
 
-        stat = cublasScale(handle, voxel[0] * voxel[1], &_factor, d_rotProjection, 1);
+        stat = cublasScale(handle, numVoxel2D, &_factor, d_rotProjection, 1);
 
 
         if (stat != CUBLAS_STATUS_SUCCESS) {
@@ -722,7 +722,7 @@ int cudaMain(const UINT *voxel,
         }
 
         const Real factor = static_cast<Real>(1.0);
-        stat = cublasAXPY(handle, voxel[0] * voxel[1], &factor, d_rotProjection, 1, d_projectionAverage, 1);
+        stat = cublasAXPY(handle, numVoxel2D, &factor, d_rotProjection, 1, d_projectionAverage, 1);
         if (stat != CUBLAS_STATUS_SUCCESS) {
           std::cout << "CUBLAS during sum failed  with status " << stat << "\n";
           exit(EXIT_FAILURE);
@@ -750,7 +750,7 @@ int cudaMain(const UINT *voxel,
         }
       }
       //// Rotate Image
-      hostDeviceExchange(d_projection,d_rotProjection,numVoxel2D,cudaMemcpyDeviceToDevice);
+      hostDeviceExchange(d_projection,d_projectionAverage,numVoxel2D,cudaMemcpyDeviceToDevice);
       const double srcPoints[3][2]{{voxel[0]/2.,voxel[1]/2.},{voxel[0]*0.5,voxel[1]*1.0},{voxel[0]*1.0,voxel[1]*0.5}};
       Real3 _dstPts[3],_srcPts;
       double center[2]{voxel[0]/2.,voxel[1]/2.};
@@ -768,12 +768,12 @@ int cudaMain(const UINT *voxel,
       double coeffs[2][3];
       computeWarpAffineMatrix(srcPoints,destPoints,coeffs);
       Real _factor  = idata.rotMask ? 0 : NAN;
-      stat = cublasScale(handle, numVoxel2D, &_factor, d_rotProjection, 1);
+      stat = cublasScale(handle, numVoxel2D, &_factor, d_projectionAverage, 1);
       NppStatus status = warpAffine(d_projection,
                                     sizeImage,
                                     voxel[1] * sizeof(Real),
                                     rect,
-                                    d_rotProjection,
+                                    d_projectionAverage,
                                     voxel[1] * sizeof(Real),
                                     rect,
                                     coeffs,
