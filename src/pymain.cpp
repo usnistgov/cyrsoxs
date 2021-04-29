@@ -150,8 +150,8 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("print", &InputData::print, "Print the input data")
       .def("setERotationAngle", &InputData::setEAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
            py::arg("EndAngle"),py::arg("IncrementAngle"))
-      .def("physSize", &InputData::setPhysSize, "Set the Physical size (in nm)", py::arg("PhysSize"))
-      .def("dimensions", &InputData::setDimension, "Set the Dimensions", py::arg("X"), py::arg("Y"), py::arg("Z"))
+      .def("setPhysSize", &InputData::setPhysSize, "Set the Physical size (in nm)", py::arg("PhysSize"))
+      .def("setDimensions", &InputData::setDimension, "Set the Dimensions", py::arg("X"), py::arg("Y"), py::arg("Z"))
       .def("validate", &InputData::validate, "Validate the input data")
       .def("setCaseType",&InputData::setCaseType,"case Type")
       .def("setMorphologyType",&InputData::setMorphologyType,"morphology Type")
@@ -195,7 +195,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);
   module.def("cleanup", &cleanup, "Cleanup",  py::arg("RefractiveIndex"), py::arg("VoxelData"),py::arg("ScatteringPattern"));
-  module.def("get_n_materials", &getNumMaterials, "Get number of materials");
+  module.def("getNumMaterials", &getNumMaterials, "Get number of materials");
 
 
 }

@@ -444,10 +444,16 @@ private:
     void print() const{
         pybind11::print("Required options:");
         pybind11::print("==================================================");
+        pybind11::print("CaseType             : ",caseTypenames[caseType]);
+        pybind11::print("MorphologyType       : ",morphologyTypeName[morphologyType]);
         pybind11::print("Dimensions           :  [",numX,",",numY,",",numZ,"]");
         pybind11::print("PhysSize             : ", physSize , "nm");
         pybind11::print("Energy               : ",energies);
         pybind11::print("Rotation Angle       : ",startAngle , " : ", incrementAngle, " : ",endAngle);
+        pybind11::print("KVectors             :");
+        for(const auto & kVec:kVectors) {
+          pybind11::print("                   :  [",kVec.x,",",kVec.y,",",kVec.z);
+        }
 
         pybind11::print("\n");
         pybind11::print("Optional options:");
@@ -478,6 +484,8 @@ private:
     }
 #endif
     void printToFile(std::ofstream & fout) const{
+        fout << "CaseType             : " << caseTypenames[caseType];
+        fout << "MorphologyType       : " << morphologyTypeName[morphologyType];
         fout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
         fout << "PhysSize             : " << physSize << "nm \n";
         fout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
@@ -489,6 +497,11 @@ private:
         fout << "Windowing Type       : " << FFT::windowingName[windowingType] << "\n";
         fout << "Rotation Mask        : " << rotMask << "\n";
         fout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
+        fout << "kVectors             : (";
+        for (const auto & kVec: kVectors) {
+          fout << "[" << kVec.x << "," << kVec.y << "," << kVec.z << "]" ;
+        }
+        fout << ")\n";
 #ifndef PYBIND
         fout << "HDF Output Directory : " << HDF5DirName << "\n";
 #endif
