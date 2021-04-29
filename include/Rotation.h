@@ -7,7 +7,7 @@
 
 #include <Datatypes.h>
 #include <limits>
-
+#include <cudaHeaders.h>
 struct Matrix{
 private:
   Real matrix[9]{};

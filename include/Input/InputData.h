@@ -46,10 +46,12 @@ namespace ParamChecker{
         DIMENSION = 1,
         PHYSSIZE = 2,
         EANGLE = 3,
-        KANGLE = 4,
-        MAX_SIZE = 5
+        KVECTORS = 4,
+        MORPHOLOGY_TYPE = 5,
+        CASE_TYPE = 6,
+        MAX_SIZE = 7
     };
-    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","EANGLE","KANGLE"};
+    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","EANGLE","KVectors","MorphologyType","CaseType"};
     static_assert(sizeof(ParamChecker::paramNames)/sizeof(char*) == ParamChecker::Parameters::MAX_SIZE,
             "sizes dont match");
 
@@ -214,6 +216,8 @@ private:
   std::string HDF5DirName = "HDF5";
 
   UINT caseType;
+  UINT morphologyType;
+
   /**
    *
    * @return gets the 2D computation flags
@@ -226,7 +230,6 @@ private:
 #ifndef PYBIND
 
   /// Morphology type
-  UINT morphologyType;
   /**
    * Constructor to read input data
    * @param refractiveIndex material input
@@ -260,10 +263,10 @@ private:
             scatterApproach = ScatterApproach::FULL;
         }
     }
-    if(caseType == CaseTypesEnums::DEFAULT) {
+    if(caseType == CaseTypes::DEFAULT) {
       kVectors.resize(1,{0,0,1});
     }
-    else if(caseType == CaseTypesEnums::BEAM_DIVERGENCE) {
+    else if(caseType == CaseTypes::BEAM_DIVERGENCE) {
       const libconfig::Setting & listOfKVectors = cfg.getRoot()["listKVectors"];
       kVectors.resize(listOfKVectors.getLength());
       for(int i = 0; i < kVectors.size(); i++) {
@@ -348,7 +351,6 @@ private:
     InputData(){
       writeHDF5 = false;
       paramChecker_.reset();
-      paramChecker_.set(ParamChecker::Parameters::KANGLE,true);
     }
     /**
      * @brief Adds the energy data
@@ -408,39 +410,34 @@ private:
       }
       paramChecker_.set(ParamChecker::Parameters::EANGLE,true);
     }
-    /**
-     * @brief Set the angles for rotation for Electric field
-     * @param _startAngle start Angle (in degrees)
-     * @param _endAngle   end Angle (in degrees)
-     * @param _incrementAngle increment in Angle (in degrees)
-     */
-    void setKAngles(const Real & _startAngle, const Real & _endAngle, const Real & _incrementAngle) {
-        if(kRotationType == KRotationType::NOROTATION) {
-            pybind11::print("[ERROR] : Trying to set angles with K rotation type set to NONE. First change the KRotationType. Returning." );
-            return;
-        }
-        kStart = _startAngle;
-        kEnd = _endAngle;
-        kIncrement = _incrementAngle;
-        if(FEQUALS(kStart,kEnd)) {
-            kIncrement = 1.0;
-        }
-        else {
-            if(FEQUALS(kIncrement,0.0)) {
-                pybind11::print("[ERROR] :  Increment angle for K rotation cannot be 0");
-                return;
-            }
-        }
-        paramChecker_.set(ParamChecker::Parameters::KANGLE,true);
+
+    void setMorphologyType(const MorphologyType _morphologyType) {
+      morphologyType = _morphologyType;
+      paramChecker_.set(ParamChecker::Parameters::MORPHOLOGY_TYPE,true);
     }
 
-    void setKRotationType(const KRotationType & _rotationType) {
-        kRotationType = _rotationType;
-        if(kRotationType == KRotationType::ROTATION) {
-            paramChecker_.set(ParamChecker::Parameters::KANGLE,false);
-        }
-
+    void setCaseType(const CaseTypes _caseType) {
+      caseType = _caseType;
+      paramChecker_.set(ParamChecker::Parameters::CASE_TYPE,true);
+      if(caseType == CaseTypes::DEFAULT) {
+        Real3 kVec({0,0,1});
+        kVectors.resize(1,kVec);
+        paramChecker_.set(ParamChecker::Parameters::KVECTORS,true);
+      }
     }
+
+    void setKVectors(const std::vector<Real> & _kVector) {
+      if(caseType == CaseTypes::DEFAULT) {
+        pybind11::print("Cannot add kVectors for default case type");
+      }
+      Real3 kVec({_kVector[0],_kVector[1],_kVector[2]});
+      normalizeVec(kVec);
+      kVectors.push_back(kVec);
+      paramChecker_.set(ParamChecker::Parameters::KVECTORS,true);
+    }
+
+
+
     /**
      * @brief prints the input data
      */
@@ -451,10 +448,7 @@ private:
         pybind11::print("PhysSize             : ", physSize , "nm");
         pybind11::print("Energy               : ",energies);
         pybind11::print("Rotation Angle       : ",startAngle , " : ", incrementAngle, " : ",endAngle);
-        pybind11::print("K Rotation Type      : ",kRotationTypeName[kRotationType]);
-        if(kRotationType == KRotationType::ROTATION) {
-        pybind11::print("Rotation Angle       : ",kStart , " : ", kIncrement, " : ",kEnd);
-        }
+
         pybind11::print("\n");
         pybind11::print("Optional options:");
         pybind11::print("==================================================");

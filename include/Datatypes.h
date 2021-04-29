@@ -69,7 +69,7 @@ enum ReferenceFrame:bool{
 };
 
 
-enum CaseTypesEnums : UINT {
+enum CaseTypes : UINT {
   DEFAULT = 0,
   BEAM_DIVERGENCE = 1,
   GRAZING_INCIDENCE = 2,
@@ -77,7 +77,7 @@ enum CaseTypesEnums : UINT {
 };
 
 static const char *caseTypenames[]{"Default", "BeamDivergence","GrazingIncidence"};
-static_assert(sizeof(caseTypenames) / sizeof(char*) == CaseTypesEnums::MAX_CASE_TYPE,
+static_assert(sizeof(caseTypenames) / sizeof(char*) == CaseTypes::MAX_CASE_TYPE,
               "sizes dont match");
 
 

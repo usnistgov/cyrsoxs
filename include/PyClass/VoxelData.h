@@ -52,8 +52,8 @@ public:
      * @brief constructor
      * @param inputData Input data
      */
-    VoxelData(const InputData &inputData,const MorphologyType & morphologyType)
-        : inputData_(inputData),morphologyType_(morphologyType) {
+    VoxelData(const InputData &inputData)
+        : inputData_(inputData),morphologyType_(static_cast<MorphologyType>(inputData.morphologyType)) {
       clear();
       const BigUINT numVoxels = inputData_.numX * inputData_.numY * inputData_.numZ;
       voxel = new Voxel<NUM_MATERIAL>[numVoxels];
@@ -97,6 +97,8 @@ public:
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matPhiVector,
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
                          const UINT matID) {
+      pybind11::print("Not supported");
+      return;
         if(morphologyType_ != MorphologyType::EULER_ANGLES){
           py::print("Error: [Expected]: Euler Angles / Spherical Coordinates. [Found:] VectorMorphology\n");
           return;

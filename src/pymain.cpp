@@ -132,15 +132,16 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .value("Full", ScatterApproach::FULL)
       .export_values();
 
-  py::enum_<KRotationType>(module, "KRotationType")
-      .value("NoRotation", KRotationType::NOROTATION)
-      .value("Rotation", KRotationType::ROTATION)
-      .export_values();
   py::enum_<MorphologyType>(module, "MorphologyType")
     .value("EulerAngles", MorphologyType::EULER_ANGLES)
     .value("VectorMorphology", MorphologyType::VECTOR_MORPHOLOGY)
     .export_values();
 
+  py::enum_<CaseTypes>(module,"CaseType")
+    .value("Default", CaseTypes::DEFAULT)
+    .value("BeamDivergence", CaseTypes::BEAM_DIVERGENCE)
+    .value("GrazingIncidence", CaseTypes::GRAZING_INCIDENCE)
+    .export_values();
 
 
   py::class_<InputData>(module, "InputData")
@@ -149,12 +150,12 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("print", &InputData::print, "Print the input data")
       .def("setERotationAngle", &InputData::setEAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
            py::arg("EndAngle"),py::arg("IncrementAngle"))
-      .def("setKRotationAngle", &InputData::setKAngles, "Set the rotation for K wave vector", py::arg("StartAngle"),
-           py::arg("EndAngle"),py::arg("IncrementAngle"))
       .def("physSize", &InputData::setPhysSize, "Set the Physical size (in nm)", py::arg("PhysSize"))
       .def("dimensions", &InputData::setDimension, "Set the Dimensions", py::arg("X"), py::arg("Y"), py::arg("Z"))
       .def("validate", &InputData::validate, "Validate the input data")
-      .def("setKRotationType",&InputData::setKRotationType,"Sets the krotation Type",py::arg("kRotation"))
+      .def("setCaseType",&InputData::setCaseType,"case Type")
+      .def("setMorphologyType",&InputData::setMorphologyType,"morphology Type")
+      .def("setKVectors",&InputData::setKVectors,"set K vectors")
       .def_readwrite("interpolationType", &InputData::ewaldsInterpolation, "Ewalds interpolation type")
       .def_readwrite("windowingType", &InputData::windowingType, "Windowing type")
       .def_readwrite("rotMask",&InputData::rotMask,"Rotation Mask")
@@ -171,7 +172,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("print", &RefractiveIndexData::printEnergyData, "Prints the refractive index data");
 
   py::class_<VoxelData>(module, "VoxelData")
-      .def(py::init<const InputData &,const MorphologyType &>(), "Constructor",py::arg("InputData"),py::arg("MorphologyType"))
+      .def(py::init<const InputData &>(), "Constructor",py::arg("InputData"))
       .def("addVoxelData", &VoxelData::addMaterialDataVectorMorphology,
            "Adds the Allignment and unaligned component to the given material", py::arg("AlignedData"),
            py::arg("UnalignedData"), py::arg("MaterialID"))
