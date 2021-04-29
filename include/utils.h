@@ -73,6 +73,8 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
  * @param projectionGPUAveraged The scattering pattern
  */
 static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged,const std::string dirName = "VTI"){
+    std::cout << "Not supported\n";
+    return;
     createDirectory(dirName);
     omp_set_num_threads(inputData.num_threads);
     const UINT numEnergyLevel = inputData.energies.size();
