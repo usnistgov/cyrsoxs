@@ -152,27 +152,6 @@ __host__ static inline void scaleVec(const Real3 & vecIn, Real3 & scaledVec, con
   scaledVec.z = scaleFactor*vecIn.z;
 }
 
-[[deprecated]]
-__host__ static inline void computeInverseMatrix(const Real  matrixA [][3], Real  inverseMatrix [][3]){
-  double det = matrixA[0][0] * (matrixA[1][1] * matrixA[2][2] - matrixA[2][1] * matrixA[1][2]) -
-               matrixA[0][1] * (matrixA[1][0] * matrixA[2][2] - matrixA[1][2] * matrixA[2][0]) +
-               matrixA[0][2] * (matrixA[1][0] * matrixA[2][1] - matrixA[1][1] * matrixA[2][0]);
-
-  assert(not(FEQUALS(det,0.0)));
-  Real invdet = 1. / det;
-
-  inverseMatrix[0][0] = (matrixA[1][1] * matrixA[2][2] - matrixA[2][1] * matrixA[1][2]) * invdet;
-  inverseMatrix[0][1] = (matrixA[0][2] * matrixA[2][1] - matrixA[0][1] * matrixA[2][2]) * invdet;
-  inverseMatrix[0][2] = (matrixA[0][1] * matrixA[1][2] - matrixA[0][2] * matrixA[1][1]) * invdet;
-  inverseMatrix[1][0] = (matrixA[1][2] * matrixA[2][0] - matrixA[1][0] * matrixA[2][2]) * invdet;
-  inverseMatrix[1][1] = (matrixA[0][0] * matrixA[2][2] - matrixA[0][2] * matrixA[2][0]) * invdet;
-  inverseMatrix[1][2] = (matrixA[1][0] * matrixA[0][2] - matrixA[0][0] * matrixA[1][2]) * invdet;
-  inverseMatrix[2][0] = (matrixA[1][0] * matrixA[2][1] - matrixA[2][0] * matrixA[1][1]) * invdet;
-  inverseMatrix[2][1] = (matrixA[2][0] * matrixA[0][1] - matrixA[0][0] * matrixA[2][1]) * invdet;
-  inverseMatrix[2][2] = (matrixA[0][0] * matrixA[1][1] - matrixA[1][0] * matrixA[0][1]) * invdet;
-
-}
-
 __host__ static inline void computeInverseMatrix(const Matrix &  matrixA, Matrix & inverseMatrix){
   double det = matrixA.getValue<0,0>() * (matrixA.getValue<1,1>() * matrixA.getValue<2,2>() - matrixA.getValue<2,1>() * matrixA.getValue<1,2>()) -
                matrixA.getValue<0,1>() * (matrixA.getValue<1,0>() * matrixA.getValue<2,2>() - matrixA.getValue<1,2>() * matrixA.getValue<2,0>()) +
@@ -194,19 +173,6 @@ __host__ static inline void computeInverseMatrix(const Matrix &  matrixA, Matrix
 
 }
 
-[[deprecated]]
-__host__ static void inline performMatrixMultiplication(const Real  matA[][3], const Real  matB[][3], Real  mat[][3]){
-  std::memset(mat,0, sizeof(Real)*9);
-#pragma unroll 3
-  for(int i = 0; i < 3; ++i)
-#pragma unroll 3
-    for(int j = 0; j < 3; ++j)
-#pragma unroll 3
-      for(int k = 0; k < 3; ++k)
-      {
-        mat[i][j] += matA[i][k] * matB[k][j];
-      }
-}
 
 template<bool transpose1, bool transpose2>
 __host__ static void inline performMatrixMultiplication(const Matrix &  matA, const Matrix &  matB, Matrix &  mat) {
@@ -216,61 +182,6 @@ __host__ static void inline performMatrixMultiplication(const Matrix &  matA, co
 }
 
 
-
-/**
- * @brief computes Matrix that will transform originalVec into transformed Vec
- *        [RotationMatrix X orignalVec = transformedVec]
- * @param [in/out] originalVec : the orginal 3D vector
- * @param [in] transformedVec  : 3D vector that the original Vec is transformed to.
- * @param [out] RotationMatrix : The resultant 3 X 3 rotation matrix
- */
-[[deprecated]]
-__host__ static void computeRotationMatrix(const Real3 & originalVec,const Real3 & transformedVec , Real  RotationMatrix [][3]){
-  /**
-   * Matlab code: (https://math.stackexchange.com/questions/180418/calculate-rotation-matrix-to-align-vector-a-to-vector-b-in-3d)
-   * G =  [ dot(A,B) -norm(cross(A,B)) 0;...
-           norm(cross(A,B)) dot(A,B)  0;...
-           0              0           1];
-
-      F = [ A (B-dot(A,B)*A)/norm(B-dot(A,B)*A) cross(B,A) ];
-
-      UU =  F*G*inv(F);
-   */
-  std::memset(RotationMatrix,0, sizeof(Real)*9);
-  if((FEQUALS(originalVec.x,transformedVec.x)) and (FEQUALS(originalVec.y,transformedVec.y)) and (FEQUALS(originalVec.z,transformedVec.z))){
-    RotationMatrix[0][0] = 1;
-    RotationMatrix[1][1] = 1;
-    RotationMatrix[2][2] = 1;
-    return;
-  }
-  const Real dotProduct = computeDotProduct(originalVec,transformedVec);
-  const Real3 & crossVec = computeCrossProduct(originalVec,transformedVec);
-  const Real normCrossProduct = computeVecNorm(crossVec);
-
-  Real G[3][3];
-  G[0][0] = dotProduct;       G[0][1] = -normCrossProduct; G[0][2] = 0;
-  G[1][0] = normCrossProduct; G[1][1] =  dotProduct;       G[1][2] = 0;
-  G[2][0] = 0;                G[2][1] = 0;                 G[2][2] = 1;
-
-
-
-  Real3 scaledVec;
-  scaleVec(originalVec,scaledVec,dotProduct);
-  const Real3 subVec{transformedVec.x - scaledVec.x,transformedVec.y - scaledVec.y,transformedVec.z - scaledVec.z};
-  const Real normSubVec = computeVecNorm(subVec);
-
-  Real F[3][3];
-  F[0][0] = originalVec.x;  F[0][1] = subVec.x/normSubVec; F[0][2] = -crossVec.x;
-  F[1][0] = originalVec.y;  F[1][1] = subVec.y/normSubVec; F[1][2] = -crossVec.y;
-  F[2][0] = originalVec.z;  F[2][1] = subVec.z/normSubVec; F[2][2] = -crossVec.z;
-
-
-  Real invF[3][3], temp1[3][3];
-  computeInverseMatrix(F,invF);
-  performMatrixMultiplication(G,invF,temp1);
-  performMatrixMultiplication(F,temp1,RotationMatrix);
-
-}
 
 /**
  * @brief computes Matrix that will transform originalVec into transformed Vec
@@ -347,29 +258,6 @@ __host__ static void inline performRodriguesRotation(Real3  & rotatedVec, const 
   rotatedVec.z = term1.z + term2.z + term3.z;
 }
 
-/**
- * @brief computes matrix times vector
- * @tparam transpose weather to use transpose of matrix
- * @param [in] matrix
- * @param [in] vec
- * @param [out] matVec
- */
-
-template <bool transpose>
-[[deprecated]]
-__host__ static void doMatVec(const Real matrix[][3], const Real3 & vec, Real3 & matVec){
-  if(transpose) {
-    matVec.x = matrix[0][0] * vec.x + matrix[1][0] * vec.y + matrix[2][0] * vec.z;
-    matVec.y = matrix[0][1] * vec.x + matrix[1][1] * vec.y + matrix[2][1] * vec.z;
-    matVec.z = matrix[0][2] * vec.x + matrix[1][2] * vec.y + matrix[2][2] * vec.z;
-  }
-  else{
-    matVec.x = matrix[0][0] * vec.x + matrix[0][1] * vec.y + matrix[0][2] * vec.z;
-    matVec.y = matrix[1][0] * vec.x + matrix[1][1] * vec.y + matrix[1][2] * vec.z;
-    matVec.z = matrix[2][0] * vec.x + matrix[2][1] * vec.y + matrix[2][2] * vec.z;
-  }
-
-}
 /**
  *
  * @tparam transpose
@@ -495,64 +383,6 @@ __host__ bool static computeRotationMatrix(const Real3 & k, const Matrix & rotat
 __host__ inline static void normalizeVec(Real3 & vec){
   Real normVec =  computeVecNorm(vec);
   scaleVec(vec,vec,1./normVec);
-}
-[[deprecated]]
-__host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, Real rotationMatrix[][3]){
-
-  static constexpr Real3 origK{0,0,1};
-  Real rotationMatrixK[3][3];
-  computeRotationMatrix(origK,k,rotationMatrixK);
-
-#if DEBUG
-  {
-    Real3 shiftedK;
-    doMatVec<false>(rotationMatrixK, origK, shiftedK);
-    assert((FEQUALS(shiftedK.x, k.x)) and (FEQUALS(shiftedK.y, k.y)) and (FEQUALS(shiftedK.z, k.z)));
-  }
-#endif
-  static constexpr Real3 X{1,0,0};
-  static constexpr UINT numInterval = 100000;
-  static constexpr Real dTheta = M_PI/(numInterval*1.0);
-  Real3 shiftedX;
-  doMatVec<false>(rotationMatrixK,X,shiftedX);
-  Real3 rotatedX;
-  Real maxDiff = std::numeric_limits<Real>::infinity();
-  Real rotAngle = 0;
-  for(UINT i = 0; i < numInterval; i++){
-    performRodriguesRotation(rotatedX,shiftedX,k,i*dTheta);
-    Real diff = fabs(rotatedX.y);
-    if(maxDiff > diff){
-      maxDiff = diff;
-      rotAngle = i*dTheta;
-    }
-  }
-  assert(fabs(maxDiff) < 1E-4);
-  performRodriguesRotation(rotatedX,shiftedX,k,rotAngle);
-  rotAngle = rotatedX.x > 0 ? (rotAngle): (rotAngle)+M_PI;
-  performRodriguesRotation(rotatedX,shiftedX,k,rotAngle);
-#if DEBUG
-  {
-    static constexpr Real3 Y{0,1,0};
-    static constexpr Real3 Z{0,0,1};
-    Real3 shiftedY,shiftedZ;
-    doMatVec<false>(rotationMatrixK, Y, shiftedY);
-    doMatVec<false>(rotationMatrixK, Z, shiftedZ);
-    Real3 rotatedY, rotatedZ;
-    performRodriguesRotation(rotatedY,shiftedY,k,rotAngle);
-    performRodriguesRotation(rotatedZ,shiftedZ,k,rotAngle);
-    assert(FEQUALS(computeDotProduct(shiftedX,shiftedY),0));
-    assert(FEQUALS(computeDotProduct(shiftedX,shiftedZ),0));
-    assert(FEQUALS(computeDotProduct(shiftedY,shiftedZ),0));
-  };
-#endif
-  Real rotationMatrixX[3][3];
-  computeRotationMatrix(shiftedX,rotatedX,rotationMatrixX);
-
-  performMatrixMultiplication(rotationMatrixX,rotationMatrixK,rotationMatrix);
-
-
-  return true;
-
 }
 
 __host__ static void INLINE inline computeWarpAffineMatrix(const double  srcPoint[][2], const double  dstPoint[][2], double  warpAffineMatrix[][3]){
