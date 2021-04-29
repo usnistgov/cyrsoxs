@@ -421,8 +421,8 @@ int cudaMain(const UINT *voxel,
     UINT BlockSize2 = static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
 
     for (UINT j = numStart; j < numEnd; j++)
-    for (UINT kID = 0; kID < kVectors.size();kID++){
-      const Real3 & kVec = kVectors[kID];
+    for (UINT kstart = 0; kstart < kVectors.size();kstart++){
+      const Real3 & kVec = kVectors[kstart];
       Matrix rotationMatrixK,rotationMatrix;
       computeRotationMatrixK(kVec,rotationMatrixK);
       Real baseRotAngle;
@@ -794,7 +794,7 @@ int cudaMain(const UINT *voxel,
       }
 #endif
 
-      hostDeviceExchange(&projectionGPUAveraged[j * numVoxel2D *kVectors.size() + kID], d_projectionAverage, numVoxel2D,
+      hostDeviceExchange(&projectionGPUAveraged[(j * idata.kVectors.size())*numVoxel2D + kstart*numVoxel2D], d_projectionAverage, numVoxel2D,
                          cudaMemcpyDeviceToHost);
 #ifdef PROFILING
       {
