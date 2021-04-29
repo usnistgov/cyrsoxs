@@ -67,6 +67,7 @@ enum ReferenceFrame:bool{
   MATERIAL = false,
   LAB = true
 };
+static const char *referenceFrameName[]{"MATERIAL", "LAB"};
 
 
 enum CaseTypes : UINT {

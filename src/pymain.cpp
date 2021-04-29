@@ -143,6 +143,10 @@ PYBIND11_MODULE(CyRSoXS, module) {
     .value("GrazingIncidence", CaseTypes::GRAZING_INCIDENCE)
     .export_values();
 
+  py::enum_<ReferenceFrame>(module,"ReferenceFrame")
+     .value("Lab",ReferenceFrame::LAB)
+     .value("Material",ReferenceFrame::MATERIAL)
+     .export_values();
 
   py::class_<InputData>(module, "InputData")
       .def(py::init<>())
@@ -160,7 +164,8 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def_readwrite("windowingType", &InputData::windowingType, "Windowing type")
       .def_readwrite("rotMask",&InputData::rotMask,"Rotation Mask")
       .def_readwrite("openMP", &InputData::num_threads, "number of OpenMP threads")
-      .def_readwrite("scatterApproach", &InputData::scatterApproach, "sets the scatter approach");
+      .def_readwrite("scatterApproach", &InputData::scatterApproach, "sets the scatter approach")
+      .def_readwrite("referenceFrame",&InputData::referenceFrame,"sets the reference frame");
 
 
   py::class_<RefractiveIndexData>(module, "RefractiveIndex")

@@ -94,8 +94,11 @@ public:
      * @param energy Energy for which the numpy array is needed
      * @return numpy numpy array with the scattering pattern data of the energy
      */
-    py::array_t<Real> writeToNumpy(const Real energy, const UINT kID) const {
-
+    py::array_t<Real> writeToNumpy(const Real energy, const UINT kID = 0) const {
+      if(inputData_.caseType == DEFAULT){
+        if(kID > 0) py::print("kID cannot be greater than 0 for Default");
+        return py::array_t<Real>{};
+      }
       const auto & energies = inputData_.energies;
       if((energy < energies[0]) or (energy > energies[energies.size() - 1])){
         py::print("[LOG]: Wrong EnergyID");

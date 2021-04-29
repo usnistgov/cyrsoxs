@@ -217,6 +217,7 @@ private:
 
   UINT caseType;
   UINT morphologyType;
+  bool referenceFrame = ReferenceFrame::MATERIAL;
 
   /**
    *
@@ -452,7 +453,7 @@ private:
         pybind11::print("Rotation Angle       : ",startAngle , " : ", incrementAngle, " : ",endAngle);
         pybind11::print("KVectors             :");
         for(const auto & kVec:kVectors) {
-          pybind11::print("                   :  [",kVec.x,",",kVec.y,",",kVec.z);
+          pybind11::print("                   :  [",kVec.x,",",kVec.y,",",kVec.z,"]");
         }
 
         pybind11::print("\n");
@@ -462,6 +463,7 @@ private:
         pybind11::print("Interpolation Type       : ",Interpolation::interpolationName[ewaldsInterpolation]);
         pybind11::print("Windowing Type           : ",FFT::windowingName[windowingType]);
         pybind11::print("Rotation Mask            : ",rotMask);
+        pybind11::print("Reference Frame          : ",referenceFrameName[(UINT)referenceFrame]);
 
     }
 
@@ -486,6 +488,7 @@ private:
     void printToFile(std::ofstream & fout) const{
         fout << "CaseType             : " << caseTypenames[caseType];
         fout << "MorphologyType       : " << morphologyTypeName[morphologyType];
+        fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame];
         fout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
         fout << "PhysSize             : " << physSize << "nm \n";
         fout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";

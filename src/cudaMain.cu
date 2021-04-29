@@ -461,7 +461,7 @@ int cudaMain(const UINT *voxel,
         computePolarization(materialInput[j], d_voxelInput, eleField, Eangle, vx, d_polarizationX, d_polarizationY,
                             d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
                             idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
-                            ReferenceFrame::MATERIAL,ERotationMatrix);
+                            static_cast<ReferenceFrame>(idata.referenceFrame),ERotationMatrix);
 
 #ifdef DUMP_FILES
 
