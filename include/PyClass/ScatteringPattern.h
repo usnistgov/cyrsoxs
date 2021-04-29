@@ -115,7 +115,7 @@ public:
       const UINT energyID = std::lower_bound(energies.begin(),energies.end(),energy) - energies.begin();
 
       if(not(FEQUALS(energies[energyID],energy))){
-        py::print("[LOG]: Wrong EnergyID");
+        py::print("[ERROR]: Wrong EnergyID");
         return py::array_t<Real>{};
       }
       py::capsule free_when_done(this->data_, [](void *f) {
