@@ -102,13 +102,13 @@ public:
           return py::array_t<Real>{};
         }
       }
-      if(kID > inputData_.kVectors.size()){
-        py::print("kID = ",kID, " greater than kVector Size = ", inputData_.kVectors.size());
+      if(kID >= inputData_.kVectors.size()){
+        py::print("[ERROR] kID = ",kID, " must be smaller than kVector Size = ", inputData_.kVectors.size());
         return py::array_t<Real>{};
       }
       const auto & energies = inputData_.energies;
       if((energy < energies[0]) or (energy > energies[energies.size() - 1])){
-        py::print("[LOG]: Wrong EnergyID");
+        py::print("[ERROR]: Wrong EnergyID");
         return py::array_t<Real>{};
       }
       py::print("[INFO] kVector = [",inputData_.kVectors[kID].x,",",inputData_.kVectors[kID].y,",",inputData_.kVectors[kID].z,"]");
