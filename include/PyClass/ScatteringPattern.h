@@ -44,7 +44,7 @@ public:
     :inputData_(InputData){
         const UINT
             numEnergyLevel = static_cast<UINT>(inputData_.energies.size());
-        data_ = new Real[numEnergyLevel * inputData_.numX * inputData_.numY];
+        data_ = new Real[numEnergyLevel * inputData_.numX * inputData_.numY * inputData_.kVectors.size()];
     }
 
     /**
@@ -94,9 +94,9 @@ public:
      * @param energy Energy for which the numpy array is needed
      * @return numpy numpy array with the scattering pattern data of the energy
      */
-    py::array_t<Real> writeToNumpy(const Real energy) const {
+    py::array_t<Real> writeToNumpy(const Real energy, const UINT kID) const {
 
-        const auto & energies = inputData_.energies;
+      const auto & energies = inputData_.energies;
       if((energy < energies[0]) or (energy > energies[energies.size() - 1])){
         py::print("[LOG]: Wrong EnergyID");
         return py::array_t<Real>{};
@@ -114,7 +114,7 @@ public:
       return (py::array_t<Real>(
       {(int)inputData_.numX,(int)inputData_.numY},
       {sizeof(Real)*inputData_.numY,sizeof(Real)},
-      &this->data_[energyID*(inputData_.numY*inputData_.numX)],
+      &this->data_[energyID*(inputData_.numY*inputData_.numX)*inputData_.kVectors.size() + kID*(inputData_.numX*inputData_.numY)],
           free_when_done));
 
 

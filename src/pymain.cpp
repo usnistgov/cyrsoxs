@@ -190,7 +190,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("clear",&ScatteringPattern::clear,"Clears the memory")
       .def("writeToHDF5",&ScatteringPattern::writeToHDF5,"Dumps data in  HDF5 file format")
       .def("writeToVTI",&ScatteringPattern::writeToVTI,"Dumps data in  VTI file format")
-      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"));
+      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"),py::arg("kID"));
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);
