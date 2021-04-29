@@ -646,7 +646,7 @@ int cudaMain(const UINT *voxel,
                                    static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
                                    idata.if2DComputation(), BlockSize2,kVec);
 #ifdef DUMP_FILES
-          hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
+          hostDeviceExchange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
           std::string dirname = "Ewald/";
           std::string fname = dirname + "ewlad" + std::to_string(i);
           VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
@@ -661,7 +661,7 @@ int cudaMain(const UINT *voxel,
                                    idata.if2DComputation(), BlockSize2,kVec);
 #ifdef DUMP_FILES
 
-          hostDeviceExcange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
+          hostDeviceExchange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
           std::string dirname = "Ewald/";
           std::string fname = dirname + "ewlad" + std::to_string(i);
           VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
