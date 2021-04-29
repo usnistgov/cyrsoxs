@@ -280,6 +280,7 @@ int cudaMain(const UINT *voxel,
   createDirectory("Polarize");
   createDirectory("FFT");
   createDirectory("Scatter");
+  createDirectory("Ewald");
 
   /** Writing VTI files as a cross check **/
 
@@ -420,291 +421,367 @@ int cudaMain(const UINT *voxel,
     UINT BlockSize  = static_cast<UINT>(ceil(numVoxels * 1.0 / NUM_THREADS));
     UINT BlockSize2 = static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
 
-    for (UINT j = numStart; j < numEnd; j++)
-    for (UINT kstart = 0; kstart < kVectors.size();kstart++){
-      const Real3 & kVec = kVectors[kstart];
-      Matrix rotationMatrixK,rotationMatrix;
-      computeRotationMatrixK(kVec,rotationMatrixK);
-      Real baseRotAngle;
-      computeRotationMatrixBaseConfiguration(kVec,rotationMatrixK,rotationMatrix,baseRotAngle);
+    for (UINT j = numStart; j < numEnd; j++) {
       const Real &energy = (idata.energies[j]);
       std::cout << " [STAT] Energy = " << energy << " starting " << "\n";
+      for (UINT kstart = 0; kstart < kVectors.size(); kstart++) {
+        const Real3 &kVec = kVectors[kstart];
+        Matrix rotationMatrixK, rotationMatrix;
+        computeRotationMatrixK(kVec, rotationMatrixK);
+        Real baseRotAngle;
+        computeRotationMatrixBaseConfiguration(kVec, rotationMatrixK, rotationMatrix, baseRotAngle);
 
-      cudaZeroEntries(d_projectionAverage, numVoxel2D);
-      if (idata.rotMask) {
-        cudaZeroEntries(d_mask, numVoxel2D);
-      }
+
+        cudaZeroEntries(d_projectionAverage, numVoxel2D);
+        if (idata.rotMask) {
+          cudaZeroEntries(d_mask, numVoxel2D);
+        }
 
 #ifdef  PROFILING
-      START_TIMER(TIMERS::ENERGY)
+        START_TIMER(TIMERS::ENERGY)
 #endif
 
 
-      ElectricField eleField;
-      eleField.e.x = 1;
-      eleField.e.y = 0;
-      eleField.e.z = 0;
-      Real wavelength = static_cast<Real>(1239.84197 / energy);
-      eleField.k.x = 0;
-      eleField.k.y = 0;
-      eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
-      Real Eangle;
-      Matrix ERotationMatrix;
-      for (UINT i = 0; i < numAnglesRotation; i++) {
-        Eangle = static_cast<Real>((baseRotAngle + i * idata.incrementAngle) * M_PI / 180.0);
-        computeRotationMatrix(kVec,rotationMatrixK,ERotationMatrix,Eangle);
+        ElectricField eleField;
+        eleField.e.x = 1;
+        eleField.e.y = 0;
+        eleField.e.z = 0;
+        Real wavelength = static_cast<Real>(1239.84197 / energy);
+        eleField.k.x = 0;
+        eleField.k.y = 0;
+        eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
+        Real Eangle;
+        Matrix ERotationMatrix;
+        for (UINT i = 0; i < numAnglesRotation; i++) {
+          Eangle = static_cast<Real>((baseRotAngle + i * idata.incrementAngle) * M_PI / 180.0);
+          computeRotationMatrix(kVec, rotationMatrixK, ERotationMatrix, Eangle);
 #ifdef PROFILING
-        {
-          START_TIMER(TIMERS::POLARIZATION)
-        }
+          {
+            START_TIMER(TIMERS::POLARIZATION)
+          }
 #endif
-        computePolarization(materialInput[j], d_voxelInput, eleField, Eangle, vx, d_polarizationX, d_polarizationY,
-                            d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
-                            idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
-                            static_cast<ReferenceFrame>(idata.referenceFrame),ERotationMatrix);
+          computePolarization(materialInput[j], d_voxelInput, eleField, Eangle, vx, d_polarizationX, d_polarizationY,
+                              d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
+                              idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
+                              static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix);
 
 #ifdef DUMP_FILES
 
-        CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
-                                     d_polarizationX,
-                                     sizeof(Complex) * numVoxels,
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
-        CUDA_CHECK_RETURN(cudaMemcpy(polarizationZ,
-                                     d_polarizationZ,
-                                     sizeof(Complex) * numVoxels,
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
-        CUDA_CHECK_RETURN(cudaMemcpy(polarizationY,
-                                     d_polarizationY,
-                                     sizeof(Complex) * numVoxels,
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
-        {
-          FILE* pX = fopen("polarizeX.dmp", "wb");
-          fwrite(polarizationX, sizeof(Complex), numVoxels, pX);
-          fclose(pX);
-          FILE* pY = fopen("polarizeY.dmp", "wb");
-          fwrite(polarizationY, sizeof(Complex), numVoxels, pY);
-          fclose(pY);
-          FILE* pZ = fopen("polarizeZ.dmp", "wb");
-          fwrite(polarizationZ, sizeof(Complex), numVoxels, pZ);
-          fclose(pZ);
-          std::string dirname = "Polarize/";
-          std::string fname = dirname + "polarizationX" + std::to_string(i);
-          VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeX");
-          fname = dirname + "polarizationY" + std::to_string(i);
-          VTI::writeDataScalar(polarizationY, voxel, fname.c_str(), "polarizeY");
-          fname = dirname + "polarizationZ" + std::to_string(i);
-          VTI::writeDataScalar(polarizationZ, voxel, fname.c_str(), "polarizeZ");
-        }
+          CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
+                                       d_polarizationX,
+                                       sizeof(Complex) * numVoxels,
+                                       cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
+          CUDA_CHECK_RETURN(cudaMemcpy(polarizationZ,
+                                       d_polarizationZ,
+                                       sizeof(Complex) * numVoxels,
+                                       cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
+          CUDA_CHECK_RETURN(cudaMemcpy(polarizationY,
+                                       d_polarizationY,
+                                       sizeof(Complex) * numVoxels,
+                                       cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
+          {
+            FILE *pX = fopen("polarizeX.dmp", "wb");
+            fwrite(polarizationX, sizeof(Complex), numVoxels, pX);
+            fclose(pX);
+            FILE *pY = fopen("polarizeY.dmp", "wb");
+            fwrite(polarizationY, sizeof(Complex), numVoxels, pY);
+            fclose(pY);
+            FILE *pZ = fopen("polarizeZ.dmp", "wb");
+            fwrite(polarizationZ, sizeof(Complex), numVoxels, pZ);
+            fclose(pZ);
+            std::string dirname = "Polarize/";
+            std::string fname = dirname + "polarizationX" + std::to_string(i);
+            VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeX");
+            fname = dirname + "polarizationY" + std::to_string(i);
+            VTI::writeDataScalar(polarizationY, voxel, fname.c_str(), "polarizeY");
+            fname = dirname + "polarizationZ" + std::to_string(i);
+            VTI::writeDataScalar(polarizationZ, voxel, fname.c_str(), "polarizeZ");
+          }
 #endif
 
 #ifdef PROFILING
-        {
-          END_TIMER(TIMERS::POLARIZATION)
-          START_TIMER(TIMERS::FFT)
-        }
+          {
+            END_TIMER(TIMERS::POLARIZATION)
+            START_TIMER(TIMERS::FFT)
+          }
 #endif
-        /** FFT Computation **/
-        result = performFFT(d_polarizationX, plan);
-        if (result != CUFFT_SUCCESS) {
-          std::cout << "CUFFT failed with result " << result << "\n";
+          /** FFT Computation **/
+          result = performFFT(d_polarizationX, plan);
+          if (result != CUFFT_SUCCESS) {
+            std::cout << "CUFFT failed with result " << result << "\n";
 #pragma omp cancel parallel
-          exit(EXIT_FAILURE);
-        }
+            exit(EXIT_FAILURE);
+          }
 
-        result = performFFT(d_polarizationY, plan);
-        if (result != CUFFT_SUCCESS) {
-          std::cout << "CUFFT failed with result " << result << "\n";
+          result = performFFT(d_polarizationY, plan);
+          if (result != CUFFT_SUCCESS) {
+            std::cout << "CUFFT failed with result " << result << "\n";
 #pragma omp cancel parallel
-          exit(EXIT_FAILURE);
-        }
+            exit(EXIT_FAILURE);
+          }
 
-        result = performFFT(d_polarizationZ, plan);
-        if (result != CUFFT_SUCCESS) {
-          std::cout << "CUFFT failed with result " << result << "\n";
-          exit(EXIT_FAILURE);
-        }
+          result = performFFT(d_polarizationZ, plan);
+          if (result != CUFFT_SUCCESS) {
+            std::cout << "CUFFT failed with result " << result << "\n";
+            exit(EXIT_FAILURE);
+          }
 
 #ifdef DUMP_FILES
-        CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
-                                     d_polarizationX,
-                                     sizeof(Complex) * numVoxels,
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
-        CUDA_CHECK_RETURN(cudaMemcpy(polarizationY,
-                                     d_polarizationY,
-                                     sizeof(Complex) * numVoxels,
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
-        CUDA_CHECK_RETURN(cudaMemcpy(polarizationZ,
-                                     d_polarizationZ,
-                                     sizeof(Complex) * numVoxels,
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
-        {
-          FILE* pX = fopen("fftpolarizeXbshift.dmp", "wb");
-          fwrite(polarizationX, sizeof(Complex), numVoxels, pX);
-          fclose(pX);
-          FILE* pY = fopen("fftpolarizeYbshift.dmp", "wb");
-          fwrite(polarizationY, sizeof(Complex), numVoxels, pY);
-          fclose(pY);
-          FILE* pZ = fopen("fftpolarizeZbshift.dmp", "wb");
-          fwrite(polarizationZ, sizeof(Complex), numVoxels, pZ);
-          fclose(pZ);
-          std::string dirname = "FFT/";
-          std::string fname = dirname + "polarizationXfftbshift" + std::to_string(i);
-          VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeXfft");
-          fname = dirname + "polarizationYfftbshift" + std::to_string(i);
-          VTI::writeDataScalar(polarizationY, voxel, fname.c_str(), "polarizeYfft");
-          fname = dirname + "polarizationZfftbshift" + std::to_string(i);
-          VTI::writeDataScalar(polarizationZ, voxel, fname.c_str(), "polarizeZfft");
-        }
+          CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
+                                       d_polarizationX,
+                                       sizeof(Complex) * numVoxels,
+                                       cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
+          CUDA_CHECK_RETURN(cudaMemcpy(polarizationY,
+                                       d_polarizationY,
+                                       sizeof(Complex) * numVoxels,
+                                       cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
+          CUDA_CHECK_RETURN(cudaMemcpy(polarizationZ,
+                                       d_polarizationZ,
+                                       sizeof(Complex) * numVoxels,
+                                       cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
+          {
+            FILE *pX = fopen("fftpolarizeXbshift.dmp", "wb");
+            fwrite(polarizationX, sizeof(Complex), numVoxels, pX);
+            fclose(pX);
+            FILE *pY = fopen("fftpolarizeYbshift.dmp", "wb");
+            fwrite(polarizationY, sizeof(Complex), numVoxels, pY);
+            fclose(pY);
+            FILE *pZ = fopen("fftpolarizeZbshift.dmp", "wb");
+            fwrite(polarizationZ, sizeof(Complex), numVoxels, pZ);
+            fclose(pZ);
+            std::string dirname = "FFT/";
+            std::string fname = dirname + "polarizationXfftbshift" + std::to_string(i);
+            VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeXfft");
+            fname = dirname + "polarizationYfftbshift" + std::to_string(i);
+            VTI::writeDataScalar(polarizationY, voxel, fname.c_str(), "polarizeYfft");
+            fname = dirname + "polarizationZfftbshift" + std::to_string(i);
+            VTI::writeDataScalar(polarizationZ, voxel, fname.c_str(), "polarizeZfft");
+          }
 #endif
 #pragma message "Make me callbacks"
-        performFFTShift(d_polarizationX, BlockSize, vx);
-        performFFTShift(d_polarizationY, BlockSize, vx);
-        performFFTShift(d_polarizationZ, BlockSize, vx);
+          performFFTShift(d_polarizationX, BlockSize, vx);
+          performFFTShift(d_polarizationY, BlockSize, vx);
+          performFFTShift(d_polarizationZ, BlockSize, vx);
 #ifdef DUMP_FILES
-        CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
-                                     d_polarizationX,
-                                     sizeof(Complex) * numVoxels,
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
-        CUDA_CHECK_RETURN(cudaMemcpy(polarizationY,
-                                     d_polarizationY,
-                                     sizeof(Complex) * numVoxels,
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
-        CUDA_CHECK_RETURN(cudaMemcpy(polarizationZ,
-                                     d_polarizationZ,
-                                     sizeof(Complex) * numVoxels,
-                                     cudaMemcpyDeviceToHost));
-        gpuErrchk(cudaPeekAtLastError());
-        {
-          FILE* pX = fopen("fftpolarizeX.dmp", "wb");
-          fwrite(polarizationX, sizeof(Complex), numVoxels, pX);
-          fclose(pX);
-          FILE* pY = fopen("fftpolarizeY.dmp", "wb");
-          fwrite(polarizationY, sizeof(Complex), numVoxels, pY);
-          fclose(pY);
-          FILE* pZ = fopen("fftpolarizeZ.dmp", "wb");
-          fwrite(polarizationZ, sizeof(Complex), numVoxels, pZ);
-          fclose(pZ);
-          std::string dirname = "FFT/";
-          std::string fname = dirname + "polarizationXfft" + std::to_string(i);
-          VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeXfft");
-          fname = dirname + "polarizationYfft" + std::to_string(i);
-          VTI::writeDataScalar(polarizationY, voxel, fname.c_str(), "polarizeYfft");
-          fname = dirname + "polarizationZfft" + std::to_string(i);
-          VTI::writeDataScalar(polarizationZ, voxel, fname.c_str(), "polarizeZfft");
-        }
+          CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
+                                       d_polarizationX,
+                                       sizeof(Complex) * numVoxels,
+                                       cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
+          CUDA_CHECK_RETURN(cudaMemcpy(polarizationY,
+                                       d_polarizationY,
+                                       sizeof(Complex) * numVoxels,
+                                       cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
+          CUDA_CHECK_RETURN(cudaMemcpy(polarizationZ,
+                                       d_polarizationZ,
+                                       sizeof(Complex) * numVoxels,
+                                       cudaMemcpyDeviceToHost));
+          gpuErrchk(cudaPeekAtLastError());
+          {
+            FILE *pX = fopen("fftpolarizeX.dmp", "wb");
+            fwrite(polarizationX, sizeof(Complex), numVoxels, pX);
+            fclose(pX);
+            FILE *pY = fopen("fftpolarizeY.dmp", "wb");
+            fwrite(polarizationY, sizeof(Complex), numVoxels, pY);
+            fclose(pY);
+            FILE *pZ = fopen("fftpolarizeZ.dmp", "wb");
+            fwrite(polarizationZ, sizeof(Complex), numVoxels, pZ);
+            fclose(pZ);
+            std::string dirname = "FFT/";
+            std::string fname = dirname + "polarizationXfft" + std::to_string(i);
+            VTI::writeDataScalar(polarizationX, voxel, fname.c_str(), "polarizeXfft");
+            fname = dirname + "polarizationYfft" + std::to_string(i);
+            VTI::writeDataScalar(polarizationY, voxel, fname.c_str(), "polarizeYfft");
+            fname = dirname + "polarizationZfft" + std::to_string(i);
+            VTI::writeDataScalar(polarizationZ, voxel, fname.c_str(), "polarizeZfft");
+          }
 #endif
 
 #ifdef PROFILING
-        {
-            END_TIMER(TIMERS::FFT)
-            START_TIMER(TIMERS::SCATTER3D)
-        }
+          {
+              END_TIMER(TIMERS::FFT)
+              START_TIMER(TIMERS::SCATTER3D)
+          }
 #endif
-        cudaZeroEntries(d_rotProjection, numVoxel2D);
-        cudaZeroEntries(d_projection, numVoxel2D);
+          cudaZeroEntries(d_rotProjection, numVoxel2D);
+          cudaZeroEntries(d_projection, numVoxel2D);
 
-        if (idata.scatterApproach == ScatterApproach::FULL) {
+          if (idata.scatterApproach == ScatterApproach::FULL) {
 
-          performScatter3DComputation(d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, 0.0,
-                                      0.0, numVoxels, vx, idata.physSize, idata.if2DComputation(), BlockSize,kVec);
+            performScatter3DComputation(d_polarizationX, d_polarizationY, d_polarizationZ, d_scatter3D, eleField, 0.0,
+                                        0.0, numVoxels, vx, idata.physSize, idata.if2DComputation(), BlockSize, kVec);
 
 #ifdef DUMP_FILES
-          CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * numVoxels, cudaMemcpyDeviceToHost));
-          gpuErrchk(cudaPeekAtLastError())
-          {
-            FILE* scatter = fopen("scatter_3D.dmp", "wb");
-            fwrite(scatter3D, sizeof(Real), numVoxels, scatter);
-            fclose(scatter);
-            std::string dirname = "Scatter/";
-            std::string fname = dirname + "scatter" + std::to_string(i);
-            VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
-          }
+            CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * numVoxels, cudaMemcpyDeviceToHost));
+            gpuErrchk(cudaPeekAtLastError())
+            {
+              FILE *scatter = fopen("scatter_3D.dmp", "wb");
+              fwrite(scatter3D, sizeof(Real), numVoxels, scatter);
+              fclose(scatter);
+              std::string dirname = "Scatter/";
+              std::string fname = dirname + "scatter" + std::to_string(i);
+              VTI::writeDataScalar(scatter3D, voxel, fname.c_str(), "scatter3D");
+            }
 
 #endif
 
 
 #ifdef EOC
-          CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * numVoxels, cudaMemcpyDeviceToHost));
-          gpuErrchk(cudaPeekAtLastError());
+            CUDA_CHECK_RETURN(cudaMemcpy(scatter3D, d_scatter3D, sizeof(Real) * numVoxels, cudaMemcpyDeviceToHost));
+            gpuErrchk(cudaPeekAtLastError());
+
+#ifdef PROFILING
+            {
+
+            }
+#endif
+            computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
+#else
+            peformEwaldProjectionGPU(d_projection, d_scatter3D, eleField.k.z, vx, 0.0, 0.0, idata.physSize,
+                                     static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
+                                     idata.if2DComputation(), BlockSize2, kVec);
+#ifdef DUMP_FILES
+            hostDeviceExchange(projectionGPUAveraged, d_projection, voxel[0] * voxel[1], cudaMemcpyDeviceToHost);
+            std::string dirname = "Ewald/";
+            std::string fname = dirname + "ewlad" + std::to_string(i);
+            VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
+            FILE *projection = fopen("projection_scatterFull.dmp", "wb");
+            fwrite(projectionGPUAveraged, sizeof(Real), numVoxels, projection);
+            fclose(projection);
+#endif
+          } else {
+            peformEwaldProjectionGPU(d_projection, d_polarizationX, d_polarizationY, d_polarizationZ, eleField.k.z, vx,
+                                     0.0, 0.0, idata.physSize,
+                                     static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
+                                     idata.if2DComputation(), BlockSize2, kVec);
+#ifdef DUMP_FILES
+
+            hostDeviceExchange(projectionGPUAveraged, d_projection, voxel[0] * voxel[1], cudaMemcpyDeviceToHost);
+            std::string dirname = "Ewald/";
+            std::string fname = dirname + "ewlad" + std::to_string(i);
+            VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
+            FILE *projection = fopen("projection_scatterPartial.dmp", "wb");
+            fwrite(projectionGPUAveraged, sizeof(Real), numVoxels, projection);
+            fclose(projection);
+#endif
+          }
+
+
+          Real _factor;
+          _factor = NAN;
+
+          stat = cublasScale(handle, numVoxel2D, &_factor, d_rotProjection, 1);
+
+
+          if (stat != CUBLAS_STATUS_SUCCESS) {
+            std::cout << "CUBLAS during scaling failed  with status " << stat << "\n";
+            exit(EXIT_FAILURE);
+          }
+
 
 #ifdef PROFILING
           {
-
+            END_TIMER(TIMERS::SCATTER3D)
+            START_TIMER(TIMERS::IMAGE_ROTATION)
           }
 #endif
-          computeEwaldProjectionCPU(projectionCPU, scatter3D, vx, eleField.k.x);
-#else
-          peformEwaldProjectionGPU(d_projection, d_scatter3D, eleField.k.z, vx, 0.0, 0.0, idata.physSize,
-                                   static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
-                                   idata.if2DComputation(), BlockSize2,kVec);
-#ifdef DUMP_FILES
-          hostDeviceExchange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
-          std::string dirname = "Ewald/";
-          std::string fname = dirname + "ewlad" + std::to_string(i);
-          VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
-          FILE* projection = fopen("projection_scatterFull.dmp", "wb");
-          fwrite(projectionGPUAveraged, sizeof(Real), numVoxels, projection);
-          fclose(projection);
-#endif
-        } else {
-          peformEwaldProjectionGPU(d_projection, d_polarizationX, d_polarizationY, d_polarizationZ, eleField.k.z, vx,
-                                   0.0, 0.0, idata.physSize,
-                                   static_cast<Interpolation::EwaldsInterpolation>(idata.ewaldsInterpolation),
-                                   idata.if2DComputation(), BlockSize2,kVec);
-#ifdef DUMP_FILES
+          const double alpha = cos(Eangle);
+          const double beta = sin(Eangle);
 
-          hostDeviceExchange(projectionGPUAveraged,d_projection,voxel[0]*voxel[1],cudaMemcpyDeviceToHost);
-          std::string dirname = "Ewald/";
-          std::string fname = dirname + "ewlad" + std::to_string(i);
-          VTI::writeDataScalar2DFP(projectionGPUAveraged, voxel, fname.c_str(), "ewald");
-          FILE* projection = fopen("projection_scatterPartial.dmp", "wb");
-          fwrite(projectionGPUAveraged, sizeof(Real), numVoxels, projection);
-          fclose(projection);
-#endif
-        }
+          /**https://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html?highlight=warpaffine**/
+          const double coeffs[2][3]{
+            alpha, beta, static_cast<Real>(((1 - alpha) * voxel[0] / 2 - beta * voxel[1] / 2.)),
+            -beta, alpha, static_cast<Real>(beta * voxel[0] / 2. + (1 - alpha) * voxel[1] / 2.)
+          };
 
 
-        Real _factor;
-        _factor = NAN;
+          NppStatus status = warpAffine(d_projection,
+                                        sizeImage,
+                                        voxel[1] * sizeof(Real),
+                                        rect,
+                                        d_rotProjection,
+                                        voxel[1] * sizeof(Real),
+                                        rect,
+                                        coeffs,
+                                        NPPI_INTER_LINEAR);
 
-        stat = cublasScale(handle, numVoxel2D, &_factor, d_rotProjection, 1);
+          if (status < 0) {
+            std::cout << "Image rotation failed with error = " << status << "\n";
+            exit(-1);
+          }
+          if (status != NPP_SUCCESS) {
+            std::cout << YLW << "[WARNING] Image rotation warning = " << status << NRM << "\n";
+          }
 
+          if (idata.rotMask) {
+            computeRotationMask<<< BlockSize2, NUM_THREADS >>>(d_rotProjection, d_mask, vx);
+            cudaDeviceSynchronize();
+          }
 
-        if (stat != CUBLAS_STATUS_SUCCESS) {
-          std::cout << "CUBLAS during scaling failed  with status " << stat << "\n";
-          exit(EXIT_FAILURE);
-        }
-
+          const Real factor = static_cast<Real>(1.0);
+          stat = cublasAXPY(handle, numVoxel2D, &factor, d_rotProjection, 1, d_projectionAverage, 1);
+          if (stat != CUBLAS_STATUS_SUCCESS) {
+            std::cout << "CUBLAS during sum failed  with status " << stat << "\n";
+            exit(EXIT_FAILURE);
+          }
 
 #ifdef PROFILING
-        {
-          END_TIMER(TIMERS::SCATTER3D)
-          START_TIMER(TIMERS::IMAGE_ROTATION)
-        }
+          {
+            END_TIMER(TIMERS::IMAGE_ROTATION)
+          }
 #endif
-        const double alpha = cos(Eangle);
-        const double beta = sin(Eangle);
+#endif
+        }
 
-        /**https://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html?highlight=warpaffine**/
-        const double coeffs[2][3]{
-          alpha, beta, static_cast<Real>(((1 - alpha) * voxel[0] / 2 - beta * voxel[1] / 2.)),
-          -beta, alpha, static_cast<Real>(beta * voxel[0] / 2. + (1 - alpha) * voxel[1] / 2.)
-        };
+        if (idata.rotMask) {
+          averageRotation<<<BlockSize2, NUM_THREADS>>>(d_projectionAverage, d_mask, vx);
+          cudaDeviceSynchronize();
+          gpuErrchk(cudaPeekAtLastError());
+        } else {
+          /// The averaging out for all angles
+          const Real alphaFac = static_cast<Real>(1.0 / numAnglesRotation);
+          stat = cublasScale(handle, voxel[0] * voxel[1], &alphaFac, d_projectionAverage, 1);
+          if (stat != CUBLAS_STATUS_SUCCESS) {
+            std::cout << "CUBLAS during averaging failed  with status " << stat << "\n";
+            exit(EXIT_FAILURE);
+          }
+        }
+        //// Rotate Image
+        hostDeviceExchange(d_projection, d_projectionAverage, numVoxel2D, cudaMemcpyDeviceToDevice);
+        const double srcPoints[3][2]{{voxel[0] / 2.,  voxel[1] / 2.},
+                                     {voxel[0] * 0.5, voxel[1] * 1.0},
+                                     {voxel[0] * 1.0, voxel[1] * 0.5}};
+        Real3 _dstPts[3], _srcPts;
+        double center[2]{voxel[0] / 2., voxel[1] / 2.};
+        for (int i = 0; i < 3; i++) {
+          _srcPts.x = srcPoints[i][0] - center[0];
+          _srcPts.y = srcPoints[i][1] - center[1];
+          _srcPts.z = 0;
+          doMatVec<true>(rotationMatrixK, _srcPts, _dstPts[i]);
+          _dstPts[i].x = _dstPts[i].x + center[0];
+          _dstPts[i].y = _dstPts[i].y + center[1];
+          _dstPts[i].z = 0;
+        }
 
-
+        const double destPoints[3][2]{{_dstPts[0].x, _dstPts[0].y},
+                                      {_dstPts[1].x, _dstPts[1].y},
+                                      {_dstPts[2].x, _dstPts[2].y}};
+        double coeffs[2][3];
+        computeWarpAffineMatrix(srcPoints, destPoints, coeffs);
+        Real _factor = idata.rotMask ? 0 : NAN;
+        stat = cublasScale(handle, numVoxel2D, &_factor, d_projectionAverage, 1);
         NppStatus status = warpAffine(d_projection,
                                       sizeImage,
                                       voxel[1] * sizeof(Real),
                                       rect,
-                                      d_rotProjection,
+                                      d_projectionAverage,
                                       voxel[1] * sizeof(Real),
                                       rect,
                                       coeffs,
@@ -717,91 +794,22 @@ int cudaMain(const UINT *voxel,
         if (status != NPP_SUCCESS) {
           std::cout << YLW << "[WARNING] Image rotation warning = " << status << NRM << "\n";
         }
-
-        if (idata.rotMask) {
-          computeRotationMask<<< BlockSize2, NUM_THREADS >>>(d_rotProjection, d_mask, vx);
-          cudaDeviceSynchronize();
-        }
-
-        const Real factor = static_cast<Real>(1.0);
-        stat = cublasAXPY(handle, numVoxel2D, &factor, d_rotProjection, 1, d_projectionAverage, 1);
-        if (stat != CUBLAS_STATUS_SUCCESS) {
-          std::cout << "CUBLAS during sum failed  with status " << stat << "\n";
-          exit(EXIT_FAILURE);
-        }
-
 #ifdef PROFILING
         {
-          END_TIMER(TIMERS::IMAGE_ROTATION)
+          START_TIMER(TIMERS::MEMCOPY_GPU_CPU)
         }
 #endif
-#endif
-      }
 
-      if (idata.rotMask) {
-        averageRotation<<<BlockSize2, NUM_THREADS>>>(d_projectionAverage, d_mask, vx);
-        cudaDeviceSynchronize();
-        gpuErrchk(cudaPeekAtLastError());
-      } else {
-        /// The averaging out for all angles
-        const Real alphaFac = static_cast<Real>(1.0 / numAnglesRotation);
-        stat = cublasScale(handle, voxel[0] * voxel[1], &alphaFac, d_projectionAverage, 1);
-        if (stat != CUBLAS_STATUS_SUCCESS) {
-          std::cout << "CUBLAS during averaging failed  with status " << stat << "\n";
-          exit(EXIT_FAILURE);
+        hostDeviceExchange(&projectionGPUAveraged[(j * idata.kVectors.size()) * numVoxel2D + kstart * numVoxel2D],
+                           d_projectionAverage, numVoxel2D,
+                           cudaMemcpyDeviceToHost);
+#ifdef PROFILING
+        {
+          END_TIMER(TIMERS::MEMCOPY_GPU_CPU)
+          END_TIMER(TIMERS::ENERGY)
         }
-      }
-      //// Rotate Image
-      hostDeviceExchange(d_projection,d_projectionAverage,numVoxel2D,cudaMemcpyDeviceToDevice);
-      const double srcPoints[3][2]{{voxel[0]/2.,voxel[1]/2.},{voxel[0]*0.5,voxel[1]*1.0},{voxel[0]*1.0,voxel[1]*0.5}};
-      Real3 _dstPts[3],_srcPts;
-      double center[2]{voxel[0]/2.,voxel[1]/2.};
-      for(int i = 0; i < 3; i++){
-        _srcPts.x = srcPoints[i][0] - center[0];
-        _srcPts.y = srcPoints[i][1] - center[1];
-        _srcPts.z = 0;
-        doMatVec<true>(rotationMatrixK,_srcPts,_dstPts[i]);
-        _dstPts[i].x = _dstPts[i].x + center[0];
-        _dstPts[i].y = _dstPts[i].y + center[1];
-        _dstPts[i].z = 0;
-      }
-
-      const double destPoints[3][2]{{_dstPts[0].x,_dstPts[0].y},{_dstPts[1].x,_dstPts[1].y},{_dstPts[2].x,_dstPts[2].y}};
-      double coeffs[2][3];
-      computeWarpAffineMatrix(srcPoints,destPoints,coeffs);
-      Real _factor  = idata.rotMask ? 0 : NAN;
-      stat = cublasScale(handle, numVoxel2D, &_factor, d_projectionAverage, 1);
-      NppStatus status = warpAffine(d_projection,
-                                    sizeImage,
-                                    voxel[1] * sizeof(Real),
-                                    rect,
-                                    d_projectionAverage,
-                                    voxel[1] * sizeof(Real),
-                                    rect,
-                                    coeffs,
-                                    NPPI_INTER_LINEAR);
-
-      if (status < 0) {
-        std::cout << "Image rotation failed with error = " << status << "\n";
-        exit(-1);
-      }
-      if (status != NPP_SUCCESS) {
-        std::cout << YLW << "[WARNING] Image rotation warning = " << status << NRM << "\n";
-      }
-#ifdef PROFILING
-      {
-        START_TIMER(TIMERS::MEMCOPY_GPU_CPU)
-      }
 #endif
-
-      hostDeviceExchange(&projectionGPUAveraged[(j * idata.kVectors.size())*numVoxel2D + kstart*numVoxel2D], d_projectionAverage, numVoxel2D,
-                         cudaMemcpyDeviceToHost);
-#ifdef PROFILING
-      {
-        END_TIMER(TIMERS::MEMCOPY_GPU_CPU)
-        END_TIMER(TIMERS::ENERGY)
       }
-#endif
     }
 
     /** Freeing bunch of memories not required now **/
