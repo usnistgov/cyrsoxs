@@ -87,6 +87,14 @@ public:
       }
     }
   }
+  __host__ void print()const{
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        std::cout << this->matrix[i * 3 + j] << " ";
+      }
+      std::cout << "\n";
+    }
+  }
 
 };
 /**
@@ -169,8 +177,9 @@ __host__ static inline void computeInverseMatrix(const Matrix &  matrixA, Matrix
   double det = matrixA.getValue<0,0>() * (matrixA.getValue<1,1>() * matrixA.getValue<2,2>() - matrixA.getValue<2,1>() * matrixA.getValue<1,2>()) -
                matrixA.getValue<0,1>() * (matrixA.getValue<1,0>() * matrixA.getValue<2,2>() - matrixA.getValue<1,2>() * matrixA.getValue<2,0>()) +
                matrixA.getValue<0,2>() * (matrixA.getValue<1,0>() * matrixA.getValue<2,1>() - matrixA.getValue<1,1>() * matrixA.getValue<2,0>());
+  bool val = fabs(det) < 1E-12;
+  assert(not(val));
 
-  assert(not(FEQUALS(det,0.0)));
   Real invdet = 1. / det;
 
   inverseMatrix.setValue<0,0>((matrixA.getValue<1,1>() * matrixA.getValue<2,2>() - matrixA.getValue<2,1>() * matrixA.getValue<1,2>()) * invdet) ;
