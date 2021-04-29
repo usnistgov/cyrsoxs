@@ -430,6 +430,7 @@ private:
     void setKVectors(const std::vector<Real> & _kVector) {
       if(caseType == CaseTypes::DEFAULT) {
         pybind11::print("Cannot add kVectors for default case type");
+        return;
       }
       Real3 kVec({_kVector[0],_kVector[1],_kVector[2]});
       normalizeVec(kVec);
@@ -451,9 +452,9 @@ private:
         pybind11::print("PhysSize             : ", physSize , "nm");
         pybind11::print("Energy               : ",energies);
         pybind11::print("Rotation Angle       : ",startAngle , " : ", incrementAngle, " : ",endAngle);
-        pybind11::print("KVectors             :");
+        pybind11::print("KVectorList           ");
         for(const auto & kVec:kVectors) {
-          pybind11::print("                   :  [",kVec.x,",",kVec.y,",",kVec.z,"]");
+          pybind11::print("                     :  [",kVec.x,",",kVec.y,",",kVec.z,"]");
         }
 
         pybind11::print("\n");

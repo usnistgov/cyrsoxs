@@ -92,6 +92,7 @@ public:
      * @brief returns the data in the numpy array. Note that it is the same memory allocation
      * with numpy wrapper.
      * @param energy Energy for which the numpy array is needed
+     * @param kID id of k Vector
      * @return numpy numpy array with the scattering pattern data of the energy
      */
     py::array_t<Real> writeToNumpy(const Real energy, const UINT kID = 0) const {
@@ -100,14 +101,17 @@ public:
           py::print("kID cannot be greater than 0 for Default");
           return py::array_t<Real>{};
         }
-
+      }
+      if(kID > inputData_.kVectors.size()){
+        py::print("kID = ",kID, " greater than kVector Size = ", inputData_.kVectors.size());
+        return py::array_t<Real>{};
       }
       const auto & energies = inputData_.energies;
       if((energy < energies[0]) or (energy > energies[energies.size() - 1])){
         py::print("[LOG]: Wrong EnergyID");
         return py::array_t<Real>{};
       }
-
+      py::print("[INFO] kVector = [",inputData_.kVectors[kID].x,",",inputData_.kVectors[kID].y,",",inputData_.kVectors[kID].z,"]");
       const UINT energyID = std::lower_bound(energies.begin(),energies.end(),energy) - energies.begin();
 
       if(not(FEQUALS(energies[energyID],energy))){
