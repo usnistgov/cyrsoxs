@@ -474,10 +474,6 @@ inline __device__ Real computeScatter3D(const Complex * polarizationX,
                                         const bool enable2D,
                                         const Real3 & kVector
 ){
-    const Real cosPhi   = cos(eAngle);
-    const Real cosTheta = cos(kAngle);
-    const Real sinPhi   = sin(eAngle);
-    const Real sinTheta = sin(kAngle);
 
     UINT X, Y, Z;
     reshape1Dto3D(id, X, Y, Z, voxel);
