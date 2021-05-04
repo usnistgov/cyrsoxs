@@ -765,7 +765,10 @@ int cudaMain(const UINT *voxel,
           _srcPts.x = srcPoints[i][0] - center[0];
           _srcPts.y = srcPoints[i][1] - center[1];
           _srcPts.z = 0;
-          doMatVec<true>(rotationMatrixK, _srcPts, _dstPts[i]);
+          const Matrix & detectorMatrix = rotationMatrix.getDetectorRotationMatrix();
+          Matrix rotMat;
+          rotMat.performMatrixMultiplication<false,false>(detectorMatrix,rotationMatrixK);
+          doMatVec<false>(rotMat, _srcPts, _dstPts[i]);
           _dstPts[i].x = _dstPts[i].x + center[0];
           _dstPts[i].y = _dstPts[i].y + center[1];
           _dstPts[i].z = 0;
