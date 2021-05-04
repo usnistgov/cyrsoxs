@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
     if(inputData.writeVTI) {
       writeVTI(inputData, voxelSize, projectionGPUAveraged,inputData.VTIDirName);
     }
-    printMetaData(inputData);
+    printMetaData(inputData,rotationMatrix);
     delete[] projectionGPUAveraged;
     delete[] voxelData;
     std::cout << "Complete. Exiting \n";

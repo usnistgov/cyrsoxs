@@ -153,7 +153,7 @@ static void printCopyrightInfo(std::ofstream & fout){
  * @param inputData Input data
  */
 
-static void printMetaData(const InputData & inputData){
+static void printMetaData(const InputData & inputData, const RotationMatrix & rotationMatrix){
   std::ofstream file("metadata.txt");
   printCopyrightInfo(file);
   file << "\n\nCyRSoXS: \n";
@@ -172,6 +172,7 @@ static void printMetaData(const InputData & inputData){
   file << "\nInputData : \n";
   file << "=========================================================================================\n";
   inputData.printToFile(file);
+  rotationMatrix.printToFile(file);
 
   file.close();
 }
