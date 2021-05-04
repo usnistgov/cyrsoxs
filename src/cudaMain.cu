@@ -36,7 +36,7 @@
 #include <chrono>
 #include <npp.h>
 #include <Output/outputUtils.h>
-
+#include <RotationMatrix.h>
 #define START_TIMER(X) timerArrayStart[X] = std::chrono::high_resolution_clock::now();
 #define END_TIMER(X) timerArrayEnd[X] = std::chrono::high_resolution_clock::now(); \
                      timings[X] +=  (static_cast<std::chrono::duration<Real>>(timerArrayEnd[X] - timerArrayStart[X])).count();

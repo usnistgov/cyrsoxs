@@ -95,7 +95,14 @@ public:
       std::cout << "\n";
     }
   }
-
+  __host__ void printToFile(std::ofstream & fout)const{
+    for (int i = 0; i < 3; i++) {
+      for (int j = 0; j < 3; j++) {
+        fout << this->matrix[i * 3 + j] << " ";
+      }
+      fout << "\n";
+    }
+  }
 };
 /**
  * @brief computes dot product of two vectors

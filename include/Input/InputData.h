@@ -219,6 +219,8 @@ private:
   UINT morphologyType;
   bool referenceFrame = ReferenceFrame::MATERIAL;
 
+  Real3 detectorCoordinates{0,0,1};
+
   /**
    *
    * @return gets the 2D computation flags
@@ -267,8 +269,14 @@ private:
     if(caseType == CaseTypes::DEFAULT) {
       kVectors.resize(1,{0,0,1});
     }
-    else if(caseType == CaseTypes::BEAM_DIVERGENCE) {
-      const libconfig::Setting & listOfKVectors = cfg.getRoot()["listKVectors"];
+    else {
+      const std::string key = "listKVectors";
+      if (!cfg.exists(key)) {
+        std::cerr << "[Input Error] No value corresponding to " << key
+                  << " found. Exiting\n";
+        exit(EXIT_FAILURE);
+      }
+      const libconfig::Setting & listOfKVectors = cfg.getRoot()[key];
       kVectors.resize(listOfKVectors.getLength());
       for(int i = 0; i < kVectors.size(); i++) {
         const libconfig::Setting & kRoot = listOfKVectors[i].lookup("k");
@@ -280,7 +288,13 @@ private:
         normalizeVec(kVectors[i]);
       }
     }
-
+    if(caseType == CaseTypes::GRAZING_INCIDENCE){
+      ReadArrayRequired(cfg, "DetectorCoordinates", _temp,3);
+      detectorCoordinates.x = _temp[0];
+      detectorCoordinates.y = _temp[1];
+      detectorCoordinates.z = _temp[2];
+      normalizeVec(detectorCoordinates);
+    }
     check2D();
   }
 
@@ -302,12 +316,11 @@ private:
           exit(EXIT_FAILURE);
         }
 
-        /** Diagonal enteries **/
         Real deltaPara = global["DeltaPara"];
         Real betaPara = global["BetaPara"];
         Real deltaPerp = global["DeltaPerp"];
         Real betaPerp = global["BetaPerp"];
-        /** Diagonal enteries **/
+
         refractiveIndex[i].npara[numMaterial].x = 1 - deltaPara;
         refractiveIndex[i].npara[numMaterial].y = betaPara;
 
@@ -322,6 +335,7 @@ private:
       validate("Scatter Approach",scatterApproach,ScatterApproach::MAX_SCATTER_APPROACH);
       validate("Ewalds Interpolation",ewaldsInterpolation,Interpolation::EwaldsInterpolation::MAX_SIZE);
       validate("Morphology Type",ewaldsInterpolation,MorphologyType::MAX_MORPHOLOGY_TYPE);
+      validate("Case Type",caseType,CaseTypes::MAX_CASE_TYPE);
       std::cout << GRN << "Input Data : [OK] " << NRM << "\n";
   }
     /**

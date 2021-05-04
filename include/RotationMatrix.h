@@ -1,0 +1,92 @@
+//
+// Created by maksbh on 5/4/21.
+//
+
+#ifndef CY_RSOXS_ROTATIONMATRIX_H
+#define CY_RSOXS_ROTATIONMATRIX_H
+
+#include <Input/InputData.h>
+#include <Rotation.h>
+
+struct BaseConfiguration{
+  Matrix matrix;
+  Real baseRotAngle;
+} ;
+
+class RotationMatrix{
+  struct BaseAxis{
+    Real3  X;
+    Real3  Y;
+    Real3  Z;
+  };
+  const InputData * inputData_;
+  std::vector<BaseConfiguration> baseConfig_;
+  Matrix detectorRotationMatrix_;
+  std::vector<BaseAxis> baseAxis_;
+public:
+  RotationMatrix(const InputData * inputData);
+  void initComputation();
+
+  inline const auto & getBaseConfigurations()const{
+    return baseConfig_;
+  }
+
+  inline const auto & getDetectorRotationMatrix() const{
+    return detectorRotationMatrix_;
+  }
+
+  void printToFile(std::ofstream & fout) const;
+};
+
+RotationMatrix::RotationMatrix(const InputData *inputData)
+:inputData_(inputData){
+
+}
+
+void RotationMatrix::initComputation() {
+  const UINT sz = inputData_->kVectors.size();
+  baseConfig_.resize(inputData_->kVectors.size());
+  baseAxis_.resize(inputData_->kVectors.size());
+  const auto & kVecs = inputData_->kVectors;
+
+  for(int i = 0; i < sz; i++){
+    computeRotationMatrixK(kVecs[i],baseConfig_[i].matrix);
+    Matrix mat;
+    computeRotationMatrixBaseConfiguration(kVecs[i],baseConfig_[i].matrix,mat,baseConfig_[i].baseRotAngle);
+    static constexpr Real3 X{1,0,0};
+    static constexpr Real3 Y{0,1,0};
+    static constexpr Real3 Z{0,0,1};
+    doMatVec<false>(mat,X,baseAxis_[i].X);
+    doMatVec<false>(mat,Y,baseAxis_[i].Y);
+    doMatVec<false>(mat,Z,baseAxis_[i].Z);
+  }
+
+
+  computeRotationMatrixK(inputData_->detectorCoordinates,detectorRotationMatrix_);
+
+}
+
+void RotationMatrix::printToFile(std::ofstream & fout) const{
+  fout << "Detector Rotation Matrix" << "\n";
+  fout << "-------------------------------\n";
+  detectorRotationMatrix_.printToFile(fout);
+  fout << "-------------------------------\n";
+
+  fout << "K Rotation Matrix And Base Configuration \n";
+  fout << "-----------------------------------------\n";
+  for(UINT i = 0; i < baseConfig_.size(); i++){
+    const auto & baseCfg = baseConfig_[i];
+    const auto & kVec = inputData_->kVectors[i];
+    fout << "-----------------------------------------\n";
+    fout << "K = " << kVec.x << " " << kVec.y << " " << kVec.z << "\n";
+    baseCfg.matrix.printToFile(fout);
+    fout << "RotAngle = " << baseCfg.baseRotAngle << "\n";
+    fout << "Base X   = " << baseAxis_[i].X.x << " " << baseAxis_[i].X.y << " " << baseAxis_[i].X.z;
+    fout << "Base Y   = " << baseAxis_[i].Y.y << " " << baseAxis_[i].Y.y << " " << baseAxis_[i].Y.z;
+    fout << "Base Z   = " << baseAxis_[i].Z.x << " " << baseAxis_[i].Z.y << " " << baseAxis_[i].Z.z;
+    fout << "-----------------------------------------\n";
+  }
+  fout << "-------------------------------\n";
+}
+
+#endif //CY_RSOXS_ROTATIONMATRIX_H
