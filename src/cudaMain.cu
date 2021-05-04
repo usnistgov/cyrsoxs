@@ -36,7 +36,7 @@
 #include <chrono>
 #include <npp.h>
 #include <Output/outputUtils.h>
-#include <RotationMatrix.h>
+//#include <RotationMatrix.h>
 #define START_TIMER(X) timerArrayStart[X] = std::chrono::high_resolution_clock::now();
 #define END_TIMER(X) timerArrayEnd[X] = std::chrono::high_resolution_clock::now(); \
                      timings[X] +=  (static_cast<std::chrono::duration<Real>>(timerArrayEnd[X] - timerArrayStart[X])).count();
@@ -221,6 +221,7 @@ int cudaMain(const UINT *voxel,
              const InputData &idata,
              const std::vector<Material<NUM_MATERIAL> > &materialInput,
              Real *projectionGPUAveraged,
+             RotationMatrix & rotationMatrix,
              const Voxel<NUM_MATERIAL> *voxelInput) {
 
 
@@ -245,7 +246,6 @@ int cudaMain(const UINT *voxel,
     std::cout << "No GPU found. Exiting" << "\n";
     return (EXIT_FAILURE);
   }
-
 
 #ifdef PROFILING
   enum TIMERS:UINT{
@@ -410,6 +410,10 @@ int cudaMain(const UINT *voxel,
 
     hostDeviceExchange(d_voxelInput, voxelInput, numVoxels, cudaMemcpyHostToDevice);
 
+    // TODO: Make this async and overlap with computation
+    rotationMatrix.initComputation();
+    const auto & baseConfigurations = rotationMatrix.getBaseConfigurations();
+
 #ifdef PROFILING
     {
       END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
@@ -425,13 +429,10 @@ int cudaMain(const UINT *voxel,
       const Real &energy = (idata.energies[j]);
       std::cout << " [STAT] Energy = " << energy << " starting " << "\n";
       for (UINT kstart = 0; kstart < kVectors.size(); kstart++) {
-        const Real3 &kVec = kVectors[kstart];
-        Matrix rotationMatrixK, rotationMatrix;
-        computeRotationMatrixK(kVec, rotationMatrixK);
-        Real baseRotAngle;
-        computeRotationMatrixBaseConfiguration(kVec, rotationMatrixK, rotationMatrix, baseRotAngle);
-
-
+        const auto & baseConfig = baseConfigurations[kstart];
+        const Real baseRotAngle = baseConfig.baseRotAngle;
+        const Matrix & rotationMatrixK = baseConfig.matrix;
+        const Real3 &kVec = idata.kVectors[kstart];
         cudaZeroEntries(d_projectionAverage, numVoxel2D);
         if (idata.rotMask) {
           cudaZeroEntries(d_mask, numVoxel2D);
@@ -789,7 +790,7 @@ int cudaMain(const UINT *voxel,
 
         if (status < 0) {
           std::cout << "Image rotation failed with error = " << status << "\n";
-          exit(-1);
+          exit(EXIT_FAILURE);
         }
         if (status != NPP_SUCCESS) {
           std::cout << YLW << "[WARNING] Image rotation warning = " << status << NRM << "\n";

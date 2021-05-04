@@ -171,8 +171,7 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   pZ.x = 0;
   pZ.y = 0;
 
-  const Real cosAngle = cos(angle);
-  const Real sinAngle = sin(angle);
+
   static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
   /**
  * [0 1 2]

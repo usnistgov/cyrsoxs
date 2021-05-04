@@ -33,7 +33,7 @@
 #include <Input/InputData.h>
 #include <Rotation.h>
 #include <cufft.h>
-
+#include <RotationMatrix.h>
 #ifdef DOUBLE_PRECISION
 static constexpr cufftType_t fftType = CUFFT_Z2Z;
 #else
@@ -48,7 +48,7 @@ static constexpr cufftType_t fftType = CUFFT_C2C;
  * @return EXIT_SUCCESS on success of execution
  */
 int cudaMain(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
-             Real *projectionAverage, const Voxel<NUM_MATERIAL> *voxelInput);
+             Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel<NUM_MATERIAL> *voxelInput);
 
 /**
  * This is done to warmup the GPU. The first instruction takes usulally

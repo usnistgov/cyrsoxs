@@ -77,7 +77,7 @@
 #include <omp.h>
 #include <iomanip>
 #include <utils.h>
-
+//#include <RotationMatrix.h>
 
 /**
  * main function
@@ -101,7 +101,7 @@ int main(int argc, char **argv) {
     }
     inputData.print();
     const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
-
+    RotationMatrix matrix(&inputData);
     std::string fname = argv[1];
     Voxel<NUM_MATERIAL> *voxelData;
     H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType));
@@ -110,7 +110,8 @@ int main(int argc, char **argv) {
       numEnergyLevel = inputData.energies.size();
     projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY * inputData.kVectors.size()];
     printCopyrightInfo();
-    cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, voxelData);
+    RotationMatrix rotationMatrix(&inputData);
+    cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
     if(inputData.writeHDF5) {
       writeH5(inputData, voxelSize, projectionGPUAveraged,inputData.HDF5DirName);
     }

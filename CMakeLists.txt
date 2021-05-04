@@ -100,6 +100,7 @@ find_package(HDF5 COMPONENTS CXX HL REQUIRED)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CyRSoXS_SRC
+        src/RotationMatrix.cpp
         src/cudaMain.cu)
 
 set(CyRSoXS_INC

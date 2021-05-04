@@ -27,7 +27,8 @@ TEST(CyRSoXS, fullFrameworkSingleEnergy) {
     Real *projectionGPUAveraged;
     const UINT numEnergyLevel = inputData.energies.size();
     projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
-    int suc = cudaMain(voxelSize, inputData, refractiveIndexData, projectionGPUAveraged, voxelData);
+    RotationMatrix rotationMatrix(&inputData);
+    int suc = cudaMain(voxelSize, inputData, refractiveIndexData, projectionGPUAveraged, rotationMatrix,voxelData);
     EXPECT_EQ(suc, EXIT_SUCCESS);
     H5::H5File file(oracleFname, H5F_ACC_RDONLY);
     H5::DataSet dataSet = file.openDataSet("projection");
@@ -76,7 +77,8 @@ TEST(CyRSoXS, fullFrameworkMultipleEnergy) {
     Real *projectionGPUAveraged;
     const UINT numEnergyLevel = inputData.energies.size();
     projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
-    int suc = cudaMain(voxelSize, inputData, refractiveIndexData, projectionGPUAveraged, voxelData);
+    RotationMatrix rotationMatrix(&inputData);
+    int suc = cudaMain(voxelSize, inputData, refractiveIndexData, projectionGPUAveraged, rotationMatrix, voxelData);
     EXPECT_EQ(suc, EXIT_SUCCESS);
     static const char *oracleFileName[]{"Energy_280.00.h5", "Energy_280.10.h5", "Energy_280.20.h5", "Energy_280.30.h5"};
     BigUINT numVoxels2D = voxelSize[0] * voxelSize[1];
