@@ -172,6 +172,10 @@ static void printMetaData(const InputData & inputData, const RotationMatrix & ro
   file << "\nInputData : \n";
   file << "=========================================================================================\n";
   inputData.printToFile(file);
+  file << "\n\n";
+
+  file << "\nRotation Matrices : \n";
+  file << "=========================================================================================\n";
   rotationMatrix.printToFile(file);
 
   file.close();
