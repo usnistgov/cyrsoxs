@@ -215,8 +215,8 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
     rotatedNr[4].x += (npar.x - nper.x)*sy*sz;
     rotatedNr[4].y += (npar.y - nper.y)*sy*sz;
 
-    rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
   }
   static constexpr Real3 eleField{1,0,0};
   Real3 matVec;
