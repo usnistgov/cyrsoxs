@@ -50,6 +50,10 @@ static constexpr cufftType_t fftType = CUFFT_C2C;
 int cudaMain(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
              Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel<NUM_MATERIAL> *voxelInput);
 
+int cudaMainStreams(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
+                    Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel<NUM_MATERIAL> *voxelInput);
+
+
 /**
  * This is done to warmup the GPU. The first instruction takes usulally
  * a larger amount of time. This is done to remove the effect in computing
@@ -147,3 +151,16 @@ __host__ int peformEwaldProjectionGPU(Real * projection,
                                       const bool & enable2D,
                                       const UINT & blockSize,
                                       const Real3 & kVector);
+
+__host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
+                       const Voxel<NUM_MATERIAL> *d_voxelInput,
+                       Complex * d_Nt,
+                       const MorphologyType &morphologyType,
+                       const UINT &blockSize);
+
+
+__host__ int computePolarization(const Complex *d_Nt, Complex *d_pX,
+                                 Complex *d_pY, Complex *d_pZ,
+                                 const UINT &blockSize,
+                                 const ReferenceFrame &referenceFrame,
+                                 const Matrix &rotationMatrix);

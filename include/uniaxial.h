@@ -246,6 +246,97 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   polarizationZ[threadID] = pZ;
 }
 
+__global__ void computeNtVectorMorphology(const Material<NUM_MATERIAL> material,
+                          const Voxel<NUM_MATERIAL> *voxelInput,
+                          Complex * Nt) {
+  const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  Complex rotatedNr[6]; // Only storing what is required
+  memset(rotatedNr,0,sizeof(Complex)*6);
+  Complex nsum;
+  for (int i = 0; i < NUM_MATERIAL; i++) {
+    Complex npar = material.npara[i];
+    Complex nper = material.nperp[i];
+    const Real &sx = voxelInput[threadID].s1[i].x;
+    const Real &sy = voxelInput[threadID].s1[i].y;
+    const Real &sz = voxelInput[threadID].s1[i].z;
+    const Real &phi_ui = voxelInput[threadID].s1[i].w;
+
+    const Real & phi = phi_ui + sx * sx + sy * sy + sz * sz;
+
+    nsum.x = npar.x + 2 * nper.x;
+    nsum.y = npar.y + 2 * nper.y;
+
+    computeComplexSquare(nsum);
+    computeComplexSquare(npar);
+    computeComplexSquare(nper);
+
+    rotatedNr[0].x += npar.x*sx*sx + nper.x*(sy*sy + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr[0].y += npar.y*sx*sx + nper.y*(sy*sy + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+    rotatedNr[1].x += (npar.x - nper.x)*sx*sy;
+    rotatedNr[1].y += (npar.y - nper.y)*sx*sy;
+
+    rotatedNr[2].x += (npar.x - nper.x)*sx*sz;
+    rotatedNr[2].y += (npar.y - nper.y)*sx*sz;
+
+    rotatedNr[3].x += npar.x*sy*sy + nper.x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr[3].y += npar.y*sy*sy + nper.y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+    rotatedNr[4].x += (npar.x - nper.x)*sy*sz;
+    rotatedNr[4].y += (npar.y - nper.y)*sy*sz;
+
+    rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
+  }
+  std::memcpy(&Nt[threadID*6],rotatedNr, sizeof(Complex)*6);
+}
+
+template<ReferenceFrame referenceFrame>
+__global__ void computePolarizationVectorMorphologyLowMemory(const Complex * Nt,Complex *polarizationX,
+                                                             Complex *polarizationY, Complex *polarizationZ,
+                                                             const Matrix rotationMatrix) {
+  const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  Complex pX{0,0}, pY{0,0}, pZ{0,0};
+
+  /**
+ * [0 1 2]
+ * [1 3 4]
+ * [2 4 5]
+ */
+  static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
+
+  static constexpr  UINT MATINDEXID[3][3]{{0,1,2}, {1,3,4},{2,4,5}};
+  static constexpr Real3 eleField{1,0,0};
+  Complex rotatedNr[6];
+  std::memcpy(rotatedNr,&Nt[threadID*6], sizeof(Complex)*6);
+  Real3 matVec;
+  doMatVec<false>(rotationMatrix,eleField,matVec);
+  pX.x = rotatedNr[MATINDEXID[0][0]].x*matVec.x + rotatedNr[MATINDEXID[0][1]].x*matVec.y + rotatedNr[MATINDEXID[0][2]].x*matVec.z;
+  pX.y = rotatedNr[MATINDEXID[0][0]].y*matVec.x + rotatedNr[MATINDEXID[0][1]].y*matVec.y + rotatedNr[MATINDEXID[0][2]].y*matVec.z;
+
+  pY.x = rotatedNr[MATINDEXID[1][0]].x*matVec.x + rotatedNr[MATINDEXID[1][1]].x*matVec.y + rotatedNr[MATINDEXID[1][2]].x*matVec.z;
+  pY.y = rotatedNr[MATINDEXID[1][0]].y*matVec.x + rotatedNr[MATINDEXID[1][1]].y*matVec.y + rotatedNr[MATINDEXID[1][2]].y*matVec.z;
+
+  pZ.x = rotatedNr[MATINDEXID[2][0]].x*matVec.x + rotatedNr[MATINDEXID[2][1]].x*matVec.y + rotatedNr[MATINDEXID[2][2]].y*matVec.z;
+  pZ.y = rotatedNr[MATINDEXID[2][0]].y*matVec.x + rotatedNr[MATINDEXID[2][1]].y*matVec.y + rotatedNr[MATINDEXID[2][2]].y*matVec.z;
+
+  pX.x *= OneBy4Pi;
+  pX.y *= OneBy4Pi;
+
+  pY.x *= OneBy4Pi;
+  pY.y *= OneBy4Pi;
+
+  pZ.x *= OneBy4Pi;
+  pZ.y *= OneBy4Pi;
+  if(referenceFrame == ReferenceFrame::MATERIAL) {
+    rotate<true>(rotationMatrix,pX,pY,pZ);
+  }
+  polarizationX[threadID] = pX;
+  polarizationY[threadID] = pY;
+  polarizationZ[threadID] = pZ;
+
+}
+
 /**
  * @brief This function computes the polarization in real space for the uniaxial case.
  * @param [in] material material data for a particular energy level under consideration.

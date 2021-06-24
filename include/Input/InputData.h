@@ -220,6 +220,7 @@ private:
   bool referenceFrame = ReferenceFrame::MATERIAL;
 
   Real3 detectorCoordinates{0,0,1};
+  int numStreams = 1;
 
   /**
    *
