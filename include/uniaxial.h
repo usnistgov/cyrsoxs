@@ -289,9 +289,9 @@ __global__ void computeNtVectorMorphology(const Material<NUM_MATERIAL> material,
     rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
   }
   BigUINT  offset = threadID*6;
-  reinterpret_cast<Real4*>(Nt)[0] = reinterpret_cast<const Real4*>(rotatedNr)[offset + 0];
-  reinterpret_cast<Real4*>(Nt)[2] = reinterpret_cast<const Real4*>(rotatedNr)[offset + 2];
-  reinterpret_cast<Real4*>(Nt)[4] = reinterpret_cast<const Real4*>(rotatedNr)[offset + 4];
+  reinterpret_cast<Real4*>(Nt)[offset + 0] = reinterpret_cast<const Real4*>(rotatedNr)[ 0];
+  reinterpret_cast<Real4*>(Nt)[offset + 2] = reinterpret_cast<const Real4*>(rotatedNr)[ 2];
+  reinterpret_cast<Real4*>(Nt)[offset + 4] = reinterpret_cast<const Real4*>(rotatedNr)[ 4];
 //  Nt[offset + 0] = rotatedNr[0];
 //  Nt[offset + 1] = rotatedNr[1];
 //  Nt[offset + 2] = rotatedNr[2];
