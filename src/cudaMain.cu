@@ -446,16 +446,16 @@ int cudaMain(const UINT *voxel,
 #endif
 
     hostDeviceExchange(d_voxelInput, voxelInput, numVoxels, cudaMemcpyHostToDevice);
-
-    // TODO: Make this async and overlap with computation
-    rotationMatrix.initComputation();
-    const auto & baseConfigurations = rotationMatrix.getBaseConfigurations();
-
 #ifdef PROFILING
     {
       END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
     }
 #endif
+    // TODO: Make this async and overlap with computation
+    rotationMatrix.initComputation();
+    const auto & baseConfigurations = rotationMatrix.getBaseConfigurations();
+
+
     const auto & kVectors = idata.kVectors;
 
 
@@ -791,6 +791,12 @@ int cudaMain(const UINT *voxel,
             exit(EXIT_FAILURE);
           }
         }
+
+#ifdef PROFILING
+        {
+          START_TIMER(TIMERS::IMAGE_ROTATION)
+        }
+#endif
         //// Rotate Image
         hostDeviceExchange(d_projection, d_projectionAverage, numVoxel2D, cudaMemcpyDeviceToDevice);
         const double srcPoints[3][2]{{voxel[0] / 2.,  voxel[1] / 2.},
@@ -837,9 +843,11 @@ int cudaMain(const UINT *voxel,
         }
 #ifdef PROFILING
         {
+          END_TIMER(TIMERS::IMAGE_ROTATION)
           START_TIMER(TIMERS::MEMCOPY_GPU_CPU)
         }
 #endif
+
 
         hostDeviceExchange(&projectionGPUAveraged[(j * idata.kVectors.size()) * numVoxel2D + kstart * numVoxel2D],
                            d_projectionAverage, numVoxel2D,
@@ -847,10 +855,14 @@ int cudaMain(const UINT *voxel,
 #ifdef PROFILING
         {
           END_TIMER(TIMERS::MEMCOPY_GPU_CPU)
-          END_TIMER(TIMERS::ENERGY)
         }
 #endif
       }
+#ifdef PROFILING
+      {
+      END_TIMER(TIMERS::ENERGY)
+      }
+#endif
     }
 
     /** Freeing bunch of memories not required now **/
