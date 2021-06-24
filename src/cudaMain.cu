@@ -140,9 +140,13 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     FFT::FFTWindowing windowing,
                                     const bool enable2D,
                                     const MorphologyType morphologyType,
-                                    const Matrix rotationMatrix
+                                    const Matrix rotationMatrix,
+                                    const BigUINT numVoxels
 ) {
   BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  if(threadID > numVoxels){
+    return;
+  }
 #ifndef BIAXIAL
   if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
     computePolarizationVectorMorphologyOptimized<referenceFrame>(&materialInput, angle, voxelInput, threadID, polarizationX,
@@ -193,7 +197,8 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
                                  const MorphologyType &morphologyType,
                                  const UINT &blockSize,
                                  const ReferenceFrame & referenceFrame,
-                                 const Matrix & rotationMatrix
+                                 const Matrix & rotationMatrix,
+                                 const BigUINT numVoxels
 ) {
   if(referenceFrame == ReferenceFrame::MATERIAL) {
     computePolarization<ReferenceFrame::MATERIAL><<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, elefield,
@@ -201,7 +206,7 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
                                                                                 d_polarizationY, d_polarizationZ,
                                                                                 windowing,
                                                                                 enable2D,
-                                                                                morphologyType,rotationMatrix);
+                                                                                morphologyType,rotationMatrix, numVoxels);
   }
   else  {
     computePolarization<ReferenceFrame::LAB><<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, elefield,
@@ -209,7 +214,7 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
                                                                                 d_polarizationY, d_polarizationZ,
                                                                                 windowing,
                                                                                 enable2D,
-                                                                                morphologyType,rotationMatrix);
+                                                                                morphologyType,rotationMatrix,numVoxels);
   }
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
@@ -220,11 +225,12 @@ __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
                        const Voxel<NUM_MATERIAL> *d_voxelInput,
                        Complex * d_Nt,
                        const MorphologyType &morphologyType,
-                       const UINT &blockSize
+                       const UINT &blockSize,
+                       const BigUINT numVoxels
 
 ) {
   if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-    computeNtVectorMorphology<<<blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, d_Nt);
+    computeNtVectorMorphology<<<blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, d_Nt,numVoxels);
   } else{
     throw std::runtime_error("Not supported");
   }
@@ -238,15 +244,16 @@ __host__ int computePolarization(const Complex * __restrict__ d_Nt, Complex *d_p
                                  Complex *d_pY, Complex *d_pZ,
                                  const UINT &blockSize,
                                  const ReferenceFrame &referenceFrame,
-                                 const Matrix &rotationMatrix
+                                 const Matrix &rotationMatrix,
+                                 const BigUINT numVoxels
 
 ) {
   if (referenceFrame == ReferenceFrame::MATERIAL) {
-      computePolarizationVectorMorphologyLowMemory<ReferenceFrame::MATERIAL><<<blockSize, NUM_THREADS >>>((Real4 *) d_Nt, d_pX,
-                                                                                                          d_pY, d_pZ,rotationMatrix);
+      computePolarizationVectorMorphologyLowMemory<ReferenceFrame::MATERIAL><<<blockSize, NUM_THREADS >>>( d_Nt, d_pX,
+                                                                                                          d_pY, d_pZ,rotationMatrix,numVoxels);
     } else{
-      computePolarizationVectorMorphologyLowMemory<ReferenceFrame::LAB><<<blockSize, NUM_THREADS >>>((Real4 *)d_Nt, d_pX,
-                                                                                                     d_pY, d_pZ,rotationMatrix);
+      computePolarizationVectorMorphologyLowMemory<ReferenceFrame::LAB><<<blockSize, NUM_THREADS >>>(d_Nt, d_pX,
+                                                                                                     d_pY, d_pZ,rotationMatrix,numVoxels);
     }
 
     cudaDeviceSynchronize();
@@ -501,7 +508,7 @@ int cudaMain(const UINT *voxel,
           computePolarization(materialInput[j], d_voxelInput, eleField, Eangle, vx, d_polarizationX, d_polarizationY,
                               d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
                               idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
-                              static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix);
+                              static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix,numVoxels);
 
 #ifdef DUMP_FILES
 
@@ -1123,7 +1130,7 @@ int cudaMainStreams(const UINT *voxel,
         START_TIMER(TIMERS::NtComputation)
       }
 #endif
-      computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize);
+      computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels);
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::NtComputation)
@@ -1191,7 +1198,7 @@ int cudaMainStreams(const UINT *voxel,
             START_TIMER(TIMERS::POLARIZATION)
           }
 #endif
-          computePolarization(d_Nt,d_polarizationX,d_polarizationY,d_polarizationZ,BlockSize,(ReferenceFrame)idata.referenceFrame,ERotationMatrix);
+          computePolarization(d_Nt,d_polarizationX,d_polarizationY,d_polarizationZ,BlockSize,(ReferenceFrame)idata.referenceFrame,ERotationMatrix,numVoxels);
 
 #ifdef DUMP_FILES
 

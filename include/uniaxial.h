@@ -248,8 +248,11 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
 
 __global__ void computeNtVectorMorphology(const Material<NUM_MATERIAL> material,
                           const Voxel<NUM_MATERIAL> *voxelInput,
-                          Complex * Nt) {
+                          Complex * Nt, const BigUINT numVoxels) {
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  if(threadID > numVoxels){
+    return;
+  }
   Complex rotatedNr[6]; // Only storing what is required
   memset(rotatedNr,0,sizeof(Complex)*6);
   Complex nsum;
@@ -288,21 +291,24 @@ __global__ void computeNtVectorMorphology(const Material<NUM_MATERIAL> material,
     rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
     rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
   }
-  BigUINT  offset = threadID*6;
 
-  Nt[offset + 0] = rotatedNr[0];
-  Nt[offset + 1] = rotatedNr[1];
-  Nt[offset + 2] = rotatedNr[2];
-  Nt[offset + 3] = rotatedNr[3];
-  Nt[offset + 4] = rotatedNr[4];
-  Nt[offset + 5] = rotatedNr[5];
+
+  Nt[threadID  + 0*numVoxels + 0] = rotatedNr[0];
+  Nt[threadID +  1*numVoxels + 0] = rotatedNr[1];
+  Nt[threadID +  2*numVoxels + 0] = rotatedNr[2];
+  Nt[threadID +  3*numVoxels + 0] = rotatedNr[3];
+  Nt[threadID +  4*numVoxels + 0] = rotatedNr[4];
+  Nt[threadID +  5*numVoxels + 0] = rotatedNr[5];
 }
 
 template<ReferenceFrame referenceFrame>
-__global__ void computePolarizationVectorMorphologyLowMemory(const Real4 * __restrict__ Nt,Complex *polarizationX,
+__global__ void computePolarizationVectorMorphologyLowMemory(const Complex * __restrict__ Nt,Complex *polarizationX,
                                                              Complex *polarizationY, Complex *polarizationZ,
-                                                             const Matrix rotationMatrix) {
+                                                             const Matrix rotationMatrix, const BigUINT numVoxels) {
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  if(threadID > numVoxels){
+    return;
+  }
   Complex pX{0,0}, pY{0,0}, pZ{0,0};
 
   /**
@@ -316,16 +322,22 @@ __global__ void computePolarizationVectorMorphologyLowMemory(const Real4 * __res
   static constexpr  UINT MATINDEXID[3][3]{{0,1,2}, {1,3,4},{2,4,5}};
   static constexpr Real3 eleField{1,0,0};
   Complex rotatedNr[6];
-  BigUINT offset = threadID*3;
-  Real4 temp = Nt[offset + 0];
-  rotatedNr[0] = {temp.x,temp.y};
-  rotatedNr[1] = {temp.z,temp.w};
-  temp = Nt[offset + 1];
-  rotatedNr[2] = {temp.x,temp.y};
-  rotatedNr[3] = {temp.z,temp.w};
-  temp = Nt[offset + 2];
-  rotatedNr[4] = {temp.x,temp.y};
-  rotatedNr[5] = {temp.x,temp.y};
+  rotatedNr[0] = Nt[threadID + 0*numVoxels];
+  rotatedNr[1] = Nt[threadID + 1*numVoxels];
+  rotatedNr[2] = Nt[threadID + 2*numVoxels];
+  rotatedNr[3] = Nt[threadID + 3*numVoxels];
+  rotatedNr[4] = Nt[threadID + 4*numVoxels];
+  rotatedNr[5] = Nt[threadID + 5*numVoxels];
+
+//  Real4 temp = Nt[threadID + 0*numVoxels];
+//  rotatedNr[0] = {temp.x,temp.y};
+//  rotatedNr[1] = {temp.z,temp.w};
+//  temp = Nt[threadID + 1*numVoxels];
+//  rotatedNr[2] = {temp.x,temp.y};
+//  rotatedNr[3] = {temp.z,temp.w};
+//  temp = Nt[threadID + 2*numVoxels];
+//  rotatedNr[4] = {temp.x,temp.y};
+//  rotatedNr[5] = {temp.x,temp.y};
   Real3 matVec;
   doMatVec<false>(rotationMatrix,eleField,matVec);
   pX.x = rotatedNr[MATINDEXID[0][0]].x*matVec.x + rotatedNr[MATINDEXID[0][1]].x*matVec.y + rotatedNr[MATINDEXID[0][2]].x*matVec.z;

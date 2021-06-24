@@ -85,7 +85,8 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     Complex *polarizationZ,
                                     FFT::FFTWindowing windowing,
                                     const bool enable2D,
-                                    const MorphologyType morphologyType
+                                    const MorphologyType morphologyType,
+                                    const BigUINT numVoxels
 );
 
 
@@ -104,7 +105,8 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> & materialInput,
                                   const MorphologyType & morphologyType,
                                   const UINT & blockSize,
                                   const ReferenceFrame & referenceFrame,
-                                  const Matrix & rotationMatrix
+                                  const Matrix & rotationMatrix,
+                                  const BigUINT numVoxel
 );
 
 
