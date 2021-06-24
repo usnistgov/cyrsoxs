@@ -220,7 +220,7 @@ private:
   bool referenceFrame = ReferenceFrame::MATERIAL;
 
   Real3 detectorCoordinates{0,0,1};
-  int numStreams = 1;
+  bool ifUseLowMemoryAlgo = false;
 
   /**
    *
@@ -261,6 +261,7 @@ private:
     if(ReadValue(cfg, "VTIDirName",VTIDirName)){}
     if(ReadValue(cfg, "HDF5DirName",HDF5DirName)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
+    if(ReadValue(cfg, "useLowMemoryAlgo",ifUseLowMemoryAlgo)){}
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     else{
         if(numZ < 4){
