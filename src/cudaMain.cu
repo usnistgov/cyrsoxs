@@ -935,21 +935,25 @@ int cudaMainStreams(const UINT *voxel,
   enum TIMERS:UINT{
     MALLOC = 0,
     MEMCOPY_CPU_GPU = 1,
-    POLARIZATION = 2,
-    FFT = 3,
-    SCATTER3D = 4,
-    IMAGE_ROTATION=5,
-    MEMCOPY_GPU_CPU = 6,
-    ENERGY=7,
-    MAX = 8
+    NtComputation = 2,
+    POLARIZATION = 3,
+    FFT = 4,
+    SCATTER3D = 5,
+    IMAGE_ROTATION= 6,
+    MEMCOPY_GPU_CPU = 7,
+    FREE_MEMORY = 8,
+    ENERGY=9,
+    MAX = 10
   };
   static const char *timersName[]{"Malloc on CPU + GPU",
                                   "Memcopy CPU -> GPU",
+                                   "Nt",
                                   "Polarization",
                                   "FFT",
                                   "Scatter3D + Ewalds",
                                   "Rotation",
                                   "Memcopy GPU -> CPU",
+                                  "Free memory",
                                   "Total time "};
   static_assert(sizeof(timersName) / sizeof(char*) == TIMERS::MAX,
                 "sizes dont match");
@@ -1069,7 +1073,6 @@ int cudaMainStreams(const UINT *voxel,
 #ifdef PROFILING
     {
       END_TIMER(TIMERS::MALLOC)
-      START_TIMER(TIMERS::MEMCOPY_CPU_GPU)
     }
 #endif
 
@@ -1079,11 +1082,6 @@ int cudaMainStreams(const UINT *voxel,
     rotationMatrix.initComputation();
     const auto & baseConfigurations = rotationMatrix.getBaseConfigurations();
 
-#ifdef PROFILING
-    {
-      END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
-    }
-#endif
     const auto & kVectors = idata.kVectors;
 
 
@@ -1093,12 +1091,40 @@ int cudaMainStreams(const UINT *voxel,
     for (UINT j = numStart; j < numEnd; j++) {
       const Real &energy = (idata.energies[j]);
       std::cout << " [STAT] Energy = " << energy << " starting " << "\n";
-
+#ifdef PROFILING
+      {
+        START_TIMER(TIMERS::ENERGY)
+        START_TIMER(TIMERS::MALLOC)
+      }
+#endif
       mallocGPU(d_voxelInput, numVoxels);
+#ifdef PROFILING
+      {
+        END_TIMER(TIMERS::MALLOC)
+        START_TIMER(TIMERS::MEMCOPY_CPU_GPU)
+      }
+#endif
       hostDeviceExchange(d_voxelInput, voxelInput, numVoxels, cudaMemcpyHostToDevice);
+#ifdef PROFILING
+      {
+        END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
+        START_TIMER(TIMERS::NtComputation)
+      }
+#endif
       computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize);
+#ifdef PROFILING
+      {
+        END_TIMER(TIMERS::NtComputation)
+        START_TIMER(TIMERS::FREE_MEMORY)
+      }
+#endif
       freeCudaMemory(d_voxelInput);
-
+#ifdef PROFILING
+      {
+        END_TIMER(TIMERS::FREE_MEMORY)
+        START_TIMER(TIMERS::MALLOC)
+      }
+#endif
 
       Complex *d_polarizationZ, *d_polarizationX, *d_polarizationY;
       Real *d_scatter3D;
@@ -1119,6 +1145,11 @@ int cudaMainStreams(const UINT *voxel,
       }
       mallocGPU(d_projectionAverage, numVoxel2D);
 #endif
+#ifdef PROFILING
+      {
+        END_TIMER(TIMERS::MALLOC)
+      }
+#endif
       for (UINT kID = 0; kID < kVectors.size(); kID++) {
         const auto & baseConfig = baseConfigurations[kID];
         const Real baseRotAngle = baseConfig.baseRotAngle;
@@ -1128,11 +1159,6 @@ int cudaMainStreams(const UINT *voxel,
         if (idata.rotMask) {
           cudaZeroEntries(d_mask, numVoxel2D);
         }
-
-#ifdef  PROFILING
-        START_TIMER(TIMERS::ENERGY)
-#endif
-
 
         ElectricField eleField;
         eleField.e.x = 1;
@@ -1429,7 +1455,11 @@ int cudaMainStreams(const UINT *voxel,
 #endif
 #endif
         }
-
+#ifdef PROFILING
+        {
+          START_TIMER(TIMERS::IMAGE_ROTATION)
+        }
+#endif
         if (idata.rotMask) {
           averageRotation<<<BlockSize2, NUM_THREADS>>>(d_projectionAverage, d_mask, vx);
           cudaDeviceSynchronize();
@@ -1489,6 +1519,7 @@ int cudaMainStreams(const UINT *voxel,
         }
 #ifdef PROFILING
         {
+          END_TIMER(TIMERS::IMAGE_ROTATION)
           START_TIMER(TIMERS::MEMCOPY_GPU_CPU)
         }
 #endif
@@ -1496,13 +1527,14 @@ int cudaMainStreams(const UINT *voxel,
         hostDeviceExchange(&projectionGPUAveraged[(j * idata.kVectors.size()) * numVoxel2D + kID * numVoxel2D],
                            d_projectionAverage, numVoxel2D,
                            cudaMemcpyDeviceToHost);
-#ifdef PROFILING
-        {
-          END_TIMER(TIMERS::MEMCOPY_GPU_CPU)
-          END_TIMER(TIMERS::ENERGY)
-        }
-#endif
+
       }
+#ifdef PROFILING
+      {
+        END_TIMER(TIMERS::MEMCOPY_GPU_CPU)
+        START_TIMER(TIMERS::FREE_MEMORY)
+      }
+#endif
       freeCudaMemory(d_polarizationX);
       freeCudaMemory(d_polarizationY);
       freeCudaMemory(d_polarizationZ);
@@ -1517,10 +1549,16 @@ int cudaMainStreams(const UINT *voxel,
         freeCudaMemory(d_mask);
       }
 #endif
+#ifdef PROFILING
+      {
+        END_TIMER(TIMERS::FREE_MEMORY)
+        END_TIMER(TIMERS::ENERGY)
+      }
+#endif
     }
 
 
-
+freeCudaMemory(d_Nt);
 
 
 #ifdef DUMP_FILES
