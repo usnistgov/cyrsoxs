@@ -111,7 +111,12 @@ int main(int argc, char **argv) {
     projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY * inputData.kVectors.size()];
     printCopyrightInfo();
     RotationMatrix rotationMatrix(&inputData);
-    cudaMainStreams(voxelSize, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
+    if(inputData.ifUseLowMemoryAlgo) {
+      cudaMainStreams(voxelSize, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
+    }
+    else{
+      cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
+    }
     if(inputData.writeHDF5) {
       writeH5(inputData, voxelSize, projectionGPUAveraged,inputData.HDF5DirName);
     }

@@ -288,7 +288,13 @@ __global__ void computeNtVectorMorphology(const Material<NUM_MATERIAL> material,
     rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
     rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
   }
-  std::memcpy(&Nt[threadID*6],rotatedNr, sizeof(Complex)*6);
+  BigUINT  offset = threadID*6;
+  Nt[offset + 0] = rotatedNr[0];
+  Nt[offset + 1] = rotatedNr[1];
+  Nt[offset + 2] = rotatedNr[2];
+  Nt[offset + 3] = rotatedNr[3];
+  Nt[offset + 4] = rotatedNr[4];
+  Nt[offset + 5] = rotatedNr[5];
 }
 
 template<ReferenceFrame referenceFrame>
@@ -308,7 +314,13 @@ __global__ void computePolarizationVectorMorphologyLowMemory(const Complex * Nt,
   static constexpr  UINT MATINDEXID[3][3]{{0,1,2}, {1,3,4},{2,4,5}};
   static constexpr Real3 eleField{1,0,0};
   Complex rotatedNr[6];
-  std::memcpy(rotatedNr,&Nt[threadID*6], sizeof(Complex)*6);
+  BigUINT offset = threadID*6;
+  rotatedNr[0] = Nt[offset + 0];
+  rotatedNr[1] = Nt[offset + 1];
+  rotatedNr[2] = Nt[offset + 2];
+  rotatedNr[3] = Nt[offset + 3];
+  rotatedNr[4] = Nt[offset + 4];
+  rotatedNr[5] = Nt[offset + 5];
   Real3 matVec;
   doMatVec<false>(rotationMatrix,eleField,matVec);
   pX.x = rotatedNr[MATINDEXID[0][0]].x*matVec.x + rotatedNr[MATINDEXID[0][1]].x*matVec.y + rotatedNr[MATINDEXID[0][2]].x*matVec.z;
