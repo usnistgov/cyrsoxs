@@ -101,6 +101,15 @@ private:
     return res;
   }
 
+  template <const char ** enumVarname,int maxEnums>
+  static UINT convertStringToEnums(const char * stringName){
+    for(int i = 0; i < maxEnums; i++){
+      if(strcmp(stringName,enumVarname[i]) == 0){
+        return i;
+      }
+    }
+    throw std::logic_error("String did not match not found");
+  }
     /**
    * Reads an array from the input file and stores it in the given vector.
    *

@@ -102,6 +102,15 @@ enum ScatterApproach:UINT{
     MAX_SCATTER_APPROACH = 2
 };
 
+enum Algorithm:UINT{
+  CommunicationMinimizing = 0,
+  MemoryMinizing = 1,
+  MAXAlgorithmType = 2
+};
+static const char *algorithmName[]{"CommunicationMinimizing","MemoryMinimizing"};
+static_assert(sizeof(algorithmName)/sizeof(char*) == Algorithm::MAXAlgorithmType,
+              "sizes dont match");
+
 static const char *scatterApproachName[]{"Partial","Full"};
 static_assert(sizeof(scatterApproachName)/sizeof(char*) == ScatterApproach::MAX_SCATTER_APPROACH,
               "sizes dont match");

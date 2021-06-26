@@ -53,14 +53,9 @@ TEST(CyRSoXS, polarization) {
 
   hostDeviceExchange(d_voxelData, voxelData, numVoxels, cudaMemcpyHostToDevice);
 
-  ElectricField eleField;
-  eleField.e.x = 1;
-  eleField.e.y = 0;
-  eleField.e.z = 0;
-  Real wavelength = static_cast<Real>(1239.84197 / inputData.energies[0]);
-  eleField.k.x = 0;
-  eleField.k.y = 0;
-  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);;
+
+  const Real wavelength = static_cast<Real>(1239.84197 / inputData.energies[0]);
+  const Real kMagnitude = static_cast<Real>(2 * M_PI / wavelength);;
   UINT blockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
   static constexpr Real3 kVec{0,0,1};
   Matrix rotationMatrixK,rotationMatrix;
@@ -75,7 +70,7 @@ TEST(CyRSoXS, polarization) {
   for(int i = 0; i < maxERotation; i++) {
     Real angle = angleOfERotation[i]*180.0/M_PI;
     computeRotationMatrix(kVec,rotationMatrixK,ERotationMatrix,angle);
-    computePolarization(refractiveIndexData[0], d_voxelData, eleField, angle, vx, d_polarizationX, d_polarizationY,
+    computePolarization(refractiveIndexData[0], d_voxelData, vx, d_polarizationX, d_polarizationY,
                         d_polarizationZ, FFT::FFTWindowing::NONE,
                         false, MorphologyType::VECTOR_MORPHOLOGY, blockSize,ReferenceFrame::MATERIAL,rotationMatrix,numVoxels);
     hostDeviceExchange(polarizationX, d_polarizationX, numVoxels, cudaMemcpyDeviceToHost);
@@ -237,14 +232,9 @@ TEST(CyRSoXS, scatter) {
 
 
   const Real energy = 280.0;
-  ElectricField eleField;
-  eleField.e.x = 1;
-  eleField.e.y = 0;
-  eleField.e.z = 0;
-  Real wavelength = static_cast<Real>(1239.84197 / energy);
-  eleField.k.x = 0;
-  eleField.k.y = 0;
-  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
+
+  const Real wavelength = static_cast<Real>(1239.84197 / energy);
+  const Real kMagnitude = static_cast<Real>(2 * M_PI / wavelength);
 
   mallocGPU(d_polarizationX,numVoxel);
   mallocGPU(d_polarizationY,numVoxel);
@@ -263,7 +253,7 @@ TEST(CyRSoXS, scatter) {
     hostDeviceExchange(d_polarizationZ, polarizationZ, numVoxel, cudaMemcpyHostToDevice);
     const UINT blockSize = static_cast<UINT>(ceil(numVoxel * 1.0 / NUM_THREADS));
 
-    int suc1 = performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,eleField,0,0,numVoxel,vx,5.0,false,blockSize,kVec);
+    int suc1 = performScatter3DComputation(d_polarizationX,d_polarizationY,d_polarizationZ,d_scatter3D,kMagnitude,numVoxel,vx,5.0,false,blockSize,kVec);
     EXPECT_EQ(suc1,EXIT_SUCCESS);
     hostDeviceExchange(scatter_3D, d_scatter3D, numVoxel, cudaMemcpyDeviceToHost);
 
@@ -293,14 +283,8 @@ TEST(CyRSoXS, ewaldProjectionFull){
   const BigUINT numVoxel2D = voxelSize[0]*voxelSize[1];
 
   const Real energy = 280.0;
-  ElectricField eleField;
-  eleField.e.x = 1;
-  eleField.e.y = 0;
-  eleField.e.z = 0;
-  Real wavelength = static_cast<Real>(1239.84197 / energy);
-  eleField.k.x = 0;
-  eleField.k.y = 0;
-  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
+  const Real wavelength = static_cast<Real>(1239.84197 / energy);
+  const Real kMagnitude = static_cast<Real>(2 * M_PI / wavelength);
 
   const std::string root = CMAKE_ROOT ;
   Real * scatter = new Real [numVoxel];
@@ -319,7 +303,7 @@ TEST(CyRSoXS, ewaldProjectionFull){
     hostDeviceExchange(d_scatter, scatter, numVoxel, cudaMemcpyHostToDevice);
     const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
     cudaZeroEntries(d_projection,numVoxel2D);
-    int suc = peformEwaldProjectionGPU(d_projection,d_scatter,eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize,kVec);
+    int suc = peformEwaldProjectionGPU(d_projection,d_scatter,kMagnitude,vx,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize,kVec);
     EXPECT_EQ(suc,EXIT_SUCCESS);
 
     readFile(projectionOracle,pathOfEwaldGPU+"Ewald.dmp",numVoxel2D);
@@ -346,14 +330,9 @@ TEST(CyRSoXS, ewaldProjectionPartial){
   const BigUINT numVoxel2D = voxelSize[0]*voxelSize[1];
 
   const Real energy = 280.0;
-  ElectricField eleField;
-  eleField.e.x = 1;
-  eleField.e.y = 0;
-  eleField.e.z = 0;
-  Real wavelength = static_cast<Real>(1239.84197 / energy);
-  eleField.k.x = 0;
-  eleField.k.y = 0;
-  eleField.k.z = static_cast<Real>(2 * M_PI / wavelength);
+
+  const Real wavelength = static_cast<Real>(1239.84197 / energy);
+  const Real kMagnitude = static_cast<Real>(2 * M_PI / wavelength);
 
   const std::string root = CMAKE_ROOT ;
 
@@ -387,7 +366,7 @@ TEST(CyRSoXS, ewaldProjectionPartial){
 
     const UINT blockSize =  static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
     int suc = peformEwaldProjectionGPU(d_projection,d_polarizationX,d_polarizationY,d_polarizationZ,
-                                       eleField.k.z,vx,0,0,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize,kVec);
+                                       kMagnitude,vx,5.0,Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR,false,blockSize,kVec);
     EXPECT_EQ(suc,EXIT_SUCCESS);
 
     hostDeviceExchange(projection, d_projection, numVoxel2D, cudaMemcpyDeviceToHost);

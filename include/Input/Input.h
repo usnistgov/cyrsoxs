@@ -80,11 +80,4 @@ struct Voxel {
   }
 };
 
-struct ElectricField {
-  /// Polarized electric field
-  Real3 e;
-  /// k vector
-  Real3 k;
-};
-
 #endif //CUDA_BASE_INPUT_H
