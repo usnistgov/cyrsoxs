@@ -179,12 +179,12 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
     Complex npar = material->npara[numMaterial];
     Complex nper = material->nperp[numMaterial];
-    const Real &sx = voxelInput[numVoxels * numMaterial + threadID].s1.x;
-    const Real &sy = voxelInput[numVoxels * numMaterial + threadID].s1.y;
-    const Real &sz = voxelInput[numVoxels * numMaterial + threadID].s1.z;
-    const Real &phi_ui = voxelInput[numVoxels * numMaterial + threadID].s1.w;
+    const Real sx = voxelInput[numVoxels * numMaterial + threadID].s1.x;
+    const Real sy = voxelInput[numVoxels * numMaterial + threadID].s1.y;
+    const Real sz = voxelInput[numVoxels * numMaterial + threadID].s1.z;
+    const Real phi_ui = voxelInput[numVoxels * numMaterial + threadID].s1.w;
 
-    const Real & phi = phi_ui + sx * sx + sy * sy + sz * sz;
+    const Real  phi = phi_ui + sx * sx + sy * sy + sz * sz;
 
     nsum.x = npar.x + 2 * nper.x;
     nsum.y = npar.y + 2 * nper.y;
