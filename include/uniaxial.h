@@ -162,14 +162,7 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
                                                     Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
                                                     const BigUINT & numVoxels, const Matrix & rotationMatrix) {
 
-  Complex pX, pY, pZ;
-  pX.x = 0;
-  pX.y = 0;
-  pY.x = 0;
-  pY.y = 0;
-  pZ.x = 0;
-  pZ.y = 0;
-
+  Complex pX{0.0,0.0}, pY{0.0,0.0}, pZ{0.0,0.0};
 
   static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
   /**
@@ -177,9 +170,10 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
  * [1 3 4]
  * [2 4 5]
  */
-  static constexpr  UINT MATINDEXID[3][3]{{0,1,2}, {1,3,4},{2,4,5}};
-  Complex rotatedNr[6]; // Only storing what is required
-  memset(rotatedNr,0,sizeof(Complex)*6);
+  Complex rotatedNr{0.0,0.0}; // Only storing what is required
+  static constexpr Real3 eleField{1,0,0};
+  Real3 matVec;
+  doMatVec<false>(rotationMatrix,eleField,matVec);
   Complex nsum;
   /// TODO: This loop is redundant and can be pre-computed over all the energy level at the cost of communication.
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
@@ -199,35 +193,57 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
     computeComplexSquare(npar);
     computeComplexSquare(nper);
 
-    rotatedNr[0].x += npar.x*sx*sx + nper.x*(sy*sy + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[0].y += npar.y*sx*sx + nper.y*(sy*sy + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+    // (0)
+    rotatedNr.x = npar.x*sx*sx + nper.x*(sy*sy + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = npar.y*sx*sx + nper.y*(sy*sy + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-    rotatedNr[1].x += (npar.x - nper.x)*sx*sy;
-    rotatedNr[1].y += (npar.y - nper.y)*sx*sy;
+    pX.x += rotatedNr.x*matVec.x;
+    pX.y += rotatedNr.y*matVec.x;
 
-    rotatedNr[2].x += (npar.x - nper.x)*sx*sz;
-    rotatedNr[2].y += (npar.y - nper.y)*sx*sz;
+    // (1)
+    rotatedNr.x = (npar.x - nper.x)*sx*sy;
+    rotatedNr.y = (npar.y - nper.y)*sx*sy;
 
-    rotatedNr[3].x += npar.x*sy*sy + nper.x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[3].y += npar.y*sy*sy + nper.y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+    pX.x += rotatedNr.x*matVec.y;
+    pX.y += rotatedNr.y*matVec.y;
 
-    rotatedNr[4].x += (npar.x - nper.x)*sy*sz;
-    rotatedNr[4].y += (npar.y - nper.y)*sy*sz;
+    pY.x += rotatedNr.x*matVec.x;
+    pY.y += rotatedNr.y*matVec.x;
 
-    rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
+    // (2)
+    rotatedNr.x = (npar.x - nper.x)*sx*sz;
+    rotatedNr.y = (npar.y - nper.y)*sx*sz;
+
+    pX.x += rotatedNr.x*matVec.z;
+    pX.y += rotatedNr.y*matVec.z;
+
+    pZ.x += rotatedNr.x*matVec.x;
+    pZ.y += rotatedNr.y*matVec.x;
+
+    // (3)
+    rotatedNr.x = npar.x*sy*sy + nper.x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = npar.y*sy*sy + nper.y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+    pY.x += rotatedNr.x*matVec.y;
+    pY.y += rotatedNr.y*matVec.y;
+
+    // (4)
+    rotatedNr.x = (npar.x - nper.x)*sy*sz;
+    rotatedNr.y = (npar.y - nper.y)*sy*sz;
+
+    pY.x += rotatedNr.x*matVec.z;
+    pY.y += rotatedNr.y*matVec.z;
+
+    pZ.x += rotatedNr.x*matVec.y;
+    pZ.y += rotatedNr.y*matVec.y;
+
+    // (5)
+    rotatedNr.x = npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
+
+    pZ.x += rotatedNr.x*matVec.z;
+    pZ.y += rotatedNr.y*matVec.z;
   }
-  static constexpr Real3 eleField{1,0,0};
-  Real3 matVec;
-  doMatVec<false>(rotationMatrix,eleField,matVec);
-  pX.x = rotatedNr[MATINDEXID[0][0]].x*matVec.x + rotatedNr[MATINDEXID[0][1]].x*matVec.y + rotatedNr[MATINDEXID[0][2]].x*matVec.z;
-  pX.y = rotatedNr[MATINDEXID[0][0]].y*matVec.x + rotatedNr[MATINDEXID[0][1]].y*matVec.y + rotatedNr[MATINDEXID[0][2]].y*matVec.z;
-
-  pY.x = rotatedNr[MATINDEXID[1][0]].x*matVec.x + rotatedNr[MATINDEXID[1][1]].x*matVec.y + rotatedNr[MATINDEXID[1][2]].x*matVec.z;
-  pY.y = rotatedNr[MATINDEXID[1][0]].y*matVec.x + rotatedNr[MATINDEXID[1][1]].y*matVec.y + rotatedNr[MATINDEXID[1][2]].y*matVec.z;
-
-  pZ.x = rotatedNr[MATINDEXID[2][0]].x*matVec.x + rotatedNr[MATINDEXID[2][1]].x*matVec.y + rotatedNr[MATINDEXID[2][2]].y*matVec.z;
-  pZ.y = rotatedNr[MATINDEXID[2][0]].y*matVec.x + rotatedNr[MATINDEXID[2][1]].y*matVec.y + rotatedNr[MATINDEXID[2][2]].y*matVec.z;
 
   pX.x *= OneBy4Pi;
   pX.y *= OneBy4Pi;
