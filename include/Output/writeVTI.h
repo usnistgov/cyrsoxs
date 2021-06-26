@@ -372,7 +372,7 @@ static void writeVoxelDataScalar(const Voxel *data,
     writeVariableHeaderScalar(fout,varname[numMat]);
 #if VTI_BINARY
     for(int i = 0; i < totalSize; i++){
-     scalardata[i] =   data[i].s1[numMat].w;
+     scalardata[i] =   data[numMat*totalSize+i].s1.w;
     }
     vtk_write_binary(fout, (char *) scalardata, sizeof(Real) * totalSize);
 #else
@@ -416,9 +416,9 @@ static void writeVoxelDataVector(const Voxel *data,
 #if VTI_BINARY
 
     for (int j = 0; j < totalSize; j++) {
-      vecdata[3 * j + 0] = data[j].s1[numMat].x;
-      vecdata[3 * j + 1] = data[j].s1[numMat].y;
-      vecdata[3 * j + 2] = data[j].s1[numMat].z;
+      vecdata[3 * j + 0] = data[totalSize*numMat + j].s1.x;
+      vecdata[3 * j + 1] = data[totalSize*numMat + j].s1.y;
+      vecdata[3 * j + 2] = data[totalSize*numMat + j].s1.z;
     }
     vtk_write_binary(fout, (char *) data, sizeof(Real) * totalSize * 3);
 #else
