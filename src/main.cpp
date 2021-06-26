@@ -103,7 +103,7 @@ int main(int argc, char **argv) {
     const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
     RotationMatrix matrix(&inputData);
     std::string fname = argv[1];
-    Voxel<NUM_MATERIAL> *voxelData;
+    Voxel *voxelData;
     H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType));
     Real *projectionGPUAveraged;
     const UINT

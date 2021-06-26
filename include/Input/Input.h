@@ -52,7 +52,7 @@ struct Material {
  * This is the structure for the voxel data
  * @tparam num_component number of component
  */
-template<int num_component>
+
 struct Voxel {
   /// s1 the uniaxial director vector \n
   /// s1[i].x = x component of the director vector (\f$s_x\f$) \n
@@ -60,22 +60,23 @@ struct Voxel {
   /// s1[i].z = z component of the director vector (\f$s_z\f$) \n
   /// s1[i].w = fraction of unaligned component (\f$\phi_{ua}\f$)
 
-  Real4 s1[num_component];
+  Real4 s1;
   __host__ __device__ inline Real  s(const UINT & id) const{
-    return s1[id].x;
+    return s1.x;
   }
   __host__ __device__ inline Real  phi(const UINT & id) const{
-    return s1[id].y;
+    return s1.y;
   }
   __host__ __device__ inline Real  theta(const UINT & id) const{
-    return s1[id].z;
+    return s1.z;
   }
   __host__ __device__ inline Real  vFrac(const UINT & id) const{
-    return s1[id].w;
+    return s1.w;
   }
 
-  Voxel(){
-      std::memset (s1, 0, sizeof (Real4)*num_component);
+  Voxel():
+  s1{0.0,0.0,0.0,0.0}{
+
   }
 };
 

@@ -48,10 +48,10 @@ static constexpr cufftType_t fftType = CUFFT_C2C;
  * @return EXIT_SUCCESS on success of execution
  */
 int cudaMain(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
-             Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel<NUM_MATERIAL> *voxelInput);
+             Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel *voxelInput);
 
 int cudaMainStreams(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
-                    Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel<NUM_MATERIAL> *voxelInput);
+                    Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel *voxelInput);
 
 
 /**
@@ -74,9 +74,10 @@ int warmup();
  * @param [out] polarizationY: polarization Y vector
  * @param [out] polarizationZ: polarization Z vector
  */
+
 template<ReferenceFrame referenceFrame>
 __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
-                                    const Voxel<NUM_MATERIAL> *voxelInput,
+                                    const Voxel *voxelInput,
                                     const ElectricField elefield,
                                     const Real angle,
                                     const uint3 voxel,
@@ -86,29 +87,32 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     FFT::FFTWindowing windowing,
                                     const bool enable2D,
                                     const MorphologyType morphologyType,
+                                    const Matrix rotationMatrix,
                                     const BigUINT numVoxels
 );
 
 
-
-
 __host__ int computePolarization(const Material<NUM_MATERIAL> & materialInput,
-                                  const Voxel<NUM_MATERIAL> *voxelInput,
+                                  const Voxel *d_voxelInput,
                                   const ElectricField  & elefield,
                                   const Real & angle,
                                   const uint3 & voxel,
                                   Complex *d_polarizationX,
                                   Complex *d_polarizationY,
                                   Complex *d_polarizationZ,
-                                  FFT::FFTWindowing windowing,
+                                  const FFT::FFTWindowing & windowing,
                                   const bool & enable2D,
                                   const MorphologyType & morphologyType,
                                   const UINT & blockSize,
                                   const ReferenceFrame & referenceFrame,
                                   const Matrix & rotationMatrix,
-                                  const BigUINT numVoxel
+                                  const BigUINT & numVoxel
 );
-
+__host__ int computePolarization(const Complex *d_Nt, Complex *d_pX,
+                                 Complex *d_pY, Complex *d_pZ,
+                                 const UINT &blockSize,
+                                 const ReferenceFrame &referenceFrame,
+                                 const Matrix &rotationMatrix,const BigUINT &numVoxels);
 
 __host__ INLINE inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan) {
     return (cufftExecC2C(plan, polarization, polarization, CUFFT_FORWARD));
@@ -155,14 +159,10 @@ __host__ int peformEwaldProjectionGPU(Real * projection,
                                       const Real3 & kVector);
 
 __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
-                       const Voxel<NUM_MATERIAL> *d_voxelInput,
+                       const Voxel *d_voxelInput,
                        Complex * d_Nt,
                        const MorphologyType &morphologyType,
-                       const UINT &blockSize);
+                       const UINT &blockSize,
+                       const BigUINT & numVoxels);
 
 
-__host__ int computePolarization(const Complex *d_Nt, Complex *d_pX,
-                                 Complex *d_pY, Complex *d_pZ,
-                                 const UINT &blockSize,
-                                 const ReferenceFrame &referenceFrame,
-                                 const Matrix &rotationMatrix);

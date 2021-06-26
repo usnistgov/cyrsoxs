@@ -17,7 +17,7 @@ TEST(CyRSoXS,H5Reader){
   const std::string root = CMAKE_ROOT ;
   const std::string fname = root + "/Data/sample.h5";
   const UINT voxelSize[3]{32,32,16};
-  Voxel<NUM_MATERIAL> *voxelData;
+  Voxel *voxelData;
   EXPECT_EQ(EXIT_SUCCESS,H5::readFile(fname, voxelSize, voxelData,MorphologyType::VECTOR_MORPHOLOGY));
   delete [] voxelData;
 }

@@ -22,7 +22,7 @@ TEST(CyRSoXS, fullFrameworkSingleEnergy) {
   for(UINT scatter = 0; scatter < ScatterApproach::MAX_SCATTER_APPROACH; scatter++) {
     inputData.scatterApproach = static_cast<ScatterApproach>(scatter);
     const UINT voxelSize[3]{32, 32, 16};
-    Voxel<NUM_MATERIAL> *voxelData;
+    Voxel *voxelData;
     H5::readFile(fname, voxelSize, voxelData, MorphologyType::VECTOR_MORPHOLOGY, false);
     Real *projectionGPUAveraged;
     const UINT numEnergyLevel = inputData.energies.size();
@@ -63,7 +63,7 @@ TEST(CyRSoXS, fullFrameworkSingleEnergyAlg2) {
   for(UINT scatter = 0; scatter < ScatterApproach::MAX_SCATTER_APPROACH; scatter++) {
     inputData.scatterApproach = static_cast<ScatterApproach>(scatter);
     const UINT voxelSize[3]{32, 32, 16};
-    Voxel<NUM_MATERIAL> *voxelData;
+    Voxel *voxelData;
     H5::readFile(fname, voxelSize, voxelData, MorphologyType::VECTOR_MORPHOLOGY, false);
     Real *projectionGPUAveraged;
     const UINT numEnergyLevel = inputData.energies.size();
@@ -113,7 +113,7 @@ TEST(CyRSoXS, fullFrameworkMultipleEnergy) {
   for(UINT scatter = 0; scatter < ScatterApproach::MAX_SCATTER_APPROACH; scatter++) {
     inputData.scatterApproach = static_cast<ScatterApproach>(scatter);
     const UINT voxelSize[3]{32, 32, 16};
-    Voxel<NUM_MATERIAL> *voxelData;
+    Voxel *voxelData;
     H5::readFile(fname, voxelSize, voxelData, MorphologyType::VECTOR_MORPHOLOGY, false);
     Real *projectionGPUAveraged;
     const UINT numEnergyLevel = inputData.energies.size();
@@ -169,7 +169,7 @@ TEST(CyRSoXS, fullFrameworkMultipleEnergyAlg2) {
   for(UINT scatter = 0; scatter < ScatterApproach::MAX_SCATTER_APPROACH; scatter++) {
     inputData.scatterApproach = static_cast<ScatterApproach>(scatter);
     const UINT voxelSize[3]{32, 32, 16};
-    Voxel<NUM_MATERIAL> *voxelData;
+    Voxel *voxelData;
     H5::readFile(fname, voxelSize, voxelData, MorphologyType::VECTOR_MORPHOLOGY, false);
     Real *projectionGPUAveraged;
     const UINT numEnergyLevel = inputData.energies.size();

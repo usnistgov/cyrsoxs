@@ -34,7 +34,7 @@ TEST(CyRSoXS, polarization) {
   InputData inputData;
   inputData.readRefractiveIndexData(refractiveIndexData);
   const UINT voxelSize[3]{32,32,16};
-  Voxel<NUM_MATERIAL> * voxelData,*d_voxelData;
+  Voxel* voxelData,*d_voxelData;
   const uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
 
 

@@ -144,22 +144,22 @@ namespace H5 {
  * @param isAllocated true if the size of voxelData is allocated
  */
 
-  static int readFile(const std::string &hdf5file, const UINT *voxelSize, Voxel<NUM_MATERIAL> *&voxelData,
+  static int readFile(const std::string &hdf5file, const UINT *voxelSize, Voxel *&voxelData,
                       const MorphologyType & morphologyType, bool isAllocated = false) {
     H5::H5File file(hdf5file, H5F_ACC_RDONLY);
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
     if (not isAllocated) {
-      voxelData = new Voxel<NUM_MATERIAL>[numVoxel];
+      voxelData = new Voxel[numVoxel*NUM_MATERIAL];
     }
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
       {
         std::vector<std::vector<Real> > alignmentData;
         getMatAllignment(file, voxelSize, alignmentData);
         for (UINT numMat = 0; numMat < NUM_MATERIAL; numMat++) {
-          for (int i = 0; i < numVoxel; i++) {
-            voxelData[i].s1[numMat].x = alignmentData[numMat][3 * i + 0];
-            voxelData[i].s1[numMat].y = alignmentData[numMat][3 * i + 1];
-            voxelData[i].s1[numMat].z = alignmentData[numMat][3 * i + 2];
+          for (BigUINT i = 0; i < numVoxel; i++) {
+            voxelData[numMat*numVoxel + i].s1.x = alignmentData[numMat][3 * i + 0];
+            voxelData[numMat*numVoxel + i].s1.y = alignmentData[numMat][3 * i + 1];
+            voxelData[numMat*numVoxel + i].s1.z = alignmentData[numMat][3 * i + 2];
           }
         }
       }
@@ -168,7 +168,7 @@ namespace H5 {
         getScalar(file,"vector_morphology","_unaligned", voxelSize, unalignedData);
         for (UINT numMat = 0; numMat < NUM_MATERIAL; numMat++) {
           for (UINT i = 0; i < numVoxel; i++) {
-            voxelData[i].s1[numMat].w = unalignedData[numMat][i];
+            voxelData[numMat*numVoxel + i].s1.w = unalignedData[numMat][i];
           }
         }
       }
@@ -190,21 +190,21 @@ namespace H5 {
 //      }
     }
     else if(morphologyType == MorphologyType::EULER_ANGLES){
-      std::vector<std::vector<Real> > s, phi, theta, vfrac;
-      getScalar(file,"morphology","_S", voxelSize, s);
-      getScalar(file,"morphology","_Phi", voxelSize, phi);
-      getScalar(file,"morphology","_Theta", voxelSize, theta);
-      getScalar(file,"morphology","_vfrac", voxelSize, vfrac);
-      {
-        for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
-          for (UINT i = 0; i < numVoxel; i++) {
-            voxelData[i].s1[matID].x = s[matID][i];
-            voxelData[i].s1[matID].y = phi[matID][i];
-            voxelData[i].s1[matID].z = theta[matID][i];
-            voxelData[i].s1[matID].w = vfrac[matID][i];
-          }
-        }
-      }
+//      std::vector<std::vector<Real> > s, phi, theta, vfrac;
+//      getScalar(file,"morphology","_S", voxelSize, s);
+//      getScalar(file,"morphology","_Phi", voxelSize, phi);
+//      getScalar(file,"morphology","_Theta", voxelSize, theta);
+//      getScalar(file,"morphology","_vfrac", voxelSize, vfrac);
+//      {
+//        for (UINT matID = 0; matID < NUM_MATERIAL; matID++) {
+//          for (UINT i = 0; i < numVoxel; i++) {
+//            voxelData[i].s1[matID].x = s[matID][i];
+//            voxelData[i].s1[matID].y = phi[matID][i];
+//            voxelData[i].s1[matID].z = theta[matID][i];
+//            voxelData[i].s1[matID].w = vfrac[matID][i];
+//          }
+//        }
+//      }
     }
     else{
       throw std::runtime_error("Wrong type of morphology");

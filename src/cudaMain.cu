@@ -128,7 +128,7 @@ __host__ int peformEwaldProjectionGPU(Real *d_projection,
 
 template<ReferenceFrame referenceFrame>
 __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
-                                    const Voxel<NUM_MATERIAL> *voxelInput,
+                                    const Voxel *voxelInput,
                                     const ElectricField elefield,
                                     const Real angle,
                                     const uint3 voxel,
@@ -149,10 +149,10 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
   if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
     computePolarizationVectorMorphologyOptimized<referenceFrame>(&materialInput, angle, voxelInput, threadID, polarizationX,
                                                  polarizationY,
-                                                 polarizationZ,rotationMatrix);
+                                                 polarizationZ,numVoxels,rotationMatrix);
   } else {
     computePolarizationEulerAngles(&materialInput, angle, voxelInput, threadID, polarizationX, polarizationY,
-                                   polarizationZ);
+                                   polarizationZ,numVoxels);
   }
 #else
   printf("Kernel not spported\n");
@@ -183,20 +183,20 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 }
 
 __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
-                                 const Voxel<NUM_MATERIAL> *d_voxelInput,
+                                 const Voxel *d_voxelInput,
                                  const ElectricField &elefield,
                                  const Real &angle,
                                  const uint3 &vx,
                                  Complex *d_polarizationX,
                                  Complex *d_polarizationY,
                                  Complex *d_polarizationZ,
-                                 FFT::FFTWindowing windowing,
+                                 const FFT::FFTWindowing & windowing,
                                  const bool &enable2D,
                                  const MorphologyType &morphologyType,
                                  const UINT &blockSize,
                                  const ReferenceFrame & referenceFrame,
                                  const Matrix & rotationMatrix,
-                                 const BigUINT numVoxels
+                                 const BigUINT & numVoxels
 ) {
   if(referenceFrame == ReferenceFrame::MATERIAL) {
     computePolarization<ReferenceFrame::MATERIAL><<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, elefield,
@@ -220,11 +220,11 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
 }
 
 __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
-                       const Voxel<NUM_MATERIAL> *d_voxelInput,
+                       const Voxel *d_voxelInput,
                        Complex * d_Nt,
                        const MorphologyType &morphologyType,
                        const UINT &blockSize,
-                       const BigUINT numVoxels
+                       const BigUINT & numVoxels
 
 ) {
   if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
@@ -243,7 +243,7 @@ __host__ int computePolarization(const Complex * __restrict__ d_Nt, Complex *d_p
                                  const UINT &blockSize,
                                  const ReferenceFrame &referenceFrame,
                                  const Matrix &rotationMatrix,
-                                 const BigUINT numVoxels
+                                 const BigUINT &numVoxels
 
 ) {
   if (referenceFrame == ReferenceFrame::MATERIAL) {
@@ -264,7 +264,7 @@ int cudaMain(const UINT *voxel,
              const std::vector<Material<NUM_MATERIAL> > &materialInput,
              Real *projectionGPUAveraged,
              RotationMatrix & rotationMatrix,
-             const Voxel<NUM_MATERIAL> *voxelInput) {
+             const Voxel *voxelInput) {
 
 
   if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()) {
@@ -428,8 +428,8 @@ int cudaMain(const UINT *voxel,
 
 #endif
 
-    Voxel<NUM_MATERIAL> *d_voxelInput;
-    mallocGPU(d_voxelInput, numVoxels);
+    Voxel *d_voxelInput;
+    mallocGPU(d_voxelInput, numVoxels*NUM_MATERIAL);
 
     Complex *d_polarizationZ, *d_polarizationX, *d_polarizationY;
     Real *d_scatter3D;
@@ -927,7 +927,7 @@ int cudaMainStreams(const UINT *voxel,
                     const std::vector<Material<NUM_MATERIAL> > &materialInput,
                     Real *projectionGPUAveraged,
                     RotationMatrix & rotationMatrix,
-                    const Voxel<NUM_MATERIAL> *voxelInput){
+                    const Voxel *voxelInput){
 
   if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()) {
     std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
@@ -1085,7 +1085,7 @@ int cudaMainStreams(const UINT *voxel,
 
 #endif
 
-    Voxel<NUM_MATERIAL> *d_voxelInput;
+    Voxel *d_voxelInput;
     Complex * d_Nt;
 
     mallocGPU(d_Nt, numVoxels*6);
@@ -1117,7 +1117,7 @@ int cudaMainStreams(const UINT *voxel,
         START_TIMER(TIMERS::MALLOC)
       }
 #endif
-      mallocGPU(d_voxelInput, numVoxels);
+      mallocGPU(d_voxelInput, numVoxels*NUM_MATERIAL);
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::MALLOC)

@@ -55,8 +55,9 @@
  */
 
 __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *material, const Real angle,
-                                            const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
-                                            Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
+                                            const Voxel *voxelInput, const BigUINT threadID,
+                                            Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
+                                            const BigUINT & numVoxel) {
 
   Complex pX, pY, pZ;
 
@@ -81,10 +82,10 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
   memset(rotatedNr,0,sizeof(Complex)*6);
   /// TODO: This loop is redundant and can be pre-computed over all the energy level at the cost of communication.
   for (int i = 0; i < NUM_MATERIAL; i++) {
-    const Real & S     = voxelInput[threadID].s(i);
-    const Real & Phi   = voxelInput[threadID].phi(i);
-    const Real & Theta = voxelInput[threadID].theta(i);
-    const Real & Vfrac = voxelInput[threadID].vFrac(i);
+    const Real & S     = voxelInput[i*numVoxel + threadID].s(i);
+    const Real & Phi   = voxelInput[i*numVoxel + threadID].phi(i);
+    const Real & Theta = voxelInput[i*numVoxel + threadID].theta(i);
+    const Real & Vfrac = voxelInput[i*numVoxel + threadID].vFrac(i);
 
     Complex  npar = material->npara[i];
     Complex  nper = material->nperp[i];
@@ -94,9 +95,7 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
     const Real &phi_ui = Vfrac - S;
 
     const Real & phi = Vfrac;
-    if(threadID == 14669) {
-      printf("New: %d MatId = %d, S1 = (%f, %f %f %f &f %f )\n", threadID, i, sx, sy, sz, phi_ui,phi);
-    }
+
     nsum.x = npar.x + 2 * nper.x;
     nsum.y = npar.y + 2 * nper.y;
 
@@ -159,9 +158,9 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
 
 template<ReferenceFrame referenceFrame>
 __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_MATERIAL> *material, const Real angle,
-                                                    const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
+                                                    const Voxel *voxelInput, const BigUINT & threadID,
                                                     Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
-                                                    const Matrix rotationMatrix) {
+                                                    const BigUINT & numVoxels, const Matrix & rotationMatrix) {
 
   Complex pX, pY, pZ;
   pX.x = 0;
@@ -183,13 +182,13 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   memset(rotatedNr,0,sizeof(Complex)*6);
   Complex nsum;
   /// TODO: This loop is redundant and can be pre-computed over all the energy level at the cost of communication.
-  for (int i = 0; i < NUM_MATERIAL; i++) {
-    Complex npar = material->npara[i];
-    Complex nper = material->nperp[i];
-    const Real &sx = voxelInput[threadID].s1[i].x;
-    const Real &sy = voxelInput[threadID].s1[i].y;
-    const Real &sz = voxelInput[threadID].s1[i].z;
-    const Real &phi_ui = voxelInput[threadID].s1[i].w;
+  for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
+    Complex npar = material->npara[numMaterial];
+    Complex nper = material->nperp[numMaterial];
+    const Real &sx = voxelInput[numVoxels * numMaterial + threadID].s1.x;
+    const Real &sy = voxelInput[numVoxels * numMaterial + threadID].s1.y;
+    const Real &sz = voxelInput[numVoxels * numMaterial + threadID].s1.z;
+    const Real &phi_ui = voxelInput[numVoxels * numMaterial + threadID].s1.w;
 
     const Real & phi = phi_ui + sx * sx + sy * sy + sz * sz;
 
@@ -247,7 +246,7 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
 }
 
 __global__ void computeNtVectorMorphology(const Material<NUM_MATERIAL> material,
-                          const Voxel<NUM_MATERIAL> *voxelInput,
+                          const Voxel * __restrict__ voxelInput,
                           Complex * Nt, const BigUINT numVoxels) {
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   if(threadID > numVoxels){
@@ -256,13 +255,13 @@ __global__ void computeNtVectorMorphology(const Material<NUM_MATERIAL> material,
   Complex rotatedNr[6]; // Only storing what is required
   memset(rotatedNr,0,sizeof(Complex)*6);
   Complex nsum;
-  for (int i = 0; i < NUM_MATERIAL; i++) {
-    Complex npar = material.npara[i];
-    Complex nper = material.nperp[i];
-    const Real &sx = voxelInput[threadID].s1[i].x;
-    const Real &sy = voxelInput[threadID].s1[i].y;
-    const Real &sz = voxelInput[threadID].s1[i].z;
-    const Real &phi_ui = voxelInput[threadID].s1[i].w;
+  for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
+    Complex npar = material.npara[numMaterial];
+    Complex nper = material.nperp[numMaterial];
+    const Real &sx = voxelInput[numMaterial*numVoxels + threadID].s1.x;
+    const Real &sy = voxelInput[numMaterial*numVoxels + threadID].s1.y;
+    const Real &sz = voxelInput[numMaterial*numVoxels + threadID].s1.z;
+    const Real &phi_ui = voxelInput[numMaterial*numVoxels + threadID].s1.w;
 
     const Real & phi = phi_ui + sx * sx + sy * sy + sz * sz;
 
@@ -365,103 +364,103 @@ __global__ void computePolarizationVectorMorphologyLowMemory(const Complex * __r
   polarizationZ[threadID] = pZ;
 
 }
-
-/**
- * @brief This function computes the polarization in real space for the uniaxial case.
- * @param [in] material material data for a particular energy level under consideration.
- * @param [in] angle The angle of rotation.
- * @param [in] voxelInput voxel Input data.
- * @param [in] threadID threadID to access the index of the entry.
- * @param [out] polarizationX
- * @param [out] polarizationY
- * @param [out] polarizationZ
- */
-
-__device__ void computePolarizationVectorMorphology(const Material<NUM_MATERIAL> *material, const Real angle,
-                                            const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
-                                            Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
-
-  Complex pX, pY, pZ, npar[NUM_MATERIAL], nper[NUM_MATERIAL];
-  Real4 s1[NUM_MATERIAL];
-
-  pX.x = 0;
-  pX.y = 0;
-  pY.x = 0;
-  pY.y = 0;
-  pZ.x = 0;
-  pZ.y = 0;
-  const Real cos_a = cos(angle);
-  const Real sin_a = sin(angle);
-  static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
-  Real temp;
-  for (int i = 0; i < NUM_MATERIAL; i++) {
-    s1[i] = voxelInput[threadID].s1[i];
-    temp = cos_a * voxelInput[threadID].s1[i].y - sin_a * voxelInput[threadID].s1[i].x;
-    s1[i].x = sin_a * s1[i].y + cos_a * s1[i].x;
-    s1[i].y = temp;
-    npar[i] = material->npara[i];
-    nper[i] = material->nperp[i];
-  }
-
-  Complex nsum;
-  for (int i = 0; i < NUM_MATERIAL; i++) {
-    const Real &sx = s1[i].x;
-    const Real &sy = s1[i].y;
-    const Real &sz = s1[i].z;
-    const Real &phi_ui = s1[i].w;
-
-    Real phi = phi_ui + sx * sx + sy * sy + sz * sz;
-    nsum.x = npar[i].x + 2 * nper[i].x;
-    nsum.y = npar[i].y + 2 * nper[i].y;
-
-    computeComplexSquare(nsum);
-    computeComplexSquare(npar[i]);
-    computeComplexSquare(nper[i]);
-
-//    pX.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].x;
-//    pX.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].x;
 //
-//    pY.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].y;
-//    pY.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].y;
+///**
+// * @brief This function computes the polarization in real space for the uniaxial case.
+// * @param [in] material material data for a particular energy level under consideration.
+// * @param [in] angle The angle of rotation.
+// * @param [in] voxelInput voxel Input data.
+// * @param [in] threadID threadID to access the index of the entry.
+// * @param [out] polarizationX
+// * @param [out] polarizationY
+// * @param [out] polarizationZ
+// */
 //
-//    pZ.x +=
-//        (s1[i].w * nsum.x) / 9.0 + npar[i].x * s1[i].z * s1[i].z + nper[i].x * (s1[i].x * s1[i].x + s1[i].y * s1[i].y)
-//            - phi;
-//    pZ.y +=
-//        (s1[i].w * nsum.y) / 9.0 + npar[i].y * s1[i].z * s1[i].z + nper[i].y * (s1[i].x * s1[i].x + s1[i].y * s1[i].y);
-
-/**
- *  npar^2*sx^2 + nper^2*sy^2 + nper^2*sz^2
-                 sx*sy*(npar^2 - nper^2)
-                 sx*sz*(npar^2 - nper^2)
- */
-    pX.x +=
-        (phi_ui * nsum.x) / (Real) 9.0 + npar[i].x * sx * sx + nper[i].x * (sz * sz + sy * sy) - phi;
-    pX.y +=
-        (phi_ui * nsum.y) / (Real) 9.0 + npar[i].y * sx * sx + nper[i].y * (sz * sz + sy * sy);
-
-    pY.x += (npar[i].x - nper[i].x) * sx * sy;
-    pY.y += (npar[i].y - nper[i].y) * sx * sy;
-
-    pZ.x += (npar[i].x - nper[i].x) * sz * sx;
-    pZ.y += (npar[i].y - nper[i].y) * sz * sx;
-
-  }
-
-  pX.x *= OneBy4Pi;
-  pX.y *= OneBy4Pi;
-
-  pY.x *= OneBy4Pi;
-  pY.y *= OneBy4Pi;
-
-  pZ.x *= OneBy4Pi;
-  pZ.y *= OneBy4Pi;
-
-  polarizationX[threadID] = pX;
-  polarizationY[threadID] = pY;
-  polarizationZ[threadID] = pZ;
-
-}
+//__device__ void computePolarizationVectorMorphology(const Material<NUM_MATERIAL> *material, const Real angle,
+//                                            const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
+//                                            Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
+//
+//  Complex pX, pY, pZ, npar[NUM_MATERIAL], nper[NUM_MATERIAL];
+//  Real4 s1[NUM_MATERIAL];
+//
+//  pX.x = 0;
+//  pX.y = 0;
+//  pY.x = 0;
+//  pY.y = 0;
+//  pZ.x = 0;
+//  pZ.y = 0;
+//  const Real cos_a = cos(angle);
+//  const Real sin_a = sin(angle);
+//  static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
+//  Real temp;
+//  for (int i = 0; i < NUM_MATERIAL; i++) {
+//    s1[i] = voxelInput[threadID].s1[i];
+//    temp = cos_a * voxelInput[threadID].s1[i].y - sin_a * voxelInput[threadID].s1[i].x;
+//    s1[i].x = sin_a * s1[i].y + cos_a * s1[i].x;
+//    s1[i].y = temp;
+//    npar[i] = material->npara[i];
+//    nper[i] = material->nperp[i];
+//  }
+//
+//  Complex nsum;
+//  for (int i = 0; i < NUM_MATERIAL; i++) {
+//    const Real &sx = s1[i].x;
+//    const Real &sy = s1[i].y;
+//    const Real &sz = s1[i].z;
+//    const Real &phi_ui = s1[i].w;
+//
+//    Real phi = phi_ui + sx * sx + sy * sy + sz * sz;
+//    nsum.x = npar[i].x + 2 * nper[i].x;
+//    nsum.y = npar[i].y + 2 * nper[i].y;
+//
+//    computeComplexSquare(nsum);
+//    computeComplexSquare(npar[i]);
+//    computeComplexSquare(nper[i]);
+//
+////    pX.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].x;
+////    pX.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].x;
+////
+////    pY.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].y;
+////    pY.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].y;
+////
+////    pZ.x +=
+////        (s1[i].w * nsum.x) / 9.0 + npar[i].x * s1[i].z * s1[i].z + nper[i].x * (s1[i].x * s1[i].x + s1[i].y * s1[i].y)
+////            - phi;
+////    pZ.y +=
+////        (s1[i].w * nsum.y) / 9.0 + npar[i].y * s1[i].z * s1[i].z + nper[i].y * (s1[i].x * s1[i].x + s1[i].y * s1[i].y);
+//
+///**
+// *  npar^2*sx^2 + nper^2*sy^2 + nper^2*sz^2
+//                 sx*sy*(npar^2 - nper^2)
+//                 sx*sz*(npar^2 - nper^2)
+// */
+//    pX.x +=
+//        (phi_ui * nsum.x) / (Real) 9.0 + npar[i].x * sx * sx + nper[i].x * (sz * sz + sy * sy) - phi;
+//    pX.y +=
+//        (phi_ui * nsum.y) / (Real) 9.0 + npar[i].y * sx * sx + nper[i].y * (sz * sz + sy * sy);
+//
+//    pY.x += (npar[i].x - nper[i].x) * sx * sy;
+//    pY.y += (npar[i].y - nper[i].y) * sx * sy;
+//
+//    pZ.x += (npar[i].x - nper[i].x) * sz * sx;
+//    pZ.y += (npar[i].y - nper[i].y) * sz * sx;
+//
+//  }
+//
+//  pX.x *= OneBy4Pi;
+//  pX.y *= OneBy4Pi;
+//
+//  pY.x *= OneBy4Pi;
+//  pY.y *= OneBy4Pi;
+//
+//  pZ.x *= OneBy4Pi;
+//  pZ.y *= OneBy4Pi;
+//
+//  polarizationX[threadID] = pX;
+//  polarizationY[threadID] = pY;
+//  polarizationZ[threadID] = pZ;
+//
+//}
 
 __host__ __device__ inline BigUINT reshape3Dto1D(UINT i, UINT j, UINT k, uint3 voxel) {
   return ((i) + (j) * voxel.x + (k) * voxel.x * voxel.y);
