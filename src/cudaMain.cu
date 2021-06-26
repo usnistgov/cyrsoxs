@@ -54,10 +54,8 @@ int warmup() {
   return EXIT_SUCCESS;
 }
 
-__host__ int performFFTShift(Complex *polarization, const UINT &blockSize, const uint3 &vx) {
-  FFTIgor<<<blockSize, NUM_THREADS>>>(polarization, vx);
-  cudaDeviceSynchronize();
-  gpuErrchk(cudaPeekAtLastError());
+__host__ int performFFTShift(Complex *polarization, const UINT &blockSize, const uint3 &vx, const int stream) {
+  FFTIgor<<<blockSize, NUM_THREADS,stream>>>(polarization, vx);
   return EXIT_SUCCESS;
 }
 
@@ -362,13 +360,22 @@ int cudaMain(const UINT *voxel,
       exit (EXIT_FAILURE);
     }
 #endif
+    static constexpr int NUM_STREAMS=3;
+    cudaStream_t streams[NUM_STREAMS];
+    cufftResult result[NUM_STREAMS];
+    cufftHandle plan[NUM_STREAMS];
+    for (int i = 0; i < NUM_STREAMS; i++) {
+      gpuErrchk(cudaStreamCreate(&streams[i]));
+    }
 
-    cufftResult result;
-    cufftHandle plan;
 #ifdef DOUBLE_PRECISION
     cufftPlan3d(&plan, voxel[2], voxel[1], voxel[0], CUFFT_Z2Z);
 #else
-    cufftPlan3d(&plan, voxel[2], voxel[1], voxel[0], CUFFT_C2C);
+    for(int i = 0; i < NUM_STREAMS; i++){
+      cufftPlan3d(&plan[i], voxel[2], voxel[1], voxel[0], CUFFT_C2C);
+      cufftSetStream(plan[i],streams[i]);
+    }
+
 #endif
     cublasHandle_t handle;
     cublasStatus_t stat;
@@ -554,25 +561,10 @@ int cudaMain(const UINT *voxel,
           }
 #endif
           /** FFT Computation **/
-          result = performFFT(d_polarizationX, plan);
-          if (result != CUFFT_SUCCESS) {
-            std::cout << "CUFFT failed with result " << result << "\n";
-#pragma omp cancel parallel
-            exit(EXIT_FAILURE);
-          }
+          result[0] = performFFT(d_polarizationX, plan[0]);
+          result[1] = performFFT(d_polarizationY, plan[1]);
+          result[2] = performFFT(d_polarizationZ, plan[2]);
 
-          result = performFFT(d_polarizationY, plan);
-          if (result != CUFFT_SUCCESS) {
-            std::cout << "CUFFT failed with result " << result << "\n";
-#pragma omp cancel parallel
-            exit(EXIT_FAILURE);
-          }
-
-          result = performFFT(d_polarizationZ, plan);
-          if (result != CUFFT_SUCCESS) {
-            std::cout << "CUFFT failed with result " << result << "\n";
-            exit(EXIT_FAILURE);
-          }
 
 #ifdef DUMP_FILES
           CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
@@ -610,9 +602,16 @@ int cudaMain(const UINT *voxel,
           }
 #endif
 #pragma message "Make me callbacks"
-          performFFTShift(d_polarizationX, BlockSize, vx);
-          performFFTShift(d_polarizationY, BlockSize, vx);
-          performFFTShift(d_polarizationZ, BlockSize, vx);
+          performFFTShift(d_polarizationX, BlockSize, vx,0);
+          performFFTShift(d_polarizationY, BlockSize, vx,1);
+          performFFTShift(d_polarizationZ, BlockSize, vx,2);
+          cudaDeviceSynchronize();
+          gpuErrchk(cudaPeekAtLastError());
+          if ((result[0] != CUFFT_SUCCESS) or (result[1] != CUFFT_SUCCESS) or (result[2] != CUFFT_SUCCESS)) {
+            std::cout << "CUFFT failed with result " << result[0] << " " << result[1] << " " << result[2] << "\n";
+#pragma omp cancel parallel
+            exit(EXIT_FAILURE);
+          }
 #ifdef DUMP_FILES
           CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
                                        d_polarizationX,
@@ -899,8 +898,10 @@ int cudaMain(const UINT *voxel,
     delete[] scatter3D;
 #endif
 
-
-    cufftDestroy(plan);
+    for(int i = 0; i < NUM_STREAMS; i++) {
+      cufftDestroy(plan[i]);
+      gpuErrchk(cudaStreamDestroy(streams[i]))
+    }
     cublasDestroy(handle);
 
 #ifdef EOC
