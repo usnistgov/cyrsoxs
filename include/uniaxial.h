@@ -175,14 +175,14 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   Real3 matVec;
   doMatVec<false>(rotationMatrix,eleField,matVec);
   Complex nsum;
-  /// TODO: This loop is redundant and can be pre-computed over all the energy level at the cost of communication.
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
     Complex npar = material->npara[numMaterial];
     Complex nper = material->nperp[numMaterial];
-    const Real sx = voxelInput[numVoxels * numMaterial + threadID].s1.x;
-    const Real sy = voxelInput[numVoxels * numMaterial + threadID].s1.y;
-    const Real sz = voxelInput[numVoxels * numMaterial + threadID].s1.z;
-    const Real phi_ui = voxelInput[numVoxels * numMaterial + threadID].s1.w;
+    const Real4 matProp = voxelInput[numVoxels * numMaterial + threadID].s1;
+    const Real & sx     = matProp.x;
+    const Real & sy     = matProp.y;
+    const Real & sz     = matProp.z;
+    const Real & phi_ui = matProp.w;
 
     const Real  phi = phi_ui + sx * sx + sy * sy + sz * sz;
 
