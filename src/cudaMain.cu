@@ -459,7 +459,7 @@ int cudaMain(const UINT *voxel,
     }
 #endif
 
-    hostDeviceExchange(d_voxelInput, voxelInput, numVoxels, cudaMemcpyHostToDevice);
+    hostDeviceExchange(d_voxelInput, voxelInput, numVoxels*NUM_MATERIAL, cudaMemcpyHostToDevice);
 #ifdef PROFILING
     {
       END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
@@ -1124,7 +1124,7 @@ int cudaMainStreams(const UINT *voxel,
         START_TIMER(TIMERS::MEMCOPY_CPU_GPU)
       }
 #endif
-      hostDeviceExchange(d_voxelInput, voxelInput, numVoxels, cudaMemcpyHostToDevice);
+      hostDeviceExchange(d_voxelInput, voxelInput, numVoxels*NUM_MATERIAL, cudaMemcpyHostToDevice);
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
