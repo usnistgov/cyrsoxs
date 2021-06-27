@@ -217,7 +217,9 @@ __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
                        const UINT &blockSize,
                        const BigUINT & numVoxels,
                        const BigUINT & offset,
+                       const BigUINT & endID,
                        const UINT & materialID,
+                       const UINT & numStreams,
                        cudaStream_t stream
 
 ) {
@@ -225,7 +227,7 @@ __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
   material.npara[0] = materialInput.npara[materialID];
   material.nperp[0] = materialInput.nperp[materialID];
   if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-    computeNtVectorMorphology<<<blockSize, NUM_THREADS,0,stream>>>(material, d_voxelInput, d_Nt, offset,numVoxels);
+    computeNtVectorMorphology<<<std::ceil(blockSize*1.0/numStreams), NUM_THREADS,0,stream>>>(material, d_voxelInput, d_Nt, offset,endID,numVoxels);
   } else{
     throw std::runtime_error("Not supported");
   }
@@ -1012,7 +1014,7 @@ int cudaMainStreams(const UINT *voxel,
     }
 #endif
     static constexpr int NUM_FFT_STREAMS = 1;
-    const int NUM_STREAMS = std::max(idata.numMaxStreams,NUM_FFT_STREAMS); // We need minimum of 3 streams for FFT
+    const int NUM_STREAMS = 3;//std::max(idata.numMaxStreams,NUM_FFT_STREAMS); // We need minimum of 3 streams for FFT
     std::vector<cudaStream_t> streams(NUM_STREAMS);
     cufftResult result[NUM_FFT_STREAMS];
     cufftHandle plan[NUM_FFT_STREAMS];
@@ -1126,7 +1128,7 @@ int cudaMainStreams(const UINT *voxel,
         for(int numMat = 0; numMat < NUM_MATERIAL; numMat++){
           cudaMemcpyAsync(&d_voxelInput[batchID[streamID]], &voxelInput[numMat*numVoxels + batchID[streamID]],
                      sizeof(Voxel)*(batchID[streamID+1] -  batchID[streamID]), cudaMemcpyHostToDevice,streams[streamID]);
-          computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,batchID[streamID],numMat,streams[streamID]);
+          computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,batchID[streamID],batchID[streamID+1],numMat,NUM_STREAMS,streams[streamID]);
         }
       }
 

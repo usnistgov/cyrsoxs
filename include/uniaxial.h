@@ -263,59 +263,59 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
 
 __global__ void computeNtVectorMorphology(const Material<1> material,
                           const Voxel * __restrict__ voxelInput,
-                          Complex * Nt, const BigUINT  offset,
+                          Complex * Nt, const BigUINT  offset, const BigUINT  endID,
                           const BigUINT numVoxels) {
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
-  if((threadID + offset) > numVoxels){
+  if((threadID + offset) >= endID){
     return;
   }
   Complex rotatedNr[6]; // Only storing what is required
   memset(rotatedNr,0,sizeof(Complex)*6);
   Complex nsum;
-//  for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
-    Complex npar = material.npara[0];
-    Complex nper = material.nperp[0];
-    const Real4 matProp = voxelInput[offset + threadID].s1;
-    const Real &sx = matProp.x;
-    const Real &sy = matProp.y;
-    const Real &sz = matProp.z;
-    const Real &phi_ui = matProp.w;
+  Complex npar = material.npara[0];
+  Complex nper = material.nperp[0];
+  const Real4 matProp = voxelInput[offset + threadID].s1;
+  const Real &sx = matProp.x;
+  const Real &sy = matProp.y;
+  const Real &sz = matProp.z;
+  const Real &phi_ui = matProp.w;
 
-    const Real & phi = phi_ui + sx * sx + sy * sy + sz * sz;
+  const Real &phi = phi_ui + sx * sx + sy * sy + sz * sz;
 
-    nsum.x = npar.x + 2 * nper.x;
-    nsum.y = npar.y + 2 * nper.y;
+  nsum.x = npar.x + 2 * nper.x;
+  nsum.y = npar.y + 2 * nper.y;
 
-    computeComplexSquare(nsum);
-    computeComplexSquare(npar);
-    computeComplexSquare(nper);
+  computeComplexSquare(nsum);
+  computeComplexSquare(npar);
+  computeComplexSquare(nper);
 
-    rotatedNr[0].x += npar.x*sx*sx + nper.x*(sy*sy + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[0].y += npar.y*sx*sx + nper.y*(sy*sy + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+  rotatedNr[0].x += npar.x * sx * sx + nper.x * (sy * sy + sz * sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[0].y += npar.y * sx * sx + nper.y * (sy * sy + sz * sz) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-    rotatedNr[1].x += (npar.x - nper.x)*sx*sy;
-    rotatedNr[1].y += (npar.y - nper.y)*sx*sy;
+  rotatedNr[1].x += (npar.x - nper.x) * sx * sy;
+  rotatedNr[1].y += (npar.y - nper.y) * sx * sy;
 
-    rotatedNr[2].x += (npar.x - nper.x)*sx*sz;
-    rotatedNr[2].y += (npar.y - nper.y)*sx*sz;
+  rotatedNr[2].x += (npar.x - nper.x) * sx * sz;
+  rotatedNr[2].y += (npar.y - nper.y) * sx * sz;
 
-    rotatedNr[3].x += npar.x*sy*sy + nper.x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[3].y += npar.y*sy*sy + nper.y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+  rotatedNr[3].x += npar.x * sy * sy + nper.x * (sx * sx + sz * sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[3].y += npar.y * sy * sy + nper.y * (sx * sx + sz * sz) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-    rotatedNr[4].x += (npar.x - nper.x)*sy*sz;
-    rotatedNr[4].y += (npar.y - nper.y)*sy*sz;
+  rotatedNr[4].x += (npar.x - nper.x) * sy * sz;
+  rotatedNr[4].y += (npar.y - nper.y) * sy * sz;
 
-    rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
-//  }
+  rotatedNr[5].x += npar.x * sz * sz + nper.x * (sx * sx + sy * sy) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[5].y += npar.y * sz * sz + nper.y * (sx * sx + sy * sy) + ((phi_ui * nsum.y) / (Real) 9.0);
 
 
-  Nt[threadID  + 0*numVoxels + 0].x += rotatedNr[0].x;Nt[threadID  + 0*numVoxels + 0].y += rotatedNr[0].y;
-  Nt[threadID +  1*numVoxels + 0].x += rotatedNr[1].x;Nt[threadID +  1*numVoxels + 0].y += rotatedNr[1].y;
-  Nt[threadID +  2*numVoxels + 0].x += rotatedNr[2].x;Nt[threadID +  2*numVoxels + 0].y += rotatedNr[2].y;
-  Nt[threadID +  3*numVoxels + 0].x += rotatedNr[3].x;Nt[threadID +  3*numVoxels + 0].y += rotatedNr[3].y;
-  Nt[threadID +  4*numVoxels + 0].x += rotatedNr[4].x;Nt[threadID +  4*numVoxels + 0].y += rotatedNr[4].y;
-  Nt[threadID +  5*numVoxels + 0].x += rotatedNr[5].x;Nt[threadID +  5*numVoxels + 0].y += rotatedNr[5].y;
+  Nt[threadID + 0 * numVoxels + offset].x += rotatedNr[0].x;
+  Nt[threadID + 0 * numVoxels + offset].y += rotatedNr[0].y;
+
+  Nt[threadID +  1*numVoxels + offset].x += rotatedNr[1].x;Nt[threadID +  1*numVoxels + offset].y += rotatedNr[1].y;
+  Nt[threadID +  2*numVoxels + offset].x += rotatedNr[2].x;Nt[threadID +  2*numVoxels + offset].y += rotatedNr[2].y;
+  Nt[threadID +  3*numVoxels + offset].x += rotatedNr[3].x;Nt[threadID +  3*numVoxels + offset].y += rotatedNr[3].y;
+  Nt[threadID +  4*numVoxels + offset].x += rotatedNr[4].x;Nt[threadID +  4*numVoxels + offset].y += rotatedNr[4].y;
+  Nt[threadID +  5*numVoxels + offset].x += rotatedNr[5].x;Nt[threadID +  5*numVoxels + offset].y += rotatedNr[5].y;
 }
 
 template<ReferenceFrame referenceFrame>
