@@ -216,14 +216,20 @@ __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
                        const MorphologyType &morphologyType,
                        const UINT &blockSize,
                        const BigUINT & numVoxels,
+                       const BigUINT & offset,
+                       const UINT & materialID,
                        cudaStream_t stream
 
 ) {
+  Material<1> material;
+  material.npara[0] = materialInput.npara[materialID];
+  material.nperp[0] = materialInput.nperp[materialID];
   if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-    computeNtVectorMorphology<<<blockSize, NUM_THREADS,0,stream>>>(materialInput, d_voxelInput, d_Nt,numVoxels);
+    computeNtVectorMorphology<<<blockSize, NUM_THREADS,0,stream>>>(material, d_voxelInput, d_Nt, offset,numVoxels);
   } else{
     throw std::runtime_error("Not supported");
   }
+  return (EXIT_SUCCESS);
 }
 
 __host__ int computePolarization(const Complex * __restrict__ d_Nt, Complex *d_pX,
@@ -1005,7 +1011,7 @@ int cudaMainStreams(const UINT *voxel,
       exit (EXIT_FAILURE);
     }
 #endif
-    static constexpr int NUM_FFT_STREAMS = 3;
+    static constexpr int NUM_FFT_STREAMS = 1;
     const int NUM_STREAMS = std::max(idata.numMaxStreams,NUM_FFT_STREAMS); // We need minimum of 3 streams for FFT
     std::vector<cudaStream_t> streams(NUM_STREAMS);
     cufftResult result[NUM_FFT_STREAMS];
@@ -1073,11 +1079,12 @@ int cudaMainStreams(const UINT *voxel,
 
     mallocGPU(d_Nt, numVoxels*6);
     const UINT perBatchVoxels = ceil(numVoxels/(NUM_STREAMS*1.0));
-    std::vector<UINT> batchID(NUM_STREAMS);
-    for(int i = 0; i < NUM_STREAMS; i++){
-      batchID[i] = (i+1)*perBatchVoxels;
+    std::vector<UINT> batchID(NUM_STREAMS+1);
+    batchID[0] = 0;
+    for(int i = 1; i < NUM_STREAMS; i++){
+      batchID[i] = (i)*perBatchVoxels;
     }
-    batchID[NUM_STREAMS - 1] = numVoxels;
+    batchID[NUM_STREAMS] = numVoxels;
 
 #ifdef PROFILING
     {
@@ -1106,7 +1113,8 @@ int cudaMainStreams(const UINT *voxel,
         START_TIMER(TIMERS::MALLOC)
       }
 #endif
-      mallocGPU(d_voxelInput, numVoxels*NUM_MATERIAL);
+      cudaZeroEntries(d_Nt,numVoxels*6);
+      mallocGPU(d_voxelInput, numVoxels);
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::MALLOC)
@@ -1114,26 +1122,30 @@ int cudaMainStreams(const UINT *voxel,
       }
 #endif
 
-      for(int i = 0; i < NUM_STREAMS; i++){
+      for(int streamID = 0; streamID < NUM_STREAMS; streamID++){
         for(int numMat = 0; numMat < NUM_MATERIAL; numMat++){
-          cudaMemcpyAsync(&voxelInput[0],)
-////          computeNt()
-//        }
+          cudaMemcpyAsync(&d_voxelInput[batchID[streamID]], &voxelInput[numMat*numVoxels + batchID[streamID]],
+                     sizeof(Voxel)*(batchID[streamID+1] -  batchID[streamID]), cudaMemcpyHostToDevice,streams[streamID]);
+          computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,batchID[streamID],numMat,streams[streamID]);
+        }
       }
-      hostDeviceExchange(d_voxelInput, voxelInput, numVoxels*NUM_MATERIAL, cudaMemcpyHostToDevice);
+
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
         START_TIMER(TIMERS::NtComputation)
       }
 #endif
-      computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels);
+//      computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,streams[0]);
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::NtComputation)
         START_TIMER(TIMERS::FREE_MEMORY)
       }
 #endif
+      cudaDeviceSynchronize();
+      gpuErrchk(cudaPeekAtLastError());
+
       freeCudaMemory(d_voxelInput);
 #ifdef PROFILING
       {
@@ -1237,16 +1249,16 @@ int cudaMainStreams(const UINT *voxel,
 #endif
           /** FFT Computation **/
           result[0] = performFFT(d_polarizationX, plan[0]);
-          result[1] = performFFT(d_polarizationY, plan[1]);
-          result[2] = performFFT(d_polarizationZ, plan[2]);
+          result[0] = performFFT(d_polarizationY, plan[0]);
+          result[0] = performFFT(d_polarizationZ, plan[0]);
 
           performFFTShift(d_polarizationX, BlockSize, vx,streams[0]);
-          performFFTShift(d_polarizationY, BlockSize, vx,streams[1]);
-          performFFTShift(d_polarizationZ, BlockSize, vx,streams[2]);
+          performFFTShift(d_polarizationY, BlockSize, vx,streams[0]);
+          performFFTShift(d_polarizationZ, BlockSize, vx,streams[0]);
           cudaDeviceSynchronize();
 
-          if ((result[0] != CUFFT_SUCCESS) or (result[1] != CUFFT_SUCCESS) or (result[2] != CUFFT_SUCCESS)) {
-            std::cout << "CUFFT failed with result " << result << "\n";
+          if ((result[0] != CUFFT_SUCCESS) or (result[0] != CUFFT_SUCCESS) or (result[0] != CUFFT_SUCCESS)) {
+            std::cout << "CUFFT failed with result " << result[0] << " " << result[0] << " " << result[0] << "\n";
 #pragma omp cancel parallel
             exit(EXIT_FAILURE);
           }

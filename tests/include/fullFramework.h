@@ -64,7 +64,8 @@ TEST(CyRSoXS, fullFrameworkSingleEnergyAlg2) {
     inputData.scatterApproach = static_cast<ScatterApproach>(scatter);
     const UINT voxelSize[3]{32, 32, 16};
     Voxel *voxelData;
-    H5::readFile(fname, voxelSize, voxelData, MorphologyType::VECTOR_MORPHOLOGY, false);
+    mallocCPUPinned(voxelData,inputData.numX*inputData.numY*inputData.numZ*NUM_MATERIAL);
+    H5::readFile(fname, voxelSize, voxelData, MorphologyType::VECTOR_MORPHOLOGY, true);
     Real *projectionGPUAveraged;
     const UINT numEnergyLevel = inputData.energies.size();
     projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
@@ -82,7 +83,7 @@ TEST(CyRSoXS, fullFrameworkSingleEnergyAlg2) {
     EXPECT_LE(linfError, TOLERANCE_CHECK);
     delete[] oracleData;
     delete[] projectionGPUAveraged;
-    delete[] voxelData;
+    cudaFreeHost(voxelData);
   }
 }
 
@@ -170,7 +171,8 @@ TEST(CyRSoXS, fullFrameworkMultipleEnergyAlg2) {
     inputData.scatterApproach = static_cast<ScatterApproach>(scatter);
     const UINT voxelSize[3]{32, 32, 16};
     Voxel *voxelData;
-    H5::readFile(fname, voxelSize, voxelData, MorphologyType::VECTOR_MORPHOLOGY, false);
+    mallocCPUPinned(voxelData,inputData.numX*inputData.numY*inputData.numZ*NUM_MATERIAL);
+    H5::readFile(fname, voxelSize, voxelData, MorphologyType::VECTOR_MORPHOLOGY, true);
     Real *projectionGPUAveraged;
     const UINT numEnergyLevel = inputData.energies.size();
     projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
@@ -193,7 +195,7 @@ TEST(CyRSoXS, fullFrameworkMultipleEnergyAlg2) {
     }
     delete [] projectionGPUAveraged;
     delete [] oracleData;
-    delete [] voxelData;
+    cudaFreeHost(voxelData);
   }
 
 }

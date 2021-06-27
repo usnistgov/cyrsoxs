@@ -261,23 +261,25 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   polarizationZ[threadID] = pZ;
 }
 
-__global__ void computeNtVectorMorphology(const Material<NUM_MATERIAL> material,
+__global__ void computeNtVectorMorphology(const Material<1> material,
                           const Voxel * __restrict__ voxelInput,
-                          Complex * Nt, const BigUINT numVoxels) {
+                          Complex * Nt, const BigUINT  offset,
+                          const BigUINT numVoxels) {
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
-  if(threadID > numVoxels){
+  if((threadID + offset) > numVoxels){
     return;
   }
   Complex rotatedNr[6]; // Only storing what is required
   memset(rotatedNr,0,sizeof(Complex)*6);
   Complex nsum;
-  for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
-    Complex npar = material.npara[numMaterial];
-    Complex nper = material.nperp[numMaterial];
-    const Real &sx = voxelInput[numMaterial*numVoxels + threadID].s1.x;
-    const Real &sy = voxelInput[numMaterial*numVoxels + threadID].s1.y;
-    const Real &sz = voxelInput[numMaterial*numVoxels + threadID].s1.z;
-    const Real &phi_ui = voxelInput[numMaterial*numVoxels + threadID].s1.w;
+//  for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
+    Complex npar = material.npara[0];
+    Complex nper = material.nperp[0];
+    const Real4 matProp = voxelInput[offset + threadID].s1;
+    const Real &sx = matProp.x;
+    const Real &sy = matProp.y;
+    const Real &sz = matProp.z;
+    const Real &phi_ui = matProp.w;
 
     const Real & phi = phi_ui + sx * sx + sy * sy + sz * sz;
 
@@ -305,15 +307,15 @@ __global__ void computeNtVectorMorphology(const Material<NUM_MATERIAL> material,
 
     rotatedNr[5].x += npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
     rotatedNr[5].y += npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
-  }
+//  }
 
 
-  Nt[threadID  + 0*numVoxels + 0] = rotatedNr[0];
-  Nt[threadID +  1*numVoxels + 0] = rotatedNr[1];
-  Nt[threadID +  2*numVoxels + 0] = rotatedNr[2];
-  Nt[threadID +  3*numVoxels + 0] = rotatedNr[3];
-  Nt[threadID +  4*numVoxels + 0] = rotatedNr[4];
-  Nt[threadID +  5*numVoxels + 0] = rotatedNr[5];
+  Nt[threadID  + 0*numVoxels + 0].x += rotatedNr[0].x;Nt[threadID  + 0*numVoxels + 0].y += rotatedNr[0].y;
+  Nt[threadID +  1*numVoxels + 0].x += rotatedNr[1].x;Nt[threadID +  1*numVoxels + 0].y += rotatedNr[1].y;
+  Nt[threadID +  2*numVoxels + 0].x += rotatedNr[2].x;Nt[threadID +  2*numVoxels + 0].y += rotatedNr[2].y;
+  Nt[threadID +  3*numVoxels + 0].x += rotatedNr[3].x;Nt[threadID +  3*numVoxels + 0].y += rotatedNr[3].y;
+  Nt[threadID +  4*numVoxels + 0].x += rotatedNr[4].x;Nt[threadID +  4*numVoxels + 0].y += rotatedNr[4].y;
+  Nt[threadID +  5*numVoxels + 0].x += rotatedNr[5].x;Nt[threadID +  5*numVoxels + 0].y += rotatedNr[5].y;
 }
 
 template<ReferenceFrame referenceFrame>
