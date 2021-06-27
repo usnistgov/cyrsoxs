@@ -1120,7 +1120,7 @@ int cudaMainStreams(const UINT *voxel,
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::MALLOC)
-        START_TIMER(TIMERS::MEMCOPY_CPU_GPU)
+        START_TIMER(TIMERS::NtComputation)
       }
 #endif
 
@@ -1131,22 +1131,15 @@ int cudaMainStreams(const UINT *voxel,
           computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,batchID[streamID],batchID[streamID+1],numMat,NUM_STREAMS,streams[streamID]);
         }
       }
-
-#ifdef PROFILING
-      {
-        END_TIMER(TIMERS::MEMCOPY_CPU_GPU)
-        START_TIMER(TIMERS::NtComputation)
-      }
-#endif
-//      computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,streams[0]);
+      cudaDeviceSynchronize();
+      gpuErrchk(cudaPeekAtLastError());
 #ifdef PROFILING
       {
         END_TIMER(TIMERS::NtComputation)
         START_TIMER(TIMERS::FREE_MEMORY)
       }
 #endif
-      cudaDeviceSynchronize();
-      gpuErrchk(cudaPeekAtLastError());
+
 
       freeCudaMemory(d_voxelInput);
 #ifdef PROFILING
