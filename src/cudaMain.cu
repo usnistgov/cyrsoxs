@@ -243,10 +243,10 @@ __host__ int computePolarization(const Complex * __restrict__ d_Nt, Complex *d_p
 
 ) {
   if (referenceFrame == ReferenceFrame::MATERIAL) {
-      computePolarizationVectorMorphologyLowMemory<ReferenceFrame::MATERIAL><<<blockSize, NUM_THREADS >>>( d_Nt, d_pX,
+      computePolarizationVectorMorphologyLowMemory<ReferenceFrame::MATERIAL><<<blockSize, NUM_THREADS >>>( (Real4 *)d_Nt, d_pX,
                                                                                                           d_pY, d_pZ,rotationMatrix,numVoxels);
     } else{
-      computePolarizationVectorMorphologyLowMemory<ReferenceFrame::LAB><<<blockSize, NUM_THREADS >>>(d_Nt, d_pX,
+      computePolarizationVectorMorphologyLowMemory<ReferenceFrame::LAB><<<blockSize, NUM_THREADS >>>((Real4 *)d_Nt, d_pX,
                                                                                                      d_pY, d_pZ,rotationMatrix,numVoxels);
     }
 
