@@ -230,6 +230,7 @@ private:
 
   Real3 detectorCoordinates{0,0,1};
   bool ifUseLowMemoryAlgo = false;
+  int numMaxStreams = 1;
 
   /**
    *

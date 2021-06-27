@@ -126,11 +126,16 @@ TEST(CyRSoXS, FFT) {
   Complex *fftPY = new Complex [numVoxels];
   Complex *fftPZ = new Complex [numVoxels];
 
-
-
-
-  cufftHandle plan;
-  cufftPlan3d(&plan, voxelSize[2], voxelSize[1], voxelSize[0], fftType);
+  static constexpr int NUM_STREAMS=3;
+  cudaStream_t streams[NUM_STREAMS];
+  cufftHandle plan[NUM_STREAMS];
+  for (int i = 0; i < NUM_STREAMS; i++) {
+    gpuErrchk(cudaStreamCreate(&streams[i]));
+  }
+  for(int i = 0; i < NUM_STREAMS; i++){
+    cufftPlan3d(&plan[i], voxelSize[2], voxelSize[1], voxelSize[0], fftType);
+    cufftSetStream(plan[i], streams[i]);
+  }
 
   for(int i = 0 ; i < maxERotation; i++){
     const std::string pathOfpolarization = root+"/Data/regressionData/SingleAngle/" + oracleDirName[i] + "/polarization/";
@@ -143,9 +148,9 @@ TEST(CyRSoXS, FFT) {
     hostDeviceExchange(d_pY, pY, numVoxels, cudaMemcpyHostToDevice);
     hostDeviceExchange(d_pZ, pZ, numVoxels, cudaMemcpyHostToDevice);
 
-    auto res1 = performFFT(d_pX,plan);
-    auto res2 = performFFT(d_pY,plan);
-    auto res3 = performFFT(d_pZ,plan);
+    auto res1 = performFFT(d_pX,plan[0]);
+    auto res2 = performFFT(d_pY,plan[1]);
+    auto res3 = performFFT(d_pZ,plan[2]);
 
     EXPECT_EQ(res1,CUFFT_SUCCESS);
     EXPECT_EQ(res2,CUFFT_SUCCESS);
@@ -169,9 +174,9 @@ TEST(CyRSoXS, FFT) {
     EXPECT_LE(linfError.y,TOLERANCE_CHECK);
     UINT blockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
     const uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
-    int suc1 = performFFTShift(d_pX,blockSize,vx);
-    int suc2 = performFFTShift(d_pY,blockSize,vx);
-    int suc3 = performFFTShift(d_pZ,blockSize,vx);
+    int suc1 = performFFTShift(d_pX,blockSize,vx,streams[0]);
+    int suc2 = performFFTShift(d_pY,blockSize,vx,streams[1]);
+    int suc3 = performFFTShift(d_pZ,blockSize,vx,streams[2]);
     EXPECT_EQ(suc1,EXIT_SUCCESS);
     EXPECT_EQ(suc2,EXIT_SUCCESS);
     EXPECT_EQ(suc3,EXIT_SUCCESS);
@@ -206,7 +211,11 @@ TEST(CyRSoXS, FFT) {
   delete [] fftPX;
   delete [] fftPY;
   delete [] fftPZ;
-  cufftDestroy(plan);
+  for(int i = 0; i < NUM_STREAMS; i++){
+    cufftDestroy(plan[i]);
+    gpuErrchk(cudaStreamDestroy(streams[i]))
+  }
+
   freeCudaMemory(d_pX);
   freeCudaMemory(d_pY);
   freeCudaMemory(d_pZ);

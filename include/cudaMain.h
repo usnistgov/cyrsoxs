@@ -114,7 +114,7 @@ __host__ INLINE inline cufftResult  performFFT(Complex *polarization, cufftHandl
     return (cufftExecC2C(plan, polarization, polarization, CUFFT_FORWARD));
 }
 
-__host__ int performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx,  const int stream = 0);
+__host__ int performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx,  const cudaStream_t stream);
 
 __host__ int performScatter3DComputation(const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
                                           Real * d_scatter3D,
