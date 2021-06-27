@@ -104,7 +104,8 @@ int main(int argc, char **argv) {
     RotationMatrix matrix(&inputData);
     std::string fname = argv[1];
     Voxel *voxelData;
-    H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType));
+    mallocCPUPinned(voxelData,inputData.numX*inputData.numY*inputData.numZ*NUM_MATERIAL);
+    H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType), true);
     Real *projectionGPUAveraged;
     const UINT
       numEnergyLevel = inputData.energies.size();

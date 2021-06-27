@@ -78,7 +78,12 @@ __host__ INLINE inline void mallocGPU(T *& d_data, const GI & size){
 template <typename T, typename GI>
 __host__ INLINE inline void mallocCPU(T *& data, const GI & size){
   data = new T[size];
+}
 
+template <typename T, typename GI>
+__host__ INLINE inline void mallocCPUPinned(T *& data, const GI & size){
+  CUDA_CHECK_RETURN(cudaMallocHost((void**)&data,sizeof(T)*size));
+  gpuErrchk(cudaPeekAtLastError());
 }
 
 template <typename T, typename GI>
