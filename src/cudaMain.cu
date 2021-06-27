@@ -215,18 +215,15 @@ __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
                        Complex * d_Nt,
                        const MorphologyType &morphologyType,
                        const UINT &blockSize,
-                       const BigUINT & numVoxels
+                       const BigUINT & numVoxels,
+                       cudaStream_t stream
 
 ) {
   if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-    computeNtVectorMorphology<<<blockSize, NUM_THREADS >>>(materialInput, d_voxelInput, d_Nt,numVoxels);
+    computeNtVectorMorphology<<<blockSize, NUM_THREADS,0,stream>>>(materialInput, d_voxelInput, d_Nt,numVoxels);
   } else{
     throw std::runtime_error("Not supported");
   }
-
-  cudaDeviceSynchronize();
-  gpuErrchk(cudaPeekAtLastError());
-  return EXIT_SUCCESS;
 }
 
 __host__ int computePolarization(const Complex * __restrict__ d_Nt, Complex *d_pX,
@@ -1075,6 +1072,12 @@ int cudaMainStreams(const UINT *voxel,
     Complex * d_Nt;
 
     mallocGPU(d_Nt, numVoxels*6);
+    const UINT perBatchVoxels = ceil(numVoxels/(NUM_STREAMS*1.0));
+    std::vector<UINT> batchID(NUM_STREAMS);
+    for(int i = 0; i < NUM_STREAMS; i++){
+      batchID[i] = (i+1)*perBatchVoxels;
+    }
+    batchID[NUM_STREAMS - 1] = numVoxels;
 
 #ifdef PROFILING
     {
@@ -1110,6 +1113,13 @@ int cudaMainStreams(const UINT *voxel,
         START_TIMER(TIMERS::MEMCOPY_CPU_GPU)
       }
 #endif
+
+      for(int i = 0; i < NUM_STREAMS; i++){
+        for(int numMat = 0; numMat < NUM_MATERIAL; numMat++){
+          cudaMemcpyAsync(&voxelInput[0],)
+////          computeNt()
+//        }
+      }
       hostDeviceExchange(d_voxelInput, voxelInput, numVoxels*NUM_MATERIAL, cudaMemcpyHostToDevice);
 #ifdef PROFILING
       {
