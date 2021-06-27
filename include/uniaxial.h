@@ -380,24 +380,6 @@ __global__ void computePolarizationVectorMorphologyLowMemory(const Real4 * __res
   // (5)
   pZ.x += rotatedNr[1].x*matVec.z;
   pZ.y += rotatedNr[1].y*matVec.z;
-//  Real4 temp = Nt[threadID + 0*numVoxels];
-//  rotatedNr[0] = {temp.x,temp.y};
-//  rotatedNr[1] = {temp.z,temp.w};
-//  temp = Nt[threadID + 1*numVoxels];
-//  rotatedNr[2] = {temp.x,temp.y};
-//  rotatedNr[3] = {temp.z,temp.w};
-//  temp = Nt[threadID + 2*numVoxels];
-//  rotatedNr[4] = {temp.x,temp.y};
-//  rotatedNr[5] = {temp.x,temp.y};
-
-//  pX.x = ;
-//  pX.y = rotatedNr[MATINDEXID[0][0]].y*matVec.x + rotatedNr[MATINDEXID[0][1]].y*matVec.y + rotatedNr[MATINDEXID[0][2]].y*matVec.z;
-//
-//  pY.x = rotatedNr[MATINDEXID[1][0]].x*matVec.x + rotatedNr[MATINDEXID[1][1]].x*matVec.y + rotatedNr[MATINDEXID[1][2]].x*matVec.z;
-//  pY.y = rotatedNr[MATINDEXID[1][0]].y*matVec.x + rotatedNr[MATINDEXID[1][1]].y*matVec.y + rotatedNr[MATINDEXID[1][2]].y*matVec.z;
-//
-//  pZ.x = rotatedNr[MATINDEXID[2][0]].x*matVec.x + rotatedNr[MATINDEXID[2][1]].x*matVec.y + rotatedNr[MATINDEXID[2][2]].y*matVec.z;
-//  pZ.y = rotatedNr[MATINDEXID[2][0]].y*matVec.x + rotatedNr[MATINDEXID[2][1]].y*matVec.y + rotatedNr[MATINDEXID[2][2]].y*matVec.z;
 
   pX.x *= OneBy4Pi;
   pX.y *= OneBy4Pi;
