@@ -1491,8 +1491,10 @@ freeCudaMemory(d_Nt);
 #if (defined(DUMP_FILES) or defined(EOC))
     delete[] scatter3D;
 #endif
-    for(int i = 0; i < NUM_STREAMS; i++) {
+    for(int i = 0; i < NUM_FFT_STREAMS; i++) {
       cufftDestroy(plan[i]);
+    }
+    for(int i = 0; i < NUM_STREAMS; i++) {
       gpuErrchk(cudaStreamDestroy(streams[i]))
     }
     cublasDestroy(handle);
