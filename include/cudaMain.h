@@ -153,6 +153,7 @@ __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
                        Complex * d_Nt,
                        const MorphologyType &morphologyType,
                        const UINT &blockSize,
-                       const BigUINT & numVoxels);
+                       const BigUINT & numVoxels,
+                       cudaStream_t stream);
 
 

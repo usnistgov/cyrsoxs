@@ -126,7 +126,7 @@ int main(int argc, char **argv) {
     }
     printMetaData(inputData,rotationMatrix);
     delete[] projectionGPUAveraged;
-    delete[] voxelData;
+    cudaFreeHost(voxelData);
     std::cout << "Complete. Exiting \n";
 
     return EXIT_SUCCESS;
