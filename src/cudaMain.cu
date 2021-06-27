@@ -1013,8 +1013,8 @@ int cudaMainStreams(const UINT *voxel,
       exit (EXIT_FAILURE);
     }
 #endif
-    static constexpr int NUM_FFT_STREAMS = 1;
-    const int NUM_STREAMS = 3;//std::max(idata.numMaxStreams,NUM_FFT_STREAMS); // We need minimum of 3 streams for FFT
+    static constexpr int NUM_FFT_STREAMS = 3;
+    const int NUM_STREAMS = std::max(idata.numMaxStreams,NUM_FFT_STREAMS); // We need minimum of 3 streams for FFT
     std::vector<cudaStream_t> streams(NUM_STREAMS);
     cufftResult result[NUM_FFT_STREAMS];
     cufftHandle plan[NUM_FFT_STREAMS];
@@ -1251,16 +1251,16 @@ int cudaMainStreams(const UINT *voxel,
 #endif
           /** FFT Computation **/
           result[0] = performFFT(d_polarizationX, plan[0]);
-          result[0] = performFFT(d_polarizationY, plan[0]);
-          result[0] = performFFT(d_polarizationZ, plan[0]);
+          result[1] = performFFT(d_polarizationY, plan[1]);
+          result[2] = performFFT(d_polarizationZ, plan[2]);
 
           performFFTShift(d_polarizationX, BlockSize, vx,streams[0]);
-          performFFTShift(d_polarizationY, BlockSize, vx,streams[0]);
-          performFFTShift(d_polarizationZ, BlockSize, vx,streams[0]);
+          performFFTShift(d_polarizationY, BlockSize, vx,streams[1]);
+          performFFTShift(d_polarizationZ, BlockSize, vx,streams[2]);
           cudaDeviceSynchronize();
 
-          if ((result[0] != CUFFT_SUCCESS) or (result[0] != CUFFT_SUCCESS) or (result[0] != CUFFT_SUCCESS)) {
-            std::cout << "CUFFT failed with result " << result[0] << " " << result[0] << " " << result[0] << "\n";
+          if ((result[0] != CUFFT_SUCCESS) or (result[1] != CUFFT_SUCCESS) or (result[2] != CUFFT_SUCCESS)) {
+            std::cout << "CUFFT failed with result " << result[0] << " " << result[1] << " " << result[2] << "\n";
 #pragma omp cancel parallel
             exit(EXIT_FAILURE);
           }
