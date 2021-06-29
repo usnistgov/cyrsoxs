@@ -8,7 +8,7 @@
 #include <Datatypes.h>
 #include <limits>
 
-static constexpr Real TOLERANCE_CHECK = 1E-4;
+static constexpr Real TOLERANCE_CHECK = 5E-5;
 template<typename T, typename GI>
 static inline T computeLinfErrorReal(const T * vec1, const T * vec2, const GI size){
   Real maxDifference = -std::numeric_limits<T>::infinity();

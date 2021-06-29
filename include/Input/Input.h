@@ -61,18 +61,6 @@ struct Voxel {
   /// s1[i].w = fraction of unaligned component (\f$\phi_{ua}\f$)
 
   Real4 s1;
-  __host__ __device__ inline Real  s(const UINT & id) const{
-    return s1.x;
-  }
-  __host__ __device__ inline Real  phi(const UINT & id) const{
-    return s1.y;
-  }
-  __host__ __device__ inline Real  theta(const UINT & id) const{
-    return s1.z;
-  }
-  __host__ __device__ inline Real  vFrac(const UINT & id) const{
-    return s1.w;
-  }
 
   Voxel():
   s1{0.0,0.0,0.0,0.0}{

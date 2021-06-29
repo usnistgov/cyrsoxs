@@ -144,8 +144,8 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                                  polarizationY,
                                                  polarizationZ,numVoxels,rotationMatrix);
   } else {
-    computePolarizationEulerAngles(&materialInput, voxelInput, threadID, polarizationX, polarizationY,
-                                   polarizationZ,numVoxels);
+    computePolarizationEulerAngles<referenceFrame>(&materialInput, voxelInput, threadID, polarizationX, polarizationY,
+                                   polarizationZ,numVoxels,rotationMatrix);
   }
 #else
   printf("Kernel not spported\n");
@@ -229,7 +229,7 @@ __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
   if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
     computeNtVectorMorphology<<<std::ceil(blockSize*1.0/numStreams), NUM_THREADS,0,stream>>>(material, d_voxelInput, d_Nt, offset,endID,numVoxels);
   } else{
-    throw std::runtime_error("Not supported");
+    computeNtEulerAngles<<<std::ceil(blockSize*1.0/numStreams), NUM_THREADS,0,stream>>>(material, d_voxelInput, d_Nt, offset,endID,numVoxels);
   }
   return (EXIT_SUCCESS);
 }
