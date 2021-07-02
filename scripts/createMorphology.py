@@ -53,7 +53,7 @@ dset = g0.create_dataset("igormaterialnum", data = num_materials,dtype = np.int3
 g1 = f.create_group('vector_morphology')
 for i in range(0,num_materials):
     name = "Mat_"+ str(i+1) + "_unaligned"
-    unalignedFraction = np.reshape(volume_fraction[i]*unaligned_fraction[i],(Nx,Ny,Nz))
+    unalignedFraction = np.reshape(volume_fraction[i]*unaligned_fraction[i],(Nz,Ny,Nx))
     dset = g1.create_dataset(name, data = (unalignedFraction),dtype = np.float32)
     
 AlignedFraction = np.zeros((size,3),dtype = np.float32)
