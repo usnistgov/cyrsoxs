@@ -140,7 +140,7 @@ namespace H5 {
       hsize_t voxelDims[3];
       const int ndims = space.getSimpleExtentDims( voxelDims, NULL);
       // Note HDF5 wrotes dimensions as (Z,Y,X)
-      if((ndims != 1) or (voxelDims[0]!=voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
+      if((ndims != 3) or (voxelDims[0]!=voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
          (voxelDims[2] != voxelSize[0])) {
         std::cout << "Error in morphology for Material = " << i << "\n";
         std::cout << "Expected dimension from config (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2] << "\n";

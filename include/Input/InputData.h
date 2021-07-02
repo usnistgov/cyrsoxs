@@ -280,7 +280,13 @@ private:
     const UINT & numEnergy = energies.size();
     for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
       std::string fname = "Material" + std::to_string(numMaterial) + ".txt";
-      cfg.readFile(fname.c_str());
+      try {
+        cfg.readFile(fname.c_str());
+      }
+      catch (std::runtime_error & e) {
+        std::cout << "Config not found for Material " << numMaterial <<  e.what() << "\n";
+
+      }
       for (int i = 0; i < numEnergy; i++) {
         const auto &global = cfg.getRoot()["EnergyData" + std::to_string(i)];
         Real energy = global["Energy"];
