@@ -283,9 +283,8 @@ private:
       try {
         cfg.readFile(fname.c_str());
       }
-      catch (std::runtime_error & e) {
-        std::cout << "Config not found for Material " << numMaterial <<  e.what() << "\n";
-
+      catch (libconfig::FileIOException & e) {
+        std::cout << "Refractive index config not found for Material " << numMaterial << "\n" << e.what() << "\n";
       }
       for (int i = 0; i < numEnergy; i++) {
         const auto &global = cfg.getRoot()["EnergyData" + std::to_string(i)];
