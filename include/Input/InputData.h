@@ -313,7 +313,10 @@ private:
       validate("K Rotation",kRotationType,KRotationType::MAX_ROTATION_TYPE);
       validate("Scatter Approach",scatterApproach,ScatterApproach::MAX_SCATTER_APPROACH);
       validate("Ewalds Interpolation",ewaldsInterpolation,Interpolation::EwaldsInterpolation::MAX_SIZE);
-      validate("Morphology Type",ewaldsInterpolation,MorphologyType::MAX_MORPHOLOGY_TYPE);
+      validate("Morphology Type",morphologyType,MorphologyType::MAX_MORPHOLOGY_TYPE);
+      if(morphologyType != MorphologyType::VECTOR_MORPHOLOGY) {
+        throw std::logic_error("Only vector morphology type is supported");
+      }
       std::cout << GRN << "Input Data : [OK] " << NRM << "\n";
   }
     /**

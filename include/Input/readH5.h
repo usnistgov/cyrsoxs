@@ -56,8 +56,27 @@ namespace H5 {
     }
     for (int i = 1; i <= NUM_MATERIAL; i++) {
       std::string varname = groupName + "Mat_" + std::to_string(i) + "_alignment";
-      H5::DataSet dataSet = file.openDataSet(varname);
+      H5::DataSet dataSet;
+      try {
+        dataSet = file.openDataSet(varname);
+      }
+      catch (GroupIException not_found_error) {
+        std::cout << "Data set = " << varname << "not found";
+        throw std::logic_error(" Dataset is not found.");
+      }
       H5::DataType dataType = dataSet.getDataType();
+      H5::DataSpace space = dataSet.getSpace();
+      hsize_t voxelDims[4];
+      const int ndims = space.getSimpleExtentDims( voxelDims, NULL);
+      // Note HDF5 wrotes dimensions as (Z,Y,X)
+      if((ndims != 4) or (voxelDims[0]!=voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
+         (voxelDims[2] != voxelSize[0]) or (voxelDims[3] != 3)) {
+        std::cout << "Error in morphology for Material = " << i << "\n";
+        std::cout << "Expected dimension from config (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2] << "\n";
+        std::cout << "Dimensions from HDF5 (X,Y,Z)          = "  << voxelDims[2] << " " << voxelDims[1] << " " << voxelDims[0] << "\n";
+        throw std::logic_error("Dimension mismatch for morphology");
+      }
+
 #ifdef DOUBLE_PRECISION
       if(dataType != PredType::NATIVE_DOUBLE){
          std::cout << "The data format is not supported for double precision \n";
@@ -107,9 +126,26 @@ namespace H5 {
     for (int i = 1; i <= NUM_MATERIAL; i++) {
       std::string varname = groupName + "/Mat_" + std::to_string(i) + strName;
 
-      H5::DataSet dataSet = file.openDataSet(varname);
+      H5::DataSet dataSet;
+      try {
+        dataSet = file.openDataSet(varname);
+      }
+      catch (GroupIException not_found_error) {
+        std::cout << "Data set = " << varname << "not found";
+        throw std::logic_error(" Dataset is not found.");
+      }
       H5::DataType dataType = dataSet.getDataType();
-
+      H5::DataSpace space = dataSet.getSpace();
+      hsize_t voxelDims[4];
+      const int ndims = space.getSimpleExtentDims( voxelDims, NULL);
+      // Note HDF5 wrotes dimensions as (Z,Y,X)
+      if((ndims != 4) or (voxelDims[0]!=voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
+         (voxelDims[2] != voxelSize[0]) or (voxelDims[3] != 3)) {
+        std::cout << "Error in morphology for Material = " << i << "\n";
+        std::cout << "Expected dimension from config (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2] << "\n";
+        std::cout << "Dimensions from HDF5 (X,Y,Z)          = "  << voxelDims[2] << " " << voxelDims[1] << " " << voxelDims[0] << "\n";
+        throw std::logic_error("Dimension mismatch for morphology");
+      }
 #ifdef DOUBLE_PRECISION
       if(dataType != PredType::NATIVE_DOUBLE){
          std::cout << "The data format is not supported for double precision \n";
