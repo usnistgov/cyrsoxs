@@ -183,7 +183,14 @@ namespace H5 {
 
   static void readFile(const std::string &hdf5file, const UINT *voxelSize, Voxel<NUM_MATERIAL> *&voxelData,
                       const MorphologyType & morphologyType, bool isAllocated = false) {
-    H5::H5File file(hdf5file, H5F_ACC_RDONLY);
+    H5::H5File  file;
+    try{
+      file= H5::H5File(hdf5file, H5F_ACC_RDONLY);
+    }
+    catch (FileIException error) {
+      std::cout  << "Cannot open file " << hdf5file << "\n";
+      exit(EXIT_FAILURE);
+    }
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
     if (not isAllocated) {
       voxelData = new Voxel<NUM_MATERIAL>[numVoxel];
