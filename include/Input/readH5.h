@@ -71,7 +71,8 @@ namespace H5 {
       // Note HDF5 wrotes dimensions as (Z,Y,X)
       if((ndims != 4) or (voxelDims[0]!=voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
          (voxelDims[2] != voxelSize[0]) or (voxelDims[3] != 3)) {
-        std::cout << "Error in morphology for Material = " << i << "\n";
+        std::cout << "Error in morphology for Material = " << i << " for vector components\n";
+        std::cout << "Ndims = " << ndims << "\n";
         std::cout << "Expected dimension from config (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2] << "\n";
         std::cout << "Dimensions from HDF5 (X,Y,Z)          = "  << voxelDims[2] << " " << voxelDims[1] << " " << voxelDims[0] << "\n";
         throw std::logic_error("Dimension mismatch for morphology");
@@ -136,11 +137,11 @@ namespace H5 {
       }
       H5::DataType dataType = dataSet.getDataType();
       H5::DataSpace space = dataSet.getSpace();
-      hsize_t voxelDims[4];
+      hsize_t voxelDims[3];
       const int ndims = space.getSimpleExtentDims( voxelDims, NULL);
       // Note HDF5 wrotes dimensions as (Z,Y,X)
-      if((ndims != 4) or (voxelDims[0]!=voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
-         (voxelDims[2] != voxelSize[0]) or (voxelDims[3] != 3)) {
+      if((ndims != 1) or (voxelDims[0]!=voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
+         (voxelDims[2] != voxelSize[0])) {
         std::cout << "Error in morphology for Material = " << i << "\n";
         std::cout << "Expected dimension from config (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2] << "\n";
         std::cout << "Dimensions from HDF5 (X,Y,Z)          = "  << voxelDims[2] << " " << voxelDims[1] << " " << voxelDims[0] << "\n";
