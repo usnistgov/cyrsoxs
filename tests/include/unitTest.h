@@ -108,99 +108,99 @@ TEST(CyRSoXS, polarization) {
 }
 
 TEST(CyRSoXS, polarizationEulerAngle) {
-  const std::string root = CMAKE_ROOT ;
-  const std::string fname = root + "/Data/sample.h5";
-  const std::string configPath = root + "/Data/config/";
-  if(cd(configPath.c_str()) != 0){
-    throw std::runtime_error("Wrong path for config");
-  }
-  std::vector<Material<NUM_MATERIAL>> refractiveIndexData;
-  InputData inputData;
-  inputData.readRefractiveIndexData(refractiveIndexData);
-  const UINT voxelSize[3]{32,32,16};
-  Voxel* voxelData,*d_voxelData;
-  const uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
-  const BigUINT  numVoxels = voxelSize[0]*voxelSize[1]*voxelSize[2];
-
-  H5::readFile(fname,voxelSize,voxelData,MorphologyType::VECTOR_MORPHOLOGY,false);
-  for(int i = 0; i < numVoxels; i++){
-    Real   sx     = voxelData[i].s1.x;
-    Real   sy     = voxelData[i].s1.y;
-    Real   sz     = voxelData[i].s1.z;
-    Real   phi_ui = voxelData[i].s1.w;
-    Real magS      = sqrt(sx*sx + sy*sy +sz*sz);
-    voxelData[i].s1.x = magS;
-    voxelData[i].s1.y = acos(sx/magS);
-    voxelData[i].s1.z = atan(sy/sz);
-    voxelData[i].s1.w = magS*magS + phi_ui;
-
-  }
-
-  Complex *polarizationX, *polarizationY,*polarizationZ;
-  Complex *d_polarizationX, *d_polarizationY,*d_polarizationZ;
-
-  mallocGPU(d_voxelData,numVoxels);
-  mallocGPU(d_polarizationX,numVoxels);
-  mallocGPU(d_polarizationY,numVoxels);
-  mallocGPU(d_polarizationZ,numVoxels);
-  mallocCPU(polarizationX,numVoxels);
-  mallocCPU(polarizationY,numVoxels);
-  mallocCPU(polarizationZ,numVoxels);
-
-  hostDeviceExchange(d_voxelData, voxelData, numVoxels, cudaMemcpyHostToDevice);
-
-
-  const Real wavelength = static_cast<Real>(1239.84197 / inputData.energies[0]);
-  const Real kMagnitude = static_cast<Real>(2 * M_PI / wavelength);;
-  UINT blockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
-  static constexpr Real3 kVec{0,0,1};
-  Matrix rotationMatrixK,rotationMatrix;
-  computeRotationMatrixK(kVec,rotationMatrixK);
-  Real baseRotAngle;
-  computeRotationMatrixBaseConfiguration(kVec,rotationMatrixK,rotationMatrix,baseRotAngle);
-
-  Complex *pXOracle = new Complex[numVoxels];
-  Complex *pYOracle = new Complex[numVoxels];
-  Complex *pZOracle = new Complex[numVoxels];
-  Matrix ERotationMatrix;
-  for(int i = 0; i < maxERotation; i++) {
-    Real angle = angleOfERotation[i]*180.0/M_PI;
-    computeRotationMatrix(kVec,rotationMatrixK,ERotationMatrix,angle);
-    computePolarization(refractiveIndexData[0], d_voxelData, vx, d_polarizationX, d_polarizationY,
-                        d_polarizationZ, FFT::FFTWindowing::NONE,
-                        false, MorphologyType::EULER_ANGLES, blockSize,ReferenceFrame::MATERIAL,rotationMatrix,numVoxels);
-    hostDeviceExchange(polarizationX, d_polarizationX, numVoxels, cudaMemcpyDeviceToHost);
-    hostDeviceExchange(polarizationY, d_polarizationY, numVoxels, cudaMemcpyDeviceToHost);
-    hostDeviceExchange(polarizationZ, d_polarizationZ, numVoxels, cudaMemcpyDeviceToHost);
-
-    std::string pathOfOracle = root + "/Data/regressionData/SingleAngle/"  + oracleDirName[i] +"/polarization/";
-    readFile(pXOracle, pathOfOracle + "polarizeX.dmp", numVoxels);
-    readFile(pYOracle, pathOfOracle + "polarizeY.dmp", numVoxels);
-    readFile(pZOracle, pathOfOracle + "polarizeZ.dmp", numVoxels);
-    Complex linfError;
-    linfError = computeLinfError(pXOracle, polarizationX, numVoxels);
-    EXPECT_LE(linfError.x, TOLERANCE_CHECK);
-    EXPECT_LE(linfError.y, TOLERANCE_CHECK);
-    linfError = computeLinfError(pYOracle, polarizationY, numVoxels);
-    EXPECT_LE(linfError.x, TOLERANCE_CHECK);
-    EXPECT_LE(linfError.y, TOLERANCE_CHECK);
-    linfError = computeLinfError(pZOracle, polarizationZ, numVoxels);
-    EXPECT_LE(linfError.x, TOLERANCE_CHECK);
-    EXPECT_LE(linfError.y, TOLERANCE_CHECK);
-  }
-
-  freeCudaMemory(d_voxelData);
-  freeCudaMemory(d_polarizationX);
-  freeCudaMemory(d_polarizationY);
-  freeCudaMemory(d_polarizationZ);
-  delete [] pXOracle;
-  delete [] pYOracle;
-  delete [] pZOracle;
-
-  delete [] voxelData;
-  delete [] polarizationX;
-  delete [] polarizationY;
-  delete [] polarizationZ;
+//  const std::string root = CMAKE_ROOT ;
+//  const std::string fname = root + "/Data/sample.h5";
+//  const std::string configPath = root + "/Data/config/";
+//  if(cd(configPath.c_str()) != 0){
+//    throw std::runtime_error("Wrong path for config");
+//  }
+//  std::vector<Material<NUM_MATERIAL>> refractiveIndexData;
+//  InputData inputData;
+//  inputData.readRefractiveIndexData(refractiveIndexData);
+//  const UINT voxelSize[3]{32,32,16};
+//  Voxel* voxelData,*d_voxelData;
+//  const uint3 vx{voxelSize[0],voxelSize[1],voxelSize[2]};
+//  const BigUINT  numVoxels = voxelSize[0]*voxelSize[1]*voxelSize[2];
+//
+//  H5::readFile(fname,voxelSize,voxelData,MorphologyType::VECTOR_MORPHOLOGY,false);
+//  for(int i = 0; i < numVoxels; i++){
+//    Real   sx     = voxelData[i].s1.x;
+//    Real   sy     = voxelData[i].s1.y;
+//    Real   sz     = voxelData[i].s1.z;
+//    Real   phi_ui = voxelData[i].s1.w;
+//    Real magS      = sqrt(sx*sx + sy*sy +sz*sz);
+//    voxelData[i].s1.x = magS;
+//    voxelData[i].s1.y = acos(sx/magS);
+//    voxelData[i].s1.z = atan(sy/sz);
+//    voxelData[i].s1.w = magS*magS + phi_ui;
+//
+//  }
+//
+//  Complex *polarizationX, *polarizationY,*polarizationZ;
+//  Complex *d_polarizationX, *d_polarizationY,*d_polarizationZ;
+//
+//  mallocGPU(d_voxelData,numVoxels);
+//  mallocGPU(d_polarizationX,numVoxels);
+//  mallocGPU(d_polarizationY,numVoxels);
+//  mallocGPU(d_polarizationZ,numVoxels);
+//  mallocCPU(polarizationX,numVoxels);
+//  mallocCPU(polarizationY,numVoxels);
+//  mallocCPU(polarizationZ,numVoxels);
+//
+//  hostDeviceExchange(d_voxelData, voxelData, numVoxels, cudaMemcpyHostToDevice);
+//
+//
+//  const Real wavelength = static_cast<Real>(1239.84197 / inputData.energies[0]);
+//  const Real kMagnitude = static_cast<Real>(2 * M_PI / wavelength);;
+//  UINT blockSize = static_cast<UINT >(ceil(numVoxels * 1.0 / NUM_THREADS));
+//  static constexpr Real3 kVec{0,0,1};
+//  Matrix rotationMatrixK,rotationMatrix;
+//  computeRotationMatrixK(kVec,rotationMatrixK);
+//  Real baseRotAngle;
+//  computeRotationMatrixBaseConfiguration(kVec,rotationMatrixK,rotationMatrix,baseRotAngle);
+//
+//  Complex *pXOracle = new Complex[numVoxels];
+//  Complex *pYOracle = new Complex[numVoxels];
+//  Complex *pZOracle = new Complex[numVoxels];
+//  Matrix ERotationMatrix;
+//  for(int i = 0; i < maxERotation; i++) {
+//    Real angle = angleOfERotation[i]*180.0/M_PI;
+//    computeRotationMatrix(kVec,rotationMatrixK,ERotationMatrix,angle);
+//    computePolarization(refractiveIndexData[0], d_voxelData, vx, d_polarizationX, d_polarizationY,
+//                        d_polarizationZ, FFT::FFTWindowing::NONE,
+//                        false, MorphologyType::EULER_ANGLES, blockSize,ReferenceFrame::MATERIAL,rotationMatrix,numVoxels);
+//    hostDeviceExchange(polarizationX, d_polarizationX, numVoxels, cudaMemcpyDeviceToHost);
+//    hostDeviceExchange(polarizationY, d_polarizationY, numVoxels, cudaMemcpyDeviceToHost);
+//    hostDeviceExchange(polarizationZ, d_polarizationZ, numVoxels, cudaMemcpyDeviceToHost);
+//
+//    std::string pathOfOracle = root + "/Data/regressionData/SingleAngle/"  + oracleDirName[i] +"/polarization/";
+//    readFile(pXOracle, pathOfOracle + "polarizeX.dmp", numVoxels);
+//    readFile(pYOracle, pathOfOracle + "polarizeY.dmp", numVoxels);
+//    readFile(pZOracle, pathOfOracle + "polarizeZ.dmp", numVoxels);
+//    Complex linfError;
+//    linfError = computeLinfError(pXOracle, polarizationX, numVoxels);
+//    EXPECT_LE(linfError.x, TOLERANCE_CHECK);
+//    EXPECT_LE(linfError.y, TOLERANCE_CHECK);
+//    linfError = computeLinfError(pYOracle, polarizationY, numVoxels);
+//    EXPECT_LE(linfError.x, TOLERANCE_CHECK);
+//    EXPECT_LE(linfError.y, TOLERANCE_CHECK);
+//    linfError = computeLinfError(pZOracle, polarizationZ, numVoxels);
+//    EXPECT_LE(linfError.x, TOLERANCE_CHECK);
+//    EXPECT_LE(linfError.y, TOLERANCE_CHECK);
+//  }
+//
+//  freeCudaMemory(d_voxelData);
+//  freeCudaMemory(d_polarizationX);
+//  freeCudaMemory(d_polarizationY);
+//  freeCudaMemory(d_polarizationZ);
+//  delete [] pXOracle;
+//  delete [] pYOracle;
+//  delete [] pZOracle;
+//
+//  delete [] voxelData;
+//  delete [] polarizationX;
+//  delete [] polarizationY;
+//  delete [] polarizationZ;
 }
 
 
