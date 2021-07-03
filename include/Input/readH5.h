@@ -67,6 +67,12 @@ namespace H5 {
       H5::DataType dataType = dataSet.getDataType();
       H5::DataSpace space = dataSet.getSpace();
       hsize_t voxelDims[4];
+      const int rank = space.getSimpleExtentNdims();
+      if(rank != 4) {
+        std::cout << "Expected rank = 4 for " << varname << ". Shape should be of the form (Nz X Ny X Nx X 3)." << "\n";
+        std::cout << "Got rank = " << rank << "\n";
+        throw std::logic_error("Rank mismatch");
+      }
       const int ndims = space.getSimpleExtentDims( voxelDims, NULL);
       // Note HDF5 wrotes dimensions as (Z,Y,X)
       if((ndims != 4) or (voxelDims[0]!=voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
@@ -138,6 +144,12 @@ namespace H5 {
       H5::DataType dataType = dataSet.getDataType();
       H5::DataSpace space = dataSet.getSpace();
       hsize_t voxelDims[3];
+      const int rank = space.getSimpleExtentNdims();
+      if(rank != 3) {
+        std::cout << "Expected rank = 3 for " << varname << ". Shape should be of the form (Nz X Ny X Nx)." << "\n";
+        std::cout << "Got rank = " << rank << "\n";
+        throw std::logic_error("Rank mismatch");
+      }
       const int ndims = space.getSimpleExtentDims( voxelDims, NULL);
       // Note HDF5 wrotes dimensions as (Z,Y,X)
       if((ndims != 3) or (voxelDims[0]!=voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
