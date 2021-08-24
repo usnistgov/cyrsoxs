@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.9 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
 project(Cy-RSoXS VERSION 0.9.0 LANGUAGES CXX CUDA)
 
@@ -12,7 +12,6 @@ option(BIAXIAL "Biaxial Computation" OFF)
 option(BUILD_DOCS "Build Documentation" OFF)
 option(PYBIND "Pybind support for Cy-RSOXS " OFF)
 option(USE_64_BIT_INDICES, "Use 64 Bit Indices" OFF)
-option(ENABLE_TEST, "Enable test" ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 if (DOUBLE_PRECISION)
@@ -44,12 +43,12 @@ else ()
     message("ASCII writing enabled")
 endif ()
 
-if (USE_64_BIT_INDICES)
+if(USE_64_BIT_INDICES)
     add_definitions(-DUSE_64_BIT_INDICES)
     message("Using 64 Bit indices")
-else ()
+else()
     message("Using 32 Bit indices")
-endif ()
+endif()
 
 if (BIAXIAL)
     add_definitions(-DBIAXIAL)
@@ -58,15 +57,11 @@ else ()
     message("Performing Uniaxial computation")
 endif ()
 
-if (PYBIND)
+if(PYBIND)
     add_definitions(-DPYBIND)
     message("WARNING: Compiling for PyBind. This will not produce any executable")
-endif ()
+endif()
 
-if (ENABLE_TEST)
-    add_definitions(-DENABLE_TEST)
-    message("Test enabled")
-endif ()
 
 find_package(CUDA 9 REQUIRED)
 find_package(OpenMP REQUIRED)
@@ -77,7 +72,7 @@ if (OPENMP_FOUND)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif ()
 
-if (PYBIND)
+if(PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
     find_package(Python COMPONENTS Interpreter Development REQUIRED)
@@ -88,19 +83,19 @@ if (PYBIND)
             ${PYTHON_INCLUDE_DIRS}
             external/pybind11/include
     )
-else ()
-    find_package(Config++)
-    if (NOT ${CONFIG++_FOUND})
-        message(FATAL_ERROR "Libconfig++ could not be located.")
-    endif ()
+else()
+find_package(Config++)
+if (NOT ${CONFIG++_FOUND})
+    message(FATAL_ERROR "Libconfig++ could not be located.")
 endif ()
 
+
+endif()
 find_package(HDF5 COMPONENTS CXX HL REQUIRED)
 
 
 set(CMAKE_CXX_STANDARD 14)
 set(CyRSoXS_SRC
-        src/RotationMatrix.cpp
         src/cudaMain.cu)
 
 set(CyRSoXS_INC
@@ -116,8 +111,6 @@ set(CyRSoXS_INC
         include/Input/Input.h
         include/Output/writeH5.h
         include/utils.h
-        include/Rotation.h
-        include/RotationMatrix.h
         )
 
 
@@ -136,8 +129,7 @@ if (NUM_MATERIAL)
     add_definitions(-DNUM_MATERIAL=${NUM_MATERIAL})
 endif ()
 
-
-if (PYBIND)
+if(PYBIND)
 
     set(PYBIND_INC
             include/PyClass/RefractiveIndex.h
@@ -149,67 +141,43 @@ if (PYBIND)
             )
 
 
-    cuda_add_library(CyRSoXS SHARED
+    cuda_add_library(CyRSoXS  SHARED
             ${PYBIND_SRC} ${CyRSoXS_SRC} ${CyRSoXS_INC})
     target_include_directories(CyRSoXS PUBLIC ${Python_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
     target_include_directories(CyRSoXS PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(CyRSoXS
-            ${PYTHON_LIBRARIES} ${HDF5_CXX_LIBRARIES} -lcufft -lcublas "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}")
+            ${PYTHON_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
     if (EOC)
         target_include_directories(CyRSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(CyRSoXS ${OpenCV_LIBS})
-    endif ()
+    endif()
 
     set_target_properties(CyRSoXS PROPERTIES
             CUDA_SEPARABLE_COMPILATION ON
             PREFIX ""
             )
 
-else ()
+else()
     set(EXE_SRC
             src/main.cpp
             )
-    add_executable(CyRSoXS ${CyRSoXS_INC} ${CyRSoXS_SRC} ${EXE_SRC})
+    add_executable(CyRSoXS  ${CyRSoXS_INC} ${CyRSoXS_SRC} ${EXE_SRC})
 
     set_target_properties(
             CyRSoXS
             PROPERTIES
             CUDA_SEPARABLE_COMPILATION ON
     )
-    target_include_directories(CyRSoXS PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include)
+    target_include_directories(CyRSoXS PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR}  ${CONFIG++_INCLUDE_DIR} include)
     target_include_directories(CyRSoXS PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(CyRSoXS
-            ${PYTHON_LIBRARIES} ${HDF5_CXX_LIBRARIES} -lcufft -lcublas "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
+            ${PYTHON_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
     if (EOC)
         target_include_directories(CyRSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(CyRSoXS ${OpenCV_LIBS})
-    endif ()
-endif ()
+    endif()
+endif()
 set_property(TARGET CyRSoXS PROPERTY CUDA_ARCHITECTURES 30 35 37 50 52 53 60 61 62 70 72)
-
-if (ENABLE_TEST)
-    if (PYBIND)
-        message("No tests with pybind with gtest framework")
-    else ()
-        add_definitions(-DCMAKE_ROOT=\"${CMAKE_SOURCE_DIR}\")
-        add_subdirectory(external/googletest)
-        set(TEST_SRC
-                tests/tests.cpp
-                )
-        set(TEST_INC
-                tests/include/basicFramework.h
-                tests/include/testUtils.h
-                tests/include/unitTest.h
-                tests/include/fullFramework.h
-                )
-        add_executable(test ${CyRSoXS_INC} ${CyRSoXS_SRC} ${TEST_SRC} ${TEST_INC})
-        target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include tests/include ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-        target_include_directories(test PRIVATE ${PROJECT_BINARY_DIR}/generated)
-        target_link_libraries(test gtest gtest_main
-                ${HDF5_CXX_LIBRARIES} -lcufft -lcublas "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
-    endif ()
-endif ()
-
 if (BUILD_DOCS)
     find_package(Doxygen)
     if (DOXYGEN_FOUND)
