@@ -67,17 +67,18 @@
  * This project is released under the MIT license.
  *
  */
-
-#include <cudaMain.h>
-#include <Input/readH5.h>
-#include <cstdlib>
+//
+//#include <cudaMain.h>
+#include "H5Cpp.h"
+//#include <cstdlib>
 #include <Input/InputData.h>
-#include <Output/writeH5.h>
-#include <cstring>
-#include <omp.h>
-#include <iomanip>
-#include <utils.h>
-
+//#include <Output/writeH5.h>
+//#include <cstring>
+//#include <omp.h>
+//#include <iomanip>
+//#include <utils.h>
+#include "hdf5_hl.h"
+//#include "H5File.h"
 /**
  * main function
  * @param argc
@@ -85,41 +86,106 @@
  * @return EXIT_SUCCESS on successful completion.
  */
 int main(int argc, char **argv) {
+  printf("\n*** Checking HDF5 dimension scales.\n");
+#define GRP_NAME "simple_scales"
+#define DIMSCALE_NAME "dimscale"
+#define NAME_ATTRIBUTE "Billy-Bob"
+#define VAR1_NAME "var1"
+#define VAR2_NAME "var2"
+#define VAR3_NAME "var3"
+#define DIM1_LEN 3
+#define DIM2_LEN 2
+#define FIFTIES_SONG "Mamma said they'll be days like this. They'll be days like this, my mamma said."
+#define FILE_NAME "try.h5"
+#define ERR return 0
+  printf("*** Creating simple dimension scales file...");
+  {
+    hid_t fileid, grpid, dimscaleid;
+    hid_t dimscale_spaceid, var1_spaceid, var3_spaceid;
+    hid_t var1_datasetid, var2_datasetid, var3_datasetid;
+    hsize_t dims[2] = {DIM1_LEN, DIM2_LEN};
+    hsize_t dimscale_dims[1] = {DIM1_LEN};
 
-    if(argc < 2){
-        std::cout << "Usage : " << argv[0] << " "<< "HDF5FileName" << "[optional] HDF5OutputDirname";
-        exit(EXIT_FAILURE);
-    }
-    std::vector<Material<NUM_MATERIAL> > materialInput;
-    InputData inputData(materialInput);
-    inputData.validate();
-    if(argc > 2){
-        inputData.HDF5DirName = argv[2];
-    }
-    inputData.print();
-    const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
+    /* Open file and create group. */
+    if ((fileid = H5Fcreate(FILE_NAME, H5F_ACC_TRUNC, H5P_DEFAULT,
+                            H5P_DEFAULT)) < 0)
+      ERR;
+    if ((grpid = H5Gcreate1(fileid, GRP_NAME, 0)) < 0) ERR;
 
-    std::string fname = argv[1];
-    Voxel<NUM_MATERIAL> *voxelData;
-    H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType));
-    Real *projectionGPUAveraged;
-    const UINT
-      numEnergyLevel = inputData.energies.size();
-    projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
-    printCopyrightInfo();
-    cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, voxelData);
-    if(inputData.writeHDF5) {
-      writeH5(inputData, voxelSize, projectionGPUAveraged,inputData.HDF5DirName);
-    }
-    if(inputData.writeVTI) {
-      writeVTI(inputData, voxelSize, projectionGPUAveraged,inputData.VTIDirName);
-    }
-    printMetaData(inputData);
-    delete[] projectionGPUAveraged;
-    delete[] voxelData;
-    std::cout << "Complete. Exiting \n";
+    /* Create our dimension scale. Use the built-in NAME attribute
+     * on the dimscale. */
+    if ((dimscale_spaceid = H5Screate_simple(1, dimscale_dims,
+                                             dimscale_dims)) < 0)
+      ERR;
+    if ((dimscaleid = H5Dcreate1(grpid, DIMSCALE_NAME, H5T_NATIVE_INT,
+                                 dimscale_spaceid, H5P_DEFAULT)) < 0)
+      ERR;
+    if (H5DSset_scale(dimscaleid, NAME_ATTRIBUTE) < 0) ERR;
 
-    return EXIT_SUCCESS;
+    /* Create a 1D variable which uses the dimscale. Attach a label
+     * to this scale. */
+    if ((var1_spaceid = H5Screate_simple(1, dims, dims)) < 0) ERR;
+    if ((var1_datasetid = H5Dcreate1(grpid, VAR1_NAME, H5T_NATIVE_INT,
+                                     var1_spaceid, H5P_DEFAULT)) < 0)
+      ERR;
+    if (H5DSattach_scale(var1_datasetid, dimscaleid, 0) < 0) ERR;
+    if (H5DSset_label(var1_datasetid, 0, FIFTIES_SONG) < 0) ERR;
 
+    /* Create a 1D variabls that doesn't use the dimension scale. */
+    if ((var2_datasetid = H5Dcreate1(grpid, VAR2_NAME, H5T_NATIVE_INT,
+                                     var1_spaceid, H5P_DEFAULT)) < 0)
+      ERR;
+
+    /* Create a 2D dataset which uses the scale for one of its
+     * dimensions. */
+    if ((var3_spaceid = H5Screate_simple(2, dims, dims)) < 0) ERR;
+    if ((var3_datasetid = H5Dcreate1(grpid, VAR3_NAME, H5T_NATIVE_INT,
+                                     var3_spaceid, H5P_DEFAULT)) < 0)
+      ERR;
+    if (H5DSattach_scale(var3_datasetid, dimscaleid, 0) < 0) ERR;
+
+    /* Close up the shop. */
+    if (H5Dclose(dimscaleid) < 0 ||
+        H5Dclose(var1_datasetid) < 0 ||
+        H5Dclose(var2_datasetid) < 0 ||
+        H5Dclose(var3_datasetid) < 0 ||
+        H5Sclose(var1_spaceid) < 0 ||
+        H5Sclose(var3_spaceid) < 0 ||
+        H5Sclose(dimscale_spaceid) < 0 ||
+        H5Gclose(grpid) < 0 ||
+        H5Fclose(fileid) < 0)
+      ERR;
+
+    /* HELP! If you are reading this in the future, and time
+     * machines have been invented, please come back to July 10,
+     * 2005, the Java Java coffee shop in Lafayette, 8:00 am MST +-
+     * 20 minutes. Bring back some advanced weapons systems to
+     * destroy the sound system here, which is playing 50's rock and
+     * roll. Do-op, do-op, la-ma la-ma, ding dong. Save me!!! (Mind
+     * you, James Brown is a different story!) */
+  }
+  printf("*** Getting simple dimension scales file...");
+  {
+#define NDIMS 1
+#define STR_LEN 2
+
+
+
+    H5::H5File  file = H5::H5File("foo.h5", H5F_ACC_RDONLY);
+
+    /* Reopen the file and group. */
+//    if ((fileid = H5::H5File(FILE_NAME,H5F_ACC_RDONLY))){};
+//    H5::Group group = file.openGroup(GRP_NAME);
+//    char obj_name[] = ";";
+    const char varName[] = "data";
+    H5::DataSet dataSet = file.openDataSet(varName);
+    /*printf("\nobj_name %s\n", obj_name);*/
+
+
+    char label[STR_LEN+1];
+    H5DSget_label(dataSet.getId(),2,label,STR_LEN);
+    std::cout <<  " " << label <<  "\n";
+    file.close();
+  }
 }
 
