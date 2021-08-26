@@ -133,4 +133,15 @@ enum MorphologyType:UINT{
 static const char *morphologyTypeName[]{"EulerAngles","VectorMorphology"};
 static_assert(sizeof(morphologyTypeName)/sizeof(char*) == MorphologyType::MAX_MORPHOLOGY_TYPE,
               "sizes dont match");
+
+
+enum MorphologyOrder:int{
+  ZYX = 0,
+  XYZ = 1,
+  INVALID = -1,
+  MAX_ORDER = 2
+};
+static const char *morphologyOrder[]{"ZYX","XYZ"};
+static_assert(sizeof(morphologyTypeName)/sizeof(char*) == MorphologyOrder::MAX_ORDER,
+              "sizes dont match");
 #endif

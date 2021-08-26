@@ -100,12 +100,12 @@ int main(int argc, char **argv) {
         inputData.HDF5DirName = argv[2];
     }
     inputData.print();
-    const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
+    UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
     RotationMatrix matrix(&inputData);
     std::string fname = argv[1];
     Voxel *voxelData;
     mallocCPUPinned(voxelData,inputData.numX*inputData.numY*inputData.numZ*NUM_MATERIAL);
-    H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType), true);
+    H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType),inputData.morphologyOrder ,true);
     Real *projectionGPUAveraged;
     const UINT
       numEnergyLevel = inputData.energies.size();

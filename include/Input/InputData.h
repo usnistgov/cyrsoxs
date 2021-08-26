@@ -232,6 +232,9 @@ private:
   bool ifUseLowMemoryAlgo = false;
   int numMaxStreams = 1;
 
+
+  int morphologyOrder = MorphologyOrder::INVALID;
+
   /**
    *
    * @return gets the 2D computation flags
