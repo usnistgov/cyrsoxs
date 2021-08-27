@@ -95,16 +95,17 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
     computeComplexSquare(npar);
     computeComplexSquare(nper);
 
+    // S = fraction of aligned components
     // (0)
-    rotatedNr.x = npar.x*sx*sx + nper.x*(sy*sy + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr.y = npar.y*sx*sx + nper.y*(sy*sy + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr.x = S*(npar.x*sx*sx + nper.x*(sy*sy + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = S*(npar.y*sx*sx + nper.y*(sy*sy + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
     pX.x += rotatedNr.x*matVec.x;
     pX.y += rotatedNr.y*matVec.x;
 
     // (1)
-    rotatedNr.x = (npar.x - nper.x)*sx*sy;
-    rotatedNr.y = (npar.y - nper.y)*sx*sy;
+    rotatedNr.x = S*(npar.x - nper.x)*sx*sy;
+    rotatedNr.y = S*(npar.y - nper.y)*sx*sy;
 
     pX.x += rotatedNr.x*matVec.y;
     pX.y += rotatedNr.y*matVec.y;
@@ -113,8 +114,8 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
     pY.y += rotatedNr.y*matVec.x;
 
     // (2)
-    rotatedNr.x = (npar.x - nper.x)*sx*sz;
-    rotatedNr.y = (npar.y - nper.y)*sx*sz;
+    rotatedNr.x = S*(npar.x - nper.x)*sx*sz;
+    rotatedNr.y = S*(npar.y - nper.y)*sx*sz;
 
     pX.x += rotatedNr.x*matVec.z;
     pX.y += rotatedNr.y*matVec.z;
@@ -123,15 +124,15 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
     pZ.y += rotatedNr.y*matVec.x;
 
     // (3)
-    rotatedNr.x = npar.x*sy*sy + nper.x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr.y = npar.y*sy*sy + nper.y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr.x = S*(npar.x*sy*sy + nper.x*(sx*sx + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = S*(npar.y*sy*sy + nper.y*(sx*sx + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
     pY.x += rotatedNr.x*matVec.y;
     pY.y += rotatedNr.y*matVec.y;
 
     // (4)
-    rotatedNr.x = (npar.x - nper.x)*sy*sz;
-    rotatedNr.y = (npar.y - nper.y)*sy*sz;
+    rotatedNr.x = S*(npar.x - nper.x)*sy*sz;
+    rotatedNr.y = S*(npar.y - nper.y)*sy*sz;
 
     pY.x += rotatedNr.x*matVec.z;
     pY.y += rotatedNr.y*matVec.z;
@@ -140,8 +141,8 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
     pZ.y += rotatedNr.y*matVec.y;
 
     // (5)
-    rotatedNr.x = npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr.y = npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr.x = S*(npar.x*sz*sz + nper.x*(sx*sx + sy*sy)) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = S*(npar.y*sz*sz + nper.y*(sx*sx + sy*sy)) +  ((phi_ui * nsum.y) / (Real) 9.0);
 
     pZ.x += rotatedNr.x*matVec.z;
     pZ.y += rotatedNr.y*matVec.z;
