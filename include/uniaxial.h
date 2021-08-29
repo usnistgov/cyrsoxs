@@ -81,9 +81,9 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
     const Real & phiAngle    = matProp.z;
     const Real & Vfrac       = matProp.w;
 
-    const Real   sx     = S*cos(thetaAngle);
-    const Real   sy     = S*sin(thetaAngle)*sin(phiAngle);
-    const Real   sz     = S*sin(thetaAngle)*cos(phiAngle);
+    const Real   sx     = cos(thetaAngle);
+    const Real   sy     = sin(thetaAngle)*sin(phiAngle);
+    const Real   sz     = sin(thetaAngle)*cos(phiAngle);
     const Real   phi_ui = Vfrac - S;
 
     const Real  & phi =  Vfrac;
@@ -344,6 +344,7 @@ __global__ void computeNtEulerAngles(const Material<1> material,
                                           const Voxel * __restrict__ voxelInput,
                                           Complex * Nt, const BigUINT  offset, const BigUINT  endID,
                                           const BigUINT numVoxels) {
+  // not correctly implemented
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   if((threadID + offset) >= endID){
     return;
