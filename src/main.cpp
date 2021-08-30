@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
     projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY * inputData.kVectors.size()];
     printCopyrightInfo();
     RotationMatrix rotationMatrix(&inputData);
-    if(inputData.ifUseLowMemoryAlgo) {
+    if(inputData.algorithmType == Algorithm::MemoryMinizing) {
       cudaMainStreams(voxelSize, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
     }
     else{

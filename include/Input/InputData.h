@@ -229,11 +229,13 @@ private:
   bool referenceFrame = ReferenceFrame::MATERIAL;
 
   Real3 detectorCoordinates{0,0,1};
-  bool ifUseLowMemoryAlgo = false;
+  int algorithmType = 0;
   int numMaxStreams = 1;
 
 
   int morphologyOrder = MorphologyOrder::INVALID;
+
+  bool dumpMorphology = true;
 
   /**
    *
@@ -274,8 +276,9 @@ private:
     if(ReadValue(cfg, "VTIDirName",VTIDirName)){}
     if(ReadValue(cfg, "HDF5DirName",HDF5DirName)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
-    if(ReadValue(cfg, "useLowMemoryAlgo",ifUseLowMemoryAlgo)){}
+    if(ReadValue(cfg, "Algorithm",algorithmType)){}
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
+    if(ReadValue(cfg,"DumpMorphology",dumpMorphology)){}
     else{
         if(numZ < 4){
             scatterApproach = ScatterApproach::FULL;
