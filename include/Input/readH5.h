@@ -389,7 +389,7 @@ namespace H5 {
           getScalar(file, "vector_morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData, numMat, true);
 #endif
           for (UINT i = 0; i < numVoxel; i++) {
-            voxelData[(numMat - 1) * numVoxel + i].s1.w = unalignedData[i];
+            voxelData[i*NUM_MATERIAL + numMat - 1].s1.w = unalignedData[i];
           }
         }
       }
@@ -398,9 +398,9 @@ namespace H5 {
         for (UINT numMat = 1; numMat < NUM_MATERIAL+1; numMat++) {
           getMatAllignment(file, voxelSize, alignmentData, static_cast<const MorphologyOrder>(morphologyOrder), numMat);
           for (BigUINT i = 0; i < numVoxel; i++) {
-            voxelData[(numMat-1) * numVoxel + i].s1.x = alignmentData[3 * i + 0];
-            voxelData[(numMat-1) * numVoxel + i].s1.y = alignmentData[3 * i + 1];
-            voxelData[(numMat-1) * numVoxel + i].s1.z = alignmentData[3 * i + 2];
+            voxelData[i*NUM_MATERIAL + numMat - 1].s1.x = alignmentData[3 * i + 0];
+            voxelData[i*NUM_MATERIAL + numMat - 1].s1.y = alignmentData[3 * i + 1];
+            voxelData[i*NUM_MATERIAL + numMat - 1].s1.z = alignmentData[3 * i + 2];
           }
         }
       }

@@ -67,10 +67,10 @@ namespace H5 {
     std::array<std::string, 4> morphologyDataSets{};
     const MorphologyType morphologyType = static_cast<MorphologyType>(inputData.morphologyType);
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-      morphologyDataSets[0] = "UnalignedFraction";
-      morphologyDataSets[1] = "Sx";
-      morphologyDataSets[2] = "Sy";
-      morphologyDataSets[3] = "Sz";
+      morphologyDataSets[0] = "Sx";
+      morphologyDataSets[1] = "Sy";
+      morphologyDataSets[2] = "Sz";
+      morphologyDataSets[3] = "UnalignedFraction";
     } else if (morphologyType == MorphologyType::EULER_ANGLES) {
       morphologyDataSets[0] = "Vfrac";
       morphologyDataSets[1] = "S";
@@ -89,7 +89,7 @@ namespace H5 {
       const hsize_t dims[3]{inputData.voxelDims[2], inputData.voxelDims[1], inputData.voxelDims[0]}; // C++ order
 
       for (int numMat = 0; numMat < NUM_MATERIAL; numMat++) {
-        const auto &group = file.createGroup("Material_" + std::to_string(numMat));
+        const auto &group = file.createGroup("Material_" + std::to_string(numMat + 1));
         for (int numComponent = 0; numComponent < 4; numComponent++) {
           for (int numVoxel = 0; numVoxel < numVoxels; numVoxel++) {
             int offset = (numVoxel * NUM_MATERIAL) + numMat;
@@ -125,10 +125,10 @@ namespace H5 {
     std::array<std::string, 4> morphologyDataSets{};
     const MorphologyType morphologyType = static_cast<MorphologyType>(inputData.morphologyType);
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-      morphologyDataSets[0] = "UnalignedFraction";
-      morphologyDataSets[1] = "Sx";
-      morphologyDataSets[2] = "Sy";
-      morphologyDataSets[3] = "Sz";
+      morphologyDataSets[0] = "Sx";
+      morphologyDataSets[1] = "Sy";
+      morphologyDataSets[2] = "Sz";
+      morphologyDataSets[3] = "UnalignedFraction";
     } else if (morphologyType == MorphologyType::EULER_ANGLES) {
       morphologyDataSets[0] = "Vfrac";
       morphologyDataSets[1] = "S";
@@ -160,18 +160,18 @@ namespace H5 {
     fprintf(fp, "\t\t0.0 0.0 0.0\n");
     fprintf(fp, "\t\t</DataItem>\n");
     fprintf(fp,
-            "\t\t<DataItem Name=\"origin\" Dimensions=\"3\" NumberType=\"Float\" Precision=\" %d\" Format=\"XML\">\n",
+            "\t\t<DataItem Name=\"spacing\" Dimensions=\"3\" NumberType=\"Float\" Precision=\" %d\" Format=\"XML\">\n",
             precision);
     fprintf(fp, "\t\t1.0 1.0 1.0\n");
     fprintf(fp, "\t\t</DataItem>\n");
-    fprintf(fp, "\t\\t</Geometry>\n");
+    fprintf(fp, "\t\t</Geometry>\n");
 
     for (int numComponent = 0; numComponent < 4; numComponent++) {
       for (int i = 1; i < NUM_MATERIAL + 1; i++) {
-        fprintf(fp, "\t\t<Attribute Name=\"Mat_%d_data\" AttributeType=\"Scalar\" Center=\"Node\">\n", i);
-        fprintf(fp, "\t\t<DataItem Dimensions=\" %d %d %d \"NumberType=\"Float\" Precision=\"%d\" Format=\"HDF\"",
+        fprintf(fp, "\t\t<Attribute Name=\"Mat_%d_%s\" AttributeType=\"Scalar\" Center=\"Cell\">\n", i,morphologyDataSets[numComponent].c_str());
+        fprintf(fp, "\t\t<DataItem Dimensions=\" %d %d %d \" NumberType=\"Float\" Precision=\"%d\" Format=\"HDF\">\n",
                 voxelSize[0], voxelSize[1], voxelSize[2], precision);
-        fprintf(fp, "\t\t %s:/Material_%d/%s\n", fName.c_str(),i,morphologyDataSets[numComponent].c_str());
+        fprintf(fp, "\t\t %s.h5:/Material_%d/%s\n", fName.c_str(),i,morphologyDataSets[numComponent].c_str());
         fprintf(fp,"\t\t</DataItem>\n");
         fprintf(fp,"\t\t</Attribute>\n");
       }
