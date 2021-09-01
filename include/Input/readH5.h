@@ -38,32 +38,35 @@
 
 namespace H5 {
 
+
   static constexpr int AXIS_LABEL_LEN = 2;
 
 
-  static inline void getDimensionAndOrder(const std::string & hdf5fileName, const MorphologyType & morphologyType, UINT * voxelSize,MorphologyOrder & morphologyOrder) {
+  static inline void
+  getDimensionAndOrder(const std::string &hdf5fileName, const MorphologyType &morphologyType, UINT *voxelSize,
+                       MorphologyOrder &morphologyOrder) {
     H5::H5File file(hdf5fileName, H5F_ACC_RDONLY);
-    if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
+    if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
       std::string groupName = "vector_morphology";
       std::string dataName = "Mat_1_unaligned";
       bool groupExists = file.nameExists(groupName.c_str());
-      if(not groupExists) {
-        std::cerr << "Group " <<  groupName << "not found";
+      if (not groupExists) {
+        std::cerr << "Group " << groupName << "not found";
         exit(EXIT_FAILURE);
       }
 
       Group group = file.openGroup(groupName.c_str());
       bool dataExists = group.nameExists(dataName.c_str());
 
-      if(not(dataExists)) {
-        std::cerr << "DataSet " <<  dataName << "not found";
+      if (not(dataExists)) {
+        std::cerr << "DataSet " << dataName << "not found";
         exit(EXIT_FAILURE);
       }
       H5::DataSet dataSet = group.openDataSet(dataName.c_str());
       H5::DataSpace space = dataSet.getSpace();
       hsize_t voxelDims[3];
       const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
-      if(ndims != 3) {
+      if (ndims != 3) {
         std::cerr << "Expected 3D array. Found Dim = " << ndims << "for " << dataName << "\n";
         exit(EXIT_FAILURE);
       }
@@ -75,24 +78,22 @@ namespace H5 {
         voxelSize[0] = voxelDims[2];
         voxelSize[1] = voxelDims[1];
         voxelSize[2] = voxelDims[0];
-      }
-      else if (((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
+      } else if (((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
         morphologyOrder = MorphologyOrder::XYZ;
         voxelSize[0] = voxelDims[0];
         voxelSize[1] = voxelDims[1];
         voxelSize[2] = voxelDims[2];
-      }
-      else {
+      } else {
         throw std::runtime_error("Only XYZ/ZYX ordering supported");
       }
       group.close();
-    }
-    else {
+    } else {
       throw std::runtime_error("Not supported");
     }
 
     file.close();
   }
+
   template<typename T>
   static void XYZ_to_ZYX(std::vector<T> &data, const int numComponents, const UINT *voxelSize) {
     std::vector<T> _data = data;
@@ -126,101 +127,111 @@ namespace H5 {
 
   static inline void getMatAllignment(const H5::H5File &file,
                                       const UINT *voxelSize,
-                                      std::vector<Real > &inputData,
+                                      std::vector<Real> &inputData,
                                       const MorphologyOrder &morphologyOrder,
-                                      const int materialID,
-                                      bool isRequired = true) {
-    std::string groupName = "vector_morphology/";
+                                      const int materialID) {
+    std::string groupName = "vector_morphology";
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
-    inputData.resize(numVoxel * 3);
 
     int i = materialID;
-    {
-      std::string varname = groupName + "Mat_" + std::to_string(i) + "_alignment";
-      H5::DataSet dataSet;
-      // Check if data set exists
-      bool dataExists = dataSet.exists(varname);
 
-      if (isRequired and not(dataExists)) {
-        std::cerr << "Dataset = " << varname << "does not exists";
+    std::string dataName = "Mat_" + std::to_string(i) + "_alignment";
+
+    H5::DataSet dataSet;
+    bool groupExists = file.nameExists(groupName.c_str());
+    if (not groupExists) {
+      std::cerr << "Group " << groupName << "not found";
+      exit(EXIT_FAILURE);
+    }
+    Group group = file.openGroup(groupName.c_str());
+    bool dataExists = group.nameExists(dataName.c_str());
+    if (not(dataExists)) {
+      std::cerr << "Dataset = " << dataName << "does not exists";
+      exit(EXIT_FAILURE);
+    }
+
+    dataSet = group.openDataSet(dataName.c_str());
+    H5::DataType dataType = dataSet.getDataType();
+    H5::DataSpace space = dataSet.getSpace();
+    hsize_t voxelDims[4];
+    const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
+    if (ndims != 4) {
+      std::cerr << "Expected 4D array. Found Dim = " << ndims << "for " << dataName << "\n";
+      exit(EXIT_FAILURE);
+    }
+    char label[2][AXIS_LABEL_LEN];
+    H5DSget_label(dataSet.getId(), 0, label[0], AXIS_LABEL_LEN);
+    H5DSget_label(dataSet.getId(), 2, label[1], AXIS_LABEL_LEN);
+
+    // We store voxel dimension as (X,Y,Z) irrespective of HDF axis label
+    if (morphologyOrder == MorphologyOrder::ZYX) {
+      if (not((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
+        std::cerr << "Axis label mismatch for morphology for " << dataName << "\n";
         exit(EXIT_FAILURE);
       }
-      if (dataExists) {
-        dataSet = file.openDataSet(varname);
-        H5::DataType dataType = dataSet.getDataType();
-        H5::DataSpace space = dataSet.getSpace();
-        hsize_t voxelDims[4];
-        const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
-        char label[2][AXIS_LABEL_LEN];
-        H5DSget_label(dataSet.getId(), 0, label[0], AXIS_LABEL_LEN);
-        H5DSget_label(dataSet.getId(), 2, label[1], AXIS_LABEL_LEN);
-
-        // We store voxel dimension as (X,Y,Z) irrespective of HDF axis label
-        if (morphologyOrder == MorphologyOrder::ZYX) {
-          if (not((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
-            throw std::logic_error("Axis label mismatch for morphology");
-          }
-          if ((ndims != 4) or (voxelDims[0] != voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
-              (voxelDims[2] != voxelSize[0]) or (voxelDims[3] != 3)) {
-            std::cout << "Error in morphology for Material = " << i << "\n";
-            std::cout << "Expected dimension (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
-                      << "\n";
-            std::cout << "Dimensions from HDF5 (X,Y,Z)          = " << voxelDims[2] << " " << voxelDims[1] << " "
-                      << voxelDims[0] << "\n";
-            throw std::logic_error("Dimension mismatch for morphology");
-          }
-        }
-        if (morphologyOrder == MorphologyOrder::XYZ) {
-          if (not((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
-            throw std::logic_error("Axis label mismatch for morphology");
-          }
-          if ((ndims != 4) or (voxelDims[0] != voxelSize[0]) or (voxelDims[1] != voxelSize[1]) or
-              (voxelDims[2] != voxelSize[2]) or (voxelDims[3] != 3)) {
-            std::cout << "Error in morphology for Material = " << i << "\n";
-            std::cout << "Expected dimension (X,Y,Z)   = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
-                      << "\n";
-            std::cout << "Dimensions from HDF5 (X,Y,Z) = " << voxelDims[0] << " " << voxelDims[1] << " " << voxelDims[2]
-                      << "\n";
-            throw std::logic_error("Dimension mismatch for morphology");
-          }
-        }
+      if ((voxelDims[0] != voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
+          (voxelDims[2] != voxelSize[0]) or (voxelDims[3] != 3)) {
+        std::cout << "Error in " << dataName << "\n";
+        std::cout << "Error in morphology for Material = " << i << "\n";
+        std::cout << "Expected dimension (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
+                  << "\n";
+        std::cout << "Dimensions from HDF5 (X,Y,Z)          = " << voxelDims[2] << " " << voxelDims[1] << " "
+                  << voxelDims[0] << "\n";
+        throw std::logic_error("Dimension mismatch for morphology");
+      }
+    }
+    if (morphologyOrder == MorphologyOrder::XYZ) {
+      if (not((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
+        std::cerr << "Axis label mismatch for morphology for " << dataName << "\n";
+        exit(EXIT_FAILURE);
+      }
+      if ((voxelDims[0] != voxelSize[0]) or (voxelDims[1] != voxelSize[1]) or
+          (voxelDims[2] != voxelSize[2]) or (voxelDims[3] != 3)) {
+        std::cout << "Error in " << dataName << "\n";
+        std::cout << "Error in morphology for Material = " << i << "\n";
+        std::cout << "Expected dimension (X,Y,Z)   = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
+                  << "\n";
+        std::cout << "Dimensions from HDF5 (X,Y,Z) = " << voxelDims[0] << " " << voxelDims[1] << " " << voxelDims[2]
+                  << "\n";
+        throw std::logic_error("Dimension mismatch for morphology");
+      }
+    }
 #ifdef DOUBLE_PRECISION
-        if(dataType != PredType::NATIVE_DOUBLE){
-           std::cout << "The data format is not supported for double precision \n";
-           exit(EXIT_FAILURE);
-        }
-        dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
+    if(dataType != PredType::NATIVE_DOUBLE){
+       std::cout << "The data format is not supported for double precision \n";
+       exit(EXIT_FAILURE);
+    }
+    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
 
 #else
 
-        if (dataType == PredType::NATIVE_DOUBLE) {
-          std::vector<double> alignedData(numVoxel * 3);
-          dataSet.read(alignedData.data(), H5::PredType::NATIVE_DOUBLE);
-          if (morphologyOrder == MorphologyOrder::XYZ) {
-            XYZ_to_ZYX(alignedData, 3, voxelSize);
-          }
-          for (int id = 0; id < numVoxel; id++) {
-            inputData[id * 3 + 0] = static_cast<Real>(alignedData[3 * id + 0]);
-            inputData[id * 3 + 1] = static_cast<Real>(alignedData[3 * id + 1]);
-            inputData[id * 3 + 2] = static_cast<Real>(alignedData[3 * id + 2]);
-          }
-        } else if (dataType == PredType::NATIVE_FLOAT) {
-          std::vector<float> alignedData(numVoxel * 3);
-          dataSet.read(alignedData.data(), H5::PredType::NATIVE_FLOAT);
-          if (morphologyOrder == MorphologyOrder::XYZ) {
-            XYZ_to_ZYX(alignedData, 3, voxelSize);
-          }
-          for (int id = 0; id < numVoxel; id++) {
-            inputData[id * 3 + 0] = static_cast<Real>(alignedData[3 * id + 0]);
-            inputData[id * 3 + 1] = static_cast<Real>(alignedData[3 * id + 1]);
-            inputData[id * 3 + 2] = static_cast<Real>(alignedData[3 * id + 2]);
-          }
-        }
-        dataType.close();
-        dataSet.close();
-#endif
+    if (dataType == PredType::NATIVE_DOUBLE) {
+      std::vector<double> alignedData(numVoxel * 3);
+      dataSet.read(alignedData.data(), H5::PredType::NATIVE_DOUBLE);
+      if (morphologyOrder == MorphologyOrder::XYZ) {
+        XYZ_to_ZYX(alignedData, 3, voxelSize);
+      }
+      for (BigUINT id = 0; id < numVoxel; id++) {
+        inputData[id * 3 + 0] = static_cast<Real>(alignedData[3 * id + 0]);
+        inputData[id * 3 + 1] = static_cast<Real>(alignedData[3 * id + 1]);
+        inputData[id * 3 + 2] = static_cast<Real>(alignedData[3 * id + 2]);
+      }
+    } else if (dataType == PredType::NATIVE_FLOAT) {
+      std::vector<float> alignedData(numVoxel * 3);
+      dataSet.read(alignedData.data(), H5::PredType::NATIVE_FLOAT);
+      if (morphologyOrder == MorphologyOrder::XYZ) {
+        XYZ_to_ZYX(alignedData, 3, voxelSize);
+      }
+      for (BigUINT id = 0; id < numVoxel; id++) {
+        inputData[id * 3 + 0] = static_cast<Real>(alignedData[3 * id + 0]);
+        inputData[id * 3 + 1] = static_cast<Real>(alignedData[3 * id + 1]);
+        inputData[id * 3 + 2] = static_cast<Real>(alignedData[3 * id + 2]);
       }
     }
+    group.close();
+    dataType.close();
+    dataSet.close();
+#endif
   }
 
 /**
@@ -231,134 +242,124 @@ namespace H5 {
  * @param [out] inputData inputData for Mat_unaligned
  */
 
-  static inline void getScalar(const H5::H5File &file,
+  static inline bool getScalar(const H5::H5File &file,
                                const std::string &groupName,
                                const std::string &strName,
-                               UINT *voxelSize,
-                               MorphologyOrder  &morphologyOrder,
-                               std::vector<Real> &inputData,
+                               const UINT *voxelSize,
+                               const MorphologyOrder &morphologyOrder,
+                               std::vector<Real> &morphologyData,
                                const int materialID,
-                               const bool isRequired = true,
-                               const bool assignLabelandDims = false ) {
+                               const bool isRequired = true) {
 
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
-    inputData.resize(numVoxel);
 
 
-    int i = materialID; {
-      std::string varname = groupName + "/Mat_" + std::to_string(i) + strName;
+    int i = materialID;
+    std::string dataName = "Mat_" + std::to_string(i) + strName;
 
-      H5::DataSet dataSet;
-      bool dataExists = dataSet.exists(varname);
-
-      // Check if dataset exists and required
-      if (isRequired and not(dataExists)) {
-        std::cerr << "Dataset = " << varname << "does not exists";
-        exit(EXIT_FAILURE);
-      }
-
-      // Fill with 0 if not exists
-      if(not(dataExists)) {
-        std::fill(inputData.begin(),inputData.end(),0.0);
-        return;
-      }
-
-      H5::DataType dataType = dataSet.getDataType();
-      H5::DataSpace space = dataSet.getSpace();
-      hsize_t voxelDims[3];
-      const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
-      char label[2][AXIS_LABEL_LEN];
-      H5DSget_label(dataSet.getId(), 0, label[0], AXIS_LABEL_LEN);
-      H5DSget_label(dataSet.getId(), 2, label[1], AXIS_LABEL_LEN);
-
-      if(assignLabelandDims) {
-        if(ndims!=3) {
-          std::cerr << "Expected 3D dimension for morphology. Found DIM = " << ndims << "\n";
-          exit(EXIT_FAILURE);
-        }
-        assert(morphologyOrder == MorphologyOrder::INVALID);
-        if (((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
-          morphologyOrder = MorphologyOrder::ZYX;
-          voxelSize[0] = voxelDims[2];
-          voxelSize[1] = voxelDims[1];
-          voxelSize[2] = voxelDims[0];
-        }
-        else if(((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))){
-          morphologyOrder = MorphologyOrder::XYZ;
-          voxelSize[0] = voxelDims[0];
-          voxelSize[1] = voxelDims[1];
-          voxelSize[2] = voxelDims[2];
-        }
-        else {
-          std::cerr << "Not supported morphology order \n";
-          exit(EXIT_FAILURE);
-        }
-      }
-      else {
-        // We store voxel dimension as (X,Y,Z) irrespective of HDF axis label
-        if (morphologyOrder == MorphologyOrder::ZYX) {
-          if (not((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
-            throw std::logic_error("Axis label mismatch for morphology");
-          }
-          if ((ndims != 3) or (voxelDims[0] != voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or (voxelDims[2] != voxelSize[0])) {
-            std::cout << "Error in morphology for Material = " << i << "\n";
-            std::cout << "Expected dimension (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
-                      << "\n";
-            std::cout << "Dimensions from HDF5 (X,Y,Z)          = " << voxelDims[2] << " " << voxelDims[1] << " "
-                      << voxelDims[0] << "\n";
-            throw std::logic_error("Dimension mismatch for morphology");
-          }
-        }
-        if (morphologyOrder == MorphologyOrder::XYZ) {
-          if (not((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
-            throw std::logic_error("Axis label mismatch for morphology");
-          }
-          if ((ndims != 3) or (voxelDims[0] != voxelSize[0]) or (voxelDims[1] != voxelSize[1]) or (voxelDims[2] != voxelSize[2])) {
-            std::cout << "Error in morphology for Material = " << i << "\n";
-            std::cout << "Expected dimension (X,Y,Z)   = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
-                      << "\n";
-            std::cout << "Dimensions from HDF5 (X,Y,Z) = " << voxelDims[0] << " " << voxelDims[1] << " " << voxelDims[2]
-                      << "\n";
-            throw std::logic_error("Dimension mismatch for morphology");
-          }
-        }
-      }
-
-#ifdef DOUBLE_PRECISION
-      if(dataType != PredType::NATIVE_DOUBLE){
-         std::cout << "The data format is not supported for double precision \n";
-         exit(EXIT_FAILURE);
-      }
-      dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
-#else
-      if (dataType == PredType::NATIVE_DOUBLE) {
-        std::vector<double> unalignedData(numVoxel);
-        dataSet.read(unalignedData.data(), H5::PredType::NATIVE_DOUBLE);
-        if(morphologyOrder == MorphologyOrder::XYZ){
-          XYZ_to_ZYX(unalignedData,1,voxelSize);
-        }
-        for (int id = 0; id < unalignedData.size(); id++) {
-          inputData[id] = static_cast<Real>(unalignedData[id]);
-        }
-      } else if (dataType == PredType::NATIVE_FLOAT) {
-        std::vector<float> unalignedData(numVoxel);
-        dataSet.read(unalignedData.data(), H5::PredType::NATIVE_FLOAT);
-        if(morphologyOrder == MorphologyOrder::XYZ){
-          XYZ_to_ZYX(unalignedData,1,voxelSize);
-        }
-        for (int id = 0; id < unalignedData.size(); id++) {
-          inputData[id] = static_cast<Real>(unalignedData[id]);
-        }
-      } else {
-        std::cerr << "This data format is not supported \n";
-        exit(EXIT_FAILURE);
-      }
-      dataType.close();
-      dataSet.close();
-#endif
+    bool groupExists = file.nameExists(groupName.c_str());
+    if (not groupExists) {
+      std::cerr << "Group " << groupName << "not found";
+      exit(EXIT_FAILURE);
     }
 
+    Group group = file.openGroup(groupName.c_str());
+    bool dataExists = group.nameExists(dataName.c_str());
+
+    // Check if dataset exists and required
+    if (isRequired and not(dataExists)) {
+      std::cerr << "Dataset = " << dataName << "does not exists";
+      exit(EXIT_FAILURE);
+    }
+
+    // Fill with 0 if not exists
+    if (not(dataExists)) {
+      std::fill(morphologyData.begin(), morphologyData.end(), 0.0);
+      return dataExists;
+    }
+
+    H5::DataSet dataSet = group.openDataSet(dataName.c_str());
+    H5::DataType dataType = dataSet.getDataType();
+    H5::DataSpace space = dataSet.getSpace();
+    hsize_t voxelDims[3];
+    const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
+    if (ndims != 3) {
+      std::cerr << "Expected 3D array. Found Dim = " << ndims << "for " << dataName << "\n";
+      exit(EXIT_FAILURE);
+    }
+    char label[2][AXIS_LABEL_LEN];
+    H5DSget_label(dataSet.getId(), 0, label[0], AXIS_LABEL_LEN);
+    H5DSget_label(dataSet.getId(), 2, label[1], AXIS_LABEL_LEN);
+
+
+    // We store voxel dimension as (X,Y,Z) irrespective of HDF axis label
+    if (morphologyOrder == MorphologyOrder::ZYX) {
+      if (not((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
+        std::cerr << "Axis label mismatch for morphology for " << dataName << "\n";
+        exit(EXIT_FAILURE);
+      }
+      if ((voxelDims[0] != voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
+          (voxelDims[2] != voxelSize[0])) {
+        std::cout << "Error in " << dataName << "\n";
+        std::cout << "Error in morphology for Material = " << i << "\n";
+        std::cout << "Expected dimension (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
+                  << "\n";
+        std::cout << "Dimensions from HDF5 (X,Y,Z) = " << voxelDims[2] << " " << voxelDims[1] << " "
+                  << voxelDims[0] << "\n";
+
+        throw std::logic_error("Dimension mismatch for morphology");
+      }
+    }
+    if (morphologyOrder == MorphologyOrder::XYZ) {
+      if (not((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
+        std::cerr << "Axis label mismatch for morphology for " << dataName << "\n";
+        exit(EXIT_FAILURE);
+      }
+      if ((voxelDims[0] != voxelSize[0]) or (voxelDims[1] != voxelSize[1]) or
+          (voxelDims[2] != voxelSize[2])) {
+        std::cout << "Error in " << dataName << "\n";
+        std::cout << "Error in morphology for Material = " << i << "\n";
+        std::cout << "Expected dimension (X,Y,Z)   = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
+                  << "\n";
+        std::cout << "Dimensions from HDF5 (X,Y,Z) = " << voxelDims[0] << " " << voxelDims[1] << " " << voxelDims[2]
+                  << "\n";
+        throw std::logic_error("Dimension mismatch for morphology");
+      }
+    }
+
+
+#ifdef DOUBLE_PRECISION
+    if(dataType != PredType::NATIVE_DOUBLE){
+       std::cout << "The data format is not supported for double precision \n";
+       exit(EXIT_FAILURE);
+    }
+    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
+#else
+    if (dataType == PredType::NATIVE_DOUBLE) {
+      std::vector<double> scalarData(numVoxel);
+      dataSet.read(scalarData.data(), H5::PredType::NATIVE_DOUBLE);
+      if (morphologyOrder == MorphologyOrder::XYZ) {
+        XYZ_to_ZYX(scalarData, 1, voxelSize);
+      }
+      for (int id = 0; id < scalarData.size(); id++) {
+        morphologyData[id] = static_cast<Real>(scalarData[id]);
+      }
+    } else if (dataType == PredType::NATIVE_FLOAT) {
+      dataSet.read(morphologyData.data(), H5::PredType::NATIVE_FLOAT);
+      if (morphologyOrder == MorphologyOrder::XYZ) {
+        XYZ_to_ZYX(morphologyData, 1, voxelSize);
+      }
+    } else {
+      std::cerr << "This data format is not supported \n";
+      exit(EXIT_FAILURE);
+    }
+    group.close();
+    dataType.close();
+    dataSet.close();
+#endif
+    return dataExists;
   }
+
 
 /**
  * @brief reads the hdf5 file
@@ -368,8 +369,9 @@ namespace H5 {
  * @param isAllocated true if the size of voxelData is allocated
  */
 
-  static int readFile(const std::string &hdf5file, UINT *voxelSize, Voxel *&voxelData,
-                      const MorphologyType &morphologyType, MorphologyOrder &morphologyOrder, bool isAllocated = false) {
+  static int readFile(const std::string &hdf5file, const UINT *voxelSize, Voxel *&voxelData,
+                      const MorphologyType &morphologyType, const MorphologyOrder &morphologyOrder,
+                      bool isAllocated = false) {
     H5::H5File file(hdf5file, H5F_ACC_RDONLY);
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
 
@@ -379,26 +381,26 @@ namespace H5 {
     }
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
       {
-        for(int numMat = 0; numMat < NUM_MATERIAL; numMat++){
-          std::vector<Real> unalignedData;
+        std::vector<Real> unalignedData(numVoxel);
+        for (int numMat = 1; numMat < NUM_MATERIAL+1; numMat++) {
 #ifdef PYBIND
           getScalar(file, "vector_morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData,numMat,true, false);
 #else
-          getScalar(file, "vector_morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData,numMat,true, (numMat == 0)?true:false);
+          getScalar(file, "vector_morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData, numMat, true);
 #endif
           for (UINT i = 0; i < numVoxel; i++) {
-            voxelData[numMat * numVoxel + i].s1.w = unalignedData[i];
+            voxelData[(numMat - 1) * numVoxel + i].s1.w = unalignedData[i];
           }
         }
       }
       {
-        for (UINT numMat = 0; numMat < NUM_MATERIAL; numMat++) {
-        std::vector<Real > alignmentData;
-        getMatAllignment(file, voxelSize, alignmentData, static_cast<const MorphologyOrder>(morphologyOrder), numMat,true);
+        std::vector<Real> alignmentData(numVoxel*3);
+        for (UINT numMat = 1; numMat < NUM_MATERIAL+1; numMat++) {
+          getMatAllignment(file, voxelSize, alignmentData, static_cast<const MorphologyOrder>(morphologyOrder), numMat);
           for (BigUINT i = 0; i < numVoxel; i++) {
-            voxelData[numMat * numVoxel + i].s1.x = alignmentData[3 * i + 0];
-            voxelData[numMat * numVoxel + i].s1.y = alignmentData[3 * i + 1];
-            voxelData[numMat * numVoxel + i].s1.z = alignmentData[3 * i + 2];
+            voxelData[(numMat-1) * numVoxel + i].s1.x = alignmentData[3 * i + 0];
+            voxelData[(numMat-1) * numVoxel + i].s1.y = alignmentData[3 * i + 1];
+            voxelData[(numMat-1) * numVoxel + i].s1.z = alignmentData[3 * i + 2];
           }
         }
       }

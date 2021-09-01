@@ -93,7 +93,7 @@ namespace H5 {
         for (int numComponent = 0; numComponent < 4; numComponent++) {
           for (int numVoxel = 0; numVoxel < numVoxels; numVoxel++) {
             int offset = (numVoxel * NUM_MATERIAL) + numMat;
-            data[numVoxel] = morphologyData[offset].getValueAt(numVoxel);
+            data[numVoxel] = morphologyData[offset].getValueAt(numComponent);
           }
           H5::DataSpace dataspace(RANK, dims);
 #ifdef DOUBLE_PRECISION
@@ -121,7 +121,7 @@ namespace H5 {
     }
   }
 
-  void writeXDMF(const InputData &inputData) {
+  void writeXDMF(const InputData &inputData, const Voxel * voxelData) {
     std::array<std::string, 4> morphologyDataSets{};
     const MorphologyType morphologyType = static_cast<MorphologyType>(inputData.morphologyType);
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
@@ -139,11 +139,12 @@ namespace H5 {
     }
     const std::string dirName = "Morphology";
     const std::string fName = "Morphology";
+    const std::string xdmfFileName = dirName+"/"+fName+".xdmf";
     static constexpr int precision = sizeof(Real);
     createDirectory(dirName);
     const UINT voxelSize[3]{inputData.voxelDims[2], inputData.voxelDims[1], inputData.voxelDims[0]}; // C++ format
 
-    FILE *fp = fopen(fName.c_str(), "w");
+    FILE *fp = fopen(xdmfFileName.c_str(), "w");
     fprintf(fp, "<?xml version=\"1.0\" ?>\n");
     fprintf(fp, "<!DOCTYPE Xdmf SYSTEM \"Xdmf.dtd\" []>\n");
     fprintf(fp, "<Xdmf xmlns:xi=\"http://www.w3.org/2003/XInclude\" Version=\"2.2\">\n");
@@ -179,6 +180,8 @@ namespace H5 {
     fprintf(fp,"\t</Domain>\n");
     fprintf(fp,"</Xdmf>\n");
     fclose(fp);
+    const std::string h5MorphologyName = dirName+"/"+fName;
+    writeMorphologyFile(h5MorphologyName,inputData,voxelData);
   }
 }
 
