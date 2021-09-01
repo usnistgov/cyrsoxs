@@ -65,7 +65,7 @@ struct Voxel {
   Voxel():
   s1{0.0,0.0,0.0,0.0}{
   }
-  const Real  getValueAt(int id) const{
+  Real  getValueAt(int id) const{
     const Real val[4]{s1.x,s1.y,s1.z,s1.w};
     return val[id];
   }

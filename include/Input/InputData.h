@@ -177,14 +177,7 @@ private:
   /**
    * @brief sets the flag for 2D computataion.
    */
-  inline void check2D() {
-    if (numZ != 1) {
-      enable2D_ = false;
-    } else {
-      std::cout << "[INFO] 2D computation enabled\n";
-      enable2D_ = true;
-    }
-  }
+
 
  public:
   /// start of energy
@@ -198,11 +191,7 @@ private:
   /// number of threads
   UINT num_threads = 4;
   /// Number of voxels in X direction.
-  UINT numX;
-  /// Number of voxels in Y direction.
-  UINT numY;
-  /// Number of voxels in Z direction.
-  UINT numZ;
+  UINT voxelDims[3];
   /// Physical Size
   Real physSize;
   /// Write HDF5 file
@@ -229,11 +218,11 @@ private:
   bool referenceFrame = ReferenceFrame::MATERIAL;
 
   Real3 detectorCoordinates{0,0,1};
-  int algorithmType = 0;
+  int algorithmType = Algorithm::CommunicationMinimizing;
   int numMaxStreams = 1;
 
 
-  int morphologyOrder = MorphologyOrder::INVALID;
+  MorphologyOrder morphologyOrder = MorphologyOrder::INVALID;
 
   bool dumpMorphology = true;
 
@@ -243,6 +232,14 @@ private:
    */
   inline bool if2DComputation() const {
      return enable2D_;
+  }
+  inline void check2D() {
+    if (voxelDims[2] != 1) {
+      enable2D_ = false;
+    } else {
+      std::cout << "[INFO] 2D computation enabled\n";
+      enable2D_ = true;
+    }
   }
 
 
@@ -264,12 +261,10 @@ private:
 
     startAngle = _temp[0]; incrementAngle = _temp[1]; endAngle = _temp[2];
 
-    ReadValueRequired(cfg, "NumThreads", num_threads);
-    ReadValueRequired(cfg, "NumX", numX);
-    ReadValueRequired(cfg, "NumY", numY);
-    ReadValueRequired(cfg, "NumZ", numZ);
     ReadValueRequired(cfg, "PhysSize", physSize);
     ReadValueRequired(cfg, "MorphologyType", morphologyType);
+
+    if(ReadValue(cfg, "NumThreads", num_threads)){}
     if(ReadValue(cfg, "RotMask",rotMask)){}
     if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
     if(ReadValue(cfg, "WriteVTI",writeVTI)){}
@@ -279,11 +274,7 @@ private:
     if(ReadValue(cfg, "Algorithm",algorithmType)){}
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     if(ReadValue(cfg,"DumpMorphology",dumpMorphology)){}
-    else{
-        if(numZ < 4){
-            scatterApproach = ScatterApproach::FULL;
-        }
-    }
+
     if(caseType == CaseTypes::DEFAULT) {
       kVectors.resize(1,{0,0,1});
     }
@@ -313,7 +304,6 @@ private:
       detectorCoordinates.z = _temp[2];
       normalizeVec(detectorCoordinates);
     }
-    check2D();
   }
 
   void readRefractiveIndexData(std::vector<Material<NUM_MATERIAL> > &refractiveIndex) const {
@@ -361,7 +351,8 @@ private:
      */
     void print() const{
 
-        std::cout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
+
+        std::cout << "Dimensions           : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         std::cout << "PhysSize             : " << physSize << " nm \n";
         std::cout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
         std::cout << "MorphologyType       : " << morphologyTypeName[morphologyType] << "\n";
@@ -522,7 +513,7 @@ private:
         fout << "CaseType             : " << caseTypenames[caseType];
         fout << "MorphologyType       : " << morphologyTypeName[morphologyType];
         fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame];
-        fout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
+        fout << "Dimensions           : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         fout << "PhysSize             : " << physSize << "nm \n";
         fout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
         fout << "Energies simulated   : [";

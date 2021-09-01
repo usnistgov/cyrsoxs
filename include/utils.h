@@ -165,7 +165,7 @@ static void printMetaData(const InputData & inputData, const RotationMatrix & ro
 
   file << "\nScaling Information:\n";
   file << "=========================================================================================\n";
-  file << "Number of pixel      :[" << inputData.numX << "," << inputData.numY << "]\n";
+  file << "Number of pixel      :[" << inputData.voxelDims[0] << "," << inputData.voxelDims[1] << "]\n";
   file << "Q range              :[" << -M_PI / inputData.physSize << "," << M_PI / inputData.physSize << "]\n";
   file << "\n\n";
 

@@ -41,6 +41,58 @@ namespace H5 {
   static constexpr int AXIS_LABEL_LEN = 2;
 
 
+  static inline void getDimensionAndOrder(const std::string & hdf5fileName, const MorphologyType & morphologyType, UINT * voxelSize,MorphologyOrder & morphologyOrder) {
+    H5::H5File file(hdf5fileName, H5F_ACC_RDONLY);
+    if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
+      std::string groupName = "vector_morphology";
+      std::string dataName = "Mat_1_unaligned";
+      bool groupExists = file.nameExists(groupName.c_str());
+      if(not groupExists) {
+        std::cerr << "Group " <<  groupName << "not found";
+        exit(EXIT_FAILURE);
+      }
+
+      Group group = file.openGroup(groupName.c_str());
+      bool dataExists = group.nameExists(dataName.c_str());
+
+      if(not(dataExists)) {
+        std::cerr << "DataSet " <<  dataName << "not found";
+        exit(EXIT_FAILURE);
+      }
+      H5::DataSet dataSet = group.openDataSet(dataName.c_str());
+      H5::DataSpace space = dataSet.getSpace();
+      hsize_t voxelDims[3];
+      const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
+      if(ndims != 3) {
+        std::cerr << "Expected 3D array. Found Dim = " << ndims << "for " << dataName << "\n";
+        exit(EXIT_FAILURE);
+      }
+      char label[2][AXIS_LABEL_LEN];
+      H5DSget_label(dataSet.getId(), 0, label[0], AXIS_LABEL_LEN);
+      H5DSget_label(dataSet.getId(), 2, label[1], AXIS_LABEL_LEN);
+      if (((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
+        morphologyOrder = MorphologyOrder::ZYX;
+        voxelSize[0] = voxelDims[2];
+        voxelSize[1] = voxelDims[1];
+        voxelSize[2] = voxelDims[0];
+      }
+      else if (((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
+        morphologyOrder = MorphologyOrder::XYZ;
+        voxelSize[0] = voxelDims[0];
+        voxelSize[1] = voxelDims[1];
+        voxelSize[2] = voxelDims[2];
+      }
+      else {
+        throw std::runtime_error("Only XYZ/ZYX ordering supported");
+      }
+      group.close();
+    }
+    else {
+      throw std::runtime_error("Not supported");
+    }
+
+    file.close();
+  }
   template<typename T>
   static void XYZ_to_ZYX(std::vector<T> &data, const int numComponents, const UINT *voxelSize) {
     std::vector<T> _data = data;
@@ -183,7 +235,7 @@ namespace H5 {
                                const std::string &groupName,
                                const std::string &strName,
                                UINT *voxelSize,
-                               int  &morphologyOrder,
+                               MorphologyOrder  &morphologyOrder,
                                std::vector<Real> &inputData,
                                const int materialID,
                                const bool isRequired = true,
@@ -317,7 +369,7 @@ namespace H5 {
  */
 
   static int readFile(const std::string &hdf5file, UINT *voxelSize, Voxel *&voxelData,
-                      const MorphologyType &morphologyType, int &morphologyOrder, bool isAllocated = false) {
+                      const MorphologyType &morphologyType, MorphologyOrder &morphologyOrder, bool isAllocated = false) {
     H5::H5File file(hdf5file, H5F_ACC_RDONLY);
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
 
@@ -355,6 +407,7 @@ namespace H5 {
     } else {
       throw std::runtime_error("Wrong type of morphology");
     }
+    file.close();
     return EXIT_SUCCESS;
   }
 }

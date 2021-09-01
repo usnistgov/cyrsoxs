@@ -83,10 +83,10 @@ namespace H5 {
     H5::H5File file(filename.c_str(), H5F_ACC_TRUNC);
     try {
 
-      const BigUINT numVoxels = inputData.numX * inputData.numY * inputData.numZ;
+      const BigUINT numVoxels = inputData.voxelDims[0] * inputData.voxelDims[1] * inputData.voxelDims[2];
       Real *data = new Real[numVoxels];
       const int RANK = 3;
-      const hsize_t dims[3]{inputData.numZ, inputData.numY, inputData.numX}; // C++ order
+      const hsize_t dims[3]{inputData.voxelDims[2], inputData.voxelDims[1], inputData.voxelDims[0]}; // C++ order
 
       for (int numMat = 0; numMat < NUM_MATERIAL; numMat++) {
         const auto &group = file.createGroup("Material_" + std::to_string(numMat));
@@ -141,7 +141,7 @@ namespace H5 {
     const std::string fName = "Morphology";
     static constexpr int precision = sizeof(Real);
     createDirectory(dirName);
-    const UINT voxelSize[3]{inputData.numZ, inputData.numY, inputData.numX}; // C++ format
+    const UINT voxelSize[3]{inputData.voxelDims[2], inputData.voxelDims[1], inputData.voxelDims[0]}; // C++ format
 
     FILE *fp = fopen(fName.c_str(), "w");
     fprintf(fp, "<?xml version=\"1.0\" ?>\n");
