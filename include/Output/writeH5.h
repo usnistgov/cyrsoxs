@@ -92,7 +92,7 @@ namespace H5 {
         const auto &group = file.createGroup("Material_" + std::to_string(numMat + 1));
         for (int numComponent = 0; numComponent < 4; numComponent++) {
           for (int numVoxel = 0; numVoxel < numVoxels; numVoxel++) {
-            int offset = (numVoxel * NUM_MATERIAL) + numMat;
+            int offset = numMat*numVoxels + numVoxel ;
             data[numVoxel] = morphologyData[offset].getValueAt(numComponent);
           }
           H5::DataSpace dataspace(RANK, dims);
