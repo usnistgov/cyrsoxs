@@ -261,7 +261,6 @@ private:
 
     startAngle = _temp[0]; incrementAngle = _temp[1]; endAngle = _temp[2];
 
-    ReadValueRequired(cfg, "PhysSize", physSize);
     ReadValueRequired(cfg, "MorphologyType", morphologyType);
 
     if(ReadValue(cfg, "NumThreads", num_threads)){}
