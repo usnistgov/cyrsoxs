@@ -94,6 +94,13 @@ namespace H5 {
     file.close();
   }
 
+  /**
+   * @brief Converts XYZ format data to ZYX format. Cy-RSoXS assumes the data is always in ZYX format
+   * @tparam T
+   * @param data data for single material
+   * @param numComponents number of components (1/3 for scalar / vector)
+   * @param voxelSize 3D array of number of voxels in each direction
+   */
   template<typename T>
   static void XYZ_to_ZYX(std::vector<T> &data, const int numComponents, const UINT *voxelSize) {
     std::vector<T> _data = data;
@@ -102,12 +109,12 @@ namespace H5 {
     UINT Y = voxelSize[1];
     UINT Z = voxelSize[2];
     for (int k = 0; k < Z; k++) {
-    for (int j = 0; j < Y; j++) {
-      for (int i = 0; i < X; i++) {
-        UINT flattenZYX = k*(X*Y) + j*X + i;
-        UINT flattenXYZ = i*(Y*Z) + j*Z + k;
+      for (int j = 0; j < Y; j++) {
+        for (int i = 0; i < X; i++) {
+          UINT flattenZYX = k * (X * Y) + j * X + i;
+          UINT flattenXYZ = i * (Y * Z) + j * Z + k;
           for (int c = 0; c < numComponents; c++) {
-            _data[flattenZYX*numComponents + c] = data[flattenXYZ*numComponents + c];
+            _data[flattenZYX * numComponents + c] = data[flattenXYZ * numComponents + c];
           }
           counter++;
         }
