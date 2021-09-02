@@ -3,16 +3,23 @@ import h5py as h5
 import numpy as np
 
 argc: int = len(sys.argv)
-if(argc < 4):
-    print("Usage : ",sys.argv[0], "oldFileName newFileName numMaterial")
+if(argc < 5):
+    print("Usage : ",sys.argv[0], "oldFileName newFileName numMaterial PhysSize")
+    exit()
 
 oldFileName = sys.argv[1]
 newFileName = sys.argv[2]
 numMaterial = int(sys.argv[3])
+PhysSize:float = float(sys.argv[4])
 
 fOld = h5.File(oldFileName,'r')
 fnewZYX = h5.File(newFileName+'ZYX.h5','w')
 fnewXYZ = h5.File(newFileName+'XYZ.h5','w')
+
+fnewZYX.create_group('morphology_parameter')
+fnewXYZ.create_group('morphology_parameter')
+fnewZYX['morphology_parameter'].create_dataset("PhysSize",data = PhysSize)
+fnewXYZ['morphology_parameter'].create_dataset("PhysSize",data = PhysSize)
 
 fnewZYX.create_group('vector_morphology')
 fnewXYZ.create_group('vector_morphology')

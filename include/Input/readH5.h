@@ -43,9 +43,48 @@ namespace H5 {
 
 
   static inline void
-  getDimensionAndOrder(const std::string &hdf5fileName, const MorphologyType &morphologyType, UINT *voxelSize,
+  getDimensionAndOrder(const std::string &hdf5fileName, const MorphologyType &morphologyType, UINT *voxelSize, Real & physSize,
                        MorphologyOrder &morphologyOrder) {
     H5::H5File file(hdf5fileName, H5F_ACC_RDONLY);
+    { // PhysSize
+      std::string groupName = "morphology_parameter";
+      std::string dataName = "PhysSize";
+      bool groupExists = file.nameExists(groupName.c_str());
+      if (not groupExists) {
+        std::cerr << "Group " << groupName << "not found";
+        exit(EXIT_FAILURE);
+      }
+      Group group = file.openGroup(groupName.c_str());
+      bool dataExists = group.nameExists(dataName.c_str());
+      if (not(dataExists)) {
+        std::cerr << "DataSet " << dataName << "not found";
+        exit(EXIT_FAILURE);
+      }
+      H5::DataSet dataSet = group.openDataSet(dataName.c_str());
+      H5::DataType dataType = dataSet.getDataType();
+#ifdef DOUBLE_PRECISION
+      if(dataType == PredType::NATIVE_DOUBLE) {
+        dataSet.read(&physSize,PredType::NATIVE_FLOAT);
+      }
+      else {
+        throw std::runtime_error("Wrong Data type for physSize");
+      }
+#else
+      if(dataType == PredType::NATIVE_FLOAT) {
+        dataSet.read(&physSize,PredType::NATIVE_FLOAT);
+      }
+      else if(dataType == PredType::NATIVE_DOUBLE) {
+        double _physSize;
+        dataSet.read(&_physSize,PredType::NATIVE_DOUBLE);
+        physSize = _physSize;
+      }
+      else {
+        throw std::runtime_error("Wrong Data type for physSize");
+      }
+#endif
+      dataSet.close();
+      group.close();
+    }
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
       std::string groupName = "vector_morphology";
       std::string dataName = "Mat_1_unaligned";

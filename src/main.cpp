@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
   if (argc > 2) {
     inputData.HDF5DirName = argv[2];
   }
-  H5::getDimensionAndOrder(fname, (MorphologyType) inputData.morphologyType, inputData.voxelDims,
+  H5::getDimensionAndOrder(fname, (MorphologyType) inputData.morphologyType, inputData.voxelDims,inputData.physSize,
                            inputData.morphologyOrder);
   inputData.check2D();
   inputData.print();
