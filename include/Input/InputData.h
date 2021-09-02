@@ -224,7 +224,7 @@ private:
 
   MorphologyOrder morphologyOrder = MorphologyOrder::INVALID;
 
-  bool dumpMorphology = true;
+  bool dumpMorphology = false;
 
   /**
    *
