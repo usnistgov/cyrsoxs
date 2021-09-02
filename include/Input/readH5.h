@@ -101,12 +101,13 @@ namespace H5 {
     UINT X = voxelSize[0];
     UINT Y = voxelSize[1];
     UINT Z = voxelSize[2];
-    for (int i = 0; i < X; i++) {
-      for (int j = 0; j < Y; j++) {
-        for (int k = 0; k < Z; k++) {
+    for (int k = 0; k < Z; k++) {
+    for (int j = 0; j < Y; j++) {
+      for (int i = 0; i < X; i++) {
+        UINT flattenZYX = k*(X*Y) + j*X + i;
+        UINT flattenXYZ = i*(Y*Z) + j*Z + k;
           for (int c = 0; c < numComponents; c++) {
-            _data[counter + numComponents * c] = data[
-              (k * voxelSize[0] * voxelSize[1] + j * voxelSize[1] + i) * numComponents + c];
+            _data[flattenZYX*numComponents + c] = data[flattenXYZ*numComponents + c];
           }
           counter++;
         }
@@ -382,25 +383,25 @@ namespace H5 {
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
       {
         std::vector<Real> unalignedData(numVoxel);
-        for (int numMat = 1; numMat < NUM_MATERIAL+1; numMat++) {
+        for (int numMat = 1; numMat < NUM_MATERIAL + 1; numMat++) {
 #ifdef PYBIND
           getScalar(file, "vector_morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData,numMat,true, false);
 #else
           getScalar(file, "vector_morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData, numMat, true);
 #endif
           for (UINT i = 0; i < numVoxel; i++) {
-            voxelData[i*NUM_MATERIAL + numMat - 1].s1.w = unalignedData[i];
+            voxelData[i * NUM_MATERIAL + numMat - 1].s1.w = unalignedData[i];
           }
         }
       }
       {
-        std::vector<Real> alignmentData(numVoxel*3);
-        for (UINT numMat = 1; numMat < NUM_MATERIAL+1; numMat++) {
+        std::vector<Real> alignmentData(numVoxel * 3);
+        for (UINT numMat = 1; numMat < NUM_MATERIAL + 1; numMat++) {
           getMatAllignment(file, voxelSize, alignmentData, static_cast<const MorphologyOrder>(morphologyOrder), numMat);
           for (BigUINT i = 0; i < numVoxel; i++) {
-            voxelData[i*NUM_MATERIAL + numMat - 1].s1.x = alignmentData[3 * i + 0];
-            voxelData[i*NUM_MATERIAL + numMat - 1].s1.y = alignmentData[3 * i + 1];
-            voxelData[i*NUM_MATERIAL + numMat - 1].s1.z = alignmentData[3 * i + 2];
+            voxelData[i * NUM_MATERIAL + numMat - 1].s1.x = alignmentData[3 * i + 0];
+            voxelData[i * NUM_MATERIAL + numMat - 1].s1.y = alignmentData[3 * i + 1];
+            voxelData[i * NUM_MATERIAL + numMat - 1].s1.z = alignmentData[3 * i + 2];
           }
         }
       }
