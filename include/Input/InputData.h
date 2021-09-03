@@ -321,7 +321,17 @@ private:
     const UINT & numEnergy = energies.size();
     for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
       std::string fname = "Material" + std::to_string(numMaterial+1) + ".txt";
-      cfg.readFile(fname.c_str());
+      try {
+        cfg.readFile(fname.c_str());
+      }
+      catch (libconfig::FileIOException & e) {
+        std::cerr << " Cannot read " << fname << "\n";
+        exit(EXIT_FAILURE);
+      }catch (libconfig::ParseException &e) {
+        std::cerr << "Parse error at " << e.getFile() << ":" << e.getLine()
+                  << " - " << e.getError() <<"\n";
+        exit(EXIT_FAILURE);
+      }
       for (int i = 0; i < numEnergy; i++) {
         const auto &global = cfg.getRoot()["EnergyData" + std::to_string(i)];
         Real energy = global["Energy"];
