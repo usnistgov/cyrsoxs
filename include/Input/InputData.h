@@ -253,7 +253,17 @@ private:
    */
   InputData(std::string filename = "config.txt") {
     libconfig::Config cfg;
-    cfg.readFile(filename.c_str());
+    try {
+      cfg.readFile(filename.c_str());
+    }
+    catch (libconfig::FileIOException & e) {
+      std::cerr << " Cannot read " << filename << "\n";
+      exit(EXIT_FAILURE);
+    }catch (libconfig::ParseException &e) {
+      std::cerr << "Parse error at " << e.getFile() << ":" << e.getLine()
+                << " - " << e.getError() <<"\n";
+      exit(EXIT_FAILURE);
+    }
     ReadValueRequired(cfg, "CaseType",caseType);
     ReadArrayRequired(cfg, "Energies", energies);
     std::vector<Real> _temp;
@@ -310,7 +320,7 @@ private:
     refractiveIndex.resize(energies.size());
     const UINT & numEnergy = energies.size();
     for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
-      std::string fname = "Material" + std::to_string(numMaterial) + ".txt";
+      std::string fname = "Material" + std::to_string(numMaterial+1) + ".txt";
       cfg.readFile(fname.c_str());
       for (int i = 0; i < numEnergy; i++) {
         const auto &global = cfg.getRoot()["EnergyData" + std::to_string(i)];
