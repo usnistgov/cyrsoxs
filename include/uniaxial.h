@@ -163,10 +163,6 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
   polarizationX[threadID] = pX;
   polarizationY[threadID] = pY;
   polarizationZ[threadID] = pZ;
-    printf("thread = %d Px = (%e, %e ), Py = (%e, %e) Pz = (%e, %e)\n",threadID,polarizationX[threadID].x,polarizationX[threadID].y,
-           polarizationY[threadID].x,polarizationY[threadID].y,polarizationZ[threadID].x,polarizationZ[threadID].y);
-
-
 }
 
 /**
@@ -287,9 +283,6 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   polarizationX[threadID] = pX;
   polarizationY[threadID] = pY;
   polarizationZ[threadID] = pZ;
-    printf("thread = %d Px = (%e, %e ), Py = (%e, %e) Pz = (%e, %e)\n", threadID, polarizationX[threadID].x,
-           polarizationX[threadID].y,
-           polarizationY[threadID].x, polarizationY[threadID].y, polarizationZ[threadID].x, polarizationZ[threadID].y);
 
 }
 
