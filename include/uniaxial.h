@@ -81,9 +81,9 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
     const Real & phiAngle    = matProp.z;
     const Real & Vfrac       = matProp.w;
 
-    const Real   sx     = cos(thetaAngle);
-    const Real   sy     = sin(thetaAngle)*sin(phiAngle);
-    const Real   sz     = sin(thetaAngle)*cos(phiAngle);
+    const Real   sx     =  cos(phiAngle);
+    const Real   sy     = -sin(phiAngle)*cos(thetaAngle);
+    const Real   sz     =  sin(phiAngle)*sin(thetaAngle);
     const Real   phi_ui = Vfrac - S;
 
     const Real  & phi =  Vfrac;
@@ -146,6 +146,7 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
 
     pZ.x += rotatedNr.x*matVec.z;
     pZ.y += rotatedNr.y*matVec.z;
+
   }
 
   pX.x *= OneBy4Pi;
@@ -162,6 +163,9 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
   polarizationX[threadID] = pX;
   polarizationY[threadID] = pY;
   polarizationZ[threadID] = pZ;
+    printf("thread = %d Px = (%e, %e ), Py = (%e, %e) Pz = (%e, %e)\n",threadID,polarizationX[threadID].x,polarizationX[threadID].y,
+           polarizationY[threadID].x,polarizationY[threadID].y,polarizationZ[threadID].x,polarizationZ[threadID].y);
+
 
 }
 
@@ -283,6 +287,10 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   polarizationX[threadID] = pX;
   polarizationY[threadID] = pY;
   polarizationZ[threadID] = pZ;
+    printf("thread = %d Px = (%e, %e ), Py = (%e, %e) Pz = (%e, %e)\n", threadID, polarizationX[threadID].x,
+           polarizationX[threadID].y,
+           polarizationY[threadID].x, polarizationY[threadID].y, polarizationZ[threadID].x, polarizationZ[threadID].y);
+
 }
 
 __global__ void computeNtVectorMorphology(const Material<1> material,
@@ -344,7 +352,7 @@ __global__ void computeNtEulerAngles(const Material<1> material,
                                           const Voxel * __restrict__ voxelInput,
                                           Complex * Nt, const BigUINT  offset, const BigUINT  endID,
                                           const BigUINT numVoxels) {
-  // not correctly implemented
+
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   if((threadID + offset) >= endID){
     return;
@@ -360,9 +368,9 @@ __global__ void computeNtEulerAngles(const Material<1> material,
   const Real & phiAngle    = matProp.z;
   const Real & Vfrac       = matProp.w;
 
-  const Real   sx     = S*cos(thetaAngle);
-  const Real   sy     = S*sin(thetaAngle)*sin(phiAngle);
-  const Real   sz     = S*sin(thetaAngle)*cos(phiAngle);
+  const Real   sx     =  cos(phiAngle);
+  const Real   sy     = -sin(phiAngle)*cos(thetaAngle);
+  const Real   sz     =  sin(phiAngle)*sin(thetaAngle);
   const Real   phi_ui = Vfrac - S;
 
   const Real  & phi =  Vfrac;
@@ -374,23 +382,23 @@ __global__ void computeNtEulerAngles(const Material<1> material,
   computeComplexSquare(npar);
   computeComplexSquare(nper);
 
-  rotatedNr[0].x += npar.x * sx * sx + nper.x * (sy * sy + sz * sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-  rotatedNr[0].y += npar.y * sx * sx + nper.y * (sy * sy + sz * sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+  rotatedNr[0].x += S*(npar.x * sx * sx + nper.x * (sy * sy + sz * sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[0].y += S*(npar.y * sx * sx + nper.y * (sy * sy + sz * sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-  rotatedNr[1].x += (npar.x - nper.x) * sx * sy;
-  rotatedNr[1].y += (npar.y - nper.y) * sx * sy;
+  rotatedNr[1].x += S*(npar.x - nper.x) * sx * sy;
+  rotatedNr[1].y += S*(npar.y - nper.y) * sx * sy;
 
-  rotatedNr[2].x += (npar.x - nper.x) * sx * sz;
-  rotatedNr[2].y += (npar.y - nper.y) * sx * sz;
+  rotatedNr[2].x += S*(npar.x - nper.x) * sx * sz;
+  rotatedNr[2].y += S*(npar.y - nper.y) * sx * sz;
 
-  rotatedNr[3].x += npar.x * sy * sy + nper.x * (sx * sx + sz * sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-  rotatedNr[3].y += npar.y * sy * sy + nper.y * (sx * sx + sz * sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+  rotatedNr[3].x += S*(npar.x * sy * sy + nper.x * (sx * sx + sz * sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[3].y += S*(npar.y * sy * sy + nper.y * (sx * sx + sz * sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-  rotatedNr[4].x += (npar.x - nper.x) * sy * sz;
-  rotatedNr[4].y += (npar.y - nper.y) * sy * sz;
+  rotatedNr[4].x += S*(npar.x - nper.x) * sy * sz;
+  rotatedNr[4].y += S*(npar.y - nper.y) * sy * sz;
 
-  rotatedNr[5].x += npar.x * sz * sz + nper.x * (sx * sx + sy * sy) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-  rotatedNr[5].y += npar.y * sz * sz + nper.y * (sx * sx + sy * sy) + ((phi_ui * nsum.y) / (Real) 9.0);
+  rotatedNr[5].x += S*(npar.x * sz * sz + nper.x * (sx * sx + sy * sy)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[5].y += S*(npar.y * sz * sz + nper.y * (sx * sx + sy * sy)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
 
   Nt[2*(threadID+offset) + 0+  0*numVoxels].x += rotatedNr[0].x; Nt[2*(threadID+offset) + 0  +  0*numVoxels ].y += rotatedNr[0].y;

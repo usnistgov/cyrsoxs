@@ -43,15 +43,16 @@ namespace H5 {
 
 
   static inline void
-  getDimensionAndOrder(const std::string &hdf5fileName, const MorphologyType &morphologyType, UINT *voxelSize, Real & physSize,
+  getDimensionAndOrder(const std::string &hdf5fileName, const MorphologyType &morphologyType, UINT *voxelSize,
+                       Real &physSize,
                        MorphologyOrder &morphologyOrder) {
     H5::H5File file(hdf5fileName, H5F_ACC_RDONLY);
     { // PhysSize
-      std::string groupName = "morphology_parameter";
+      std::string groupName = "Morphology_Parameters";
       std::string dataName = "PhysSize";
       bool groupExists = file.nameExists(groupName.c_str());
       if (not groupExists) {
-        std::cerr << "Group " << groupName << "not found";
+        std::cerr << "Group " << groupName << " not found";
         exit(EXIT_FAILURE);
       }
       Group group = file.openGroup(groupName.c_str());
@@ -70,66 +71,60 @@ namespace H5 {
         throw std::runtime_error("Wrong Data type for physSize");
       }
 #else
-      if(dataType == PredType::NATIVE_FLOAT) {
-        dataSet.read(&physSize,PredType::NATIVE_FLOAT);
-      }
-      else if(dataType == PredType::NATIVE_DOUBLE) {
+      if (dataType == PredType::NATIVE_FLOAT) {
+        dataSet.read(&physSize, PredType::NATIVE_FLOAT);
+      } else if (dataType == PredType::NATIVE_DOUBLE) {
         double _physSize;
-        dataSet.read(&_physSize,PredType::NATIVE_DOUBLE);
+        dataSet.read(&_physSize, PredType::NATIVE_DOUBLE);
         physSize = _physSize;
-      }
-      else {
+      } else {
         throw std::runtime_error("Wrong Data type for physSize");
       }
 #endif
       dataSet.close();
       group.close();
     }
-    if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-      std::string groupName = "vector_morphology";
-      std::string dataName = "Mat_1_unaligned";
-      bool groupExists = file.nameExists(groupName.c_str());
-      if (not groupExists) {
-        std::cerr << "Group " << groupName << "not found";
-        exit(EXIT_FAILURE);
-      }
+    std::string groupName = (morphologyType == MorphologyType::EULER_ANGLES) ? "Euler_Angles" : "Vector_Morphology";
+    std::string dataName = (morphologyType == MorphologyType::EULER_ANGLES) ?  "Mat_1_Vfrac" : "Mat_1_unaligned";
 
-      Group group = file.openGroup(groupName.c_str());
-      bool dataExists = group.nameExists(dataName.c_str());
-
-      if (not(dataExists)) {
-        std::cerr << "DataSet " << dataName << "not found";
-        exit(EXIT_FAILURE);
-      }
-      H5::DataSet dataSet = group.openDataSet(dataName.c_str());
-      H5::DataSpace space = dataSet.getSpace();
-      hsize_t voxelDims[3];
-      const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
-      if (ndims != 3) {
-        std::cerr << "Expected 3D array. Found Dim = " << ndims << "for " << dataName << "\n";
-        exit(EXIT_FAILURE);
-      }
-      char label[2][AXIS_LABEL_LEN];
-      H5DSget_label(dataSet.getId(), 0, label[0], AXIS_LABEL_LEN);
-      H5DSget_label(dataSet.getId(), 2, label[1], AXIS_LABEL_LEN);
-      if (((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
-        morphologyOrder = MorphologyOrder::ZYX;
-        voxelSize[0] = voxelDims[2];
-        voxelSize[1] = voxelDims[1];
-        voxelSize[2] = voxelDims[0];
-      } else if (((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
-        morphologyOrder = MorphologyOrder::XYZ;
-        voxelSize[0] = voxelDims[0];
-        voxelSize[1] = voxelDims[1];
-        voxelSize[2] = voxelDims[2];
-      } else {
-        throw std::runtime_error("Only XYZ/ZYX ordering supported");
-      }
-      group.close();
-    } else {
-      throw std::runtime_error("Not supported");
+    bool groupExists = file.nameExists(groupName.c_str());
+    if (not groupExists) {
+      std::cerr << "Group " << groupName << " not found";
+      exit(EXIT_FAILURE);
     }
 
+    Group group = file.openGroup(groupName.c_str());
+    bool dataExists = group.nameExists(dataName.c_str());
+
+    if (not(dataExists)) {
+      std::cerr << "DataSet " << dataName << "not found";
+      exit(EXIT_FAILURE);
+    }
+    H5::DataSet dataSet = group.openDataSet(dataName.c_str());
+    H5::DataSpace space = dataSet.getSpace();
+    hsize_t voxelDims[3];
+    const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
+    if (ndims != 3) {
+      std::cerr << "Expected 3D array. Found Dim = " << ndims << "for " << dataName << "\n";
+      exit(EXIT_FAILURE);
+    }
+    char label[2][AXIS_LABEL_LEN];
+    H5DSget_label(dataSet.getId(), 0, label[0], AXIS_LABEL_LEN);
+    H5DSget_label(dataSet.getId(), 2, label[1], AXIS_LABEL_LEN);
+    if (((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
+      morphologyOrder = MorphologyOrder::ZYX;
+      voxelSize[0] = voxelDims[2];
+      voxelSize[1] = voxelDims[1];
+      voxelSize[2] = voxelDims[0];
+    } else if (((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
+      morphologyOrder = MorphologyOrder::XYZ;
+      voxelSize[0] = voxelDims[0];
+      voxelSize[1] = voxelDims[1];
+      voxelSize[2] = voxelDims[2];
+    } else {
+      throw std::runtime_error("Only XYZ/ZYX ordering supported");
+    }
+    group.close();
     file.close();
   }
 
@@ -177,7 +172,7 @@ namespace H5 {
                                       std::vector<Real> &inputData,
                                       const MorphologyOrder &morphologyOrder,
                                       const int materialID) {
-    std::string groupName = "vector_morphology";
+    std::string groupName = "Vector_Morphology";
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
 
     int i = materialID;
@@ -433,10 +428,10 @@ namespace H5 {
 #ifdef PYBIND
           getScalar(file, "vector_morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData,numMat,true, false);
 #else
-          getScalar(file, "vector_morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData, numMat, true);
+          getScalar(file, "Vector_Morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData, numMat, true);
 #endif
           for (UINT i = 0; i < numVoxel; i++) {
-            voxelData[(numMat-1)*numVoxel + i].s1.w = unalignedData[i];
+            voxelData[(numMat - 1) * numVoxel + i].s1.w = unalignedData[i];
           }
         }
       }
@@ -445,14 +440,63 @@ namespace H5 {
         for (UINT numMat = 1; numMat < NUM_MATERIAL + 1; numMat++) {
           getMatAllignment(file, voxelSize, alignmentData, static_cast<const MorphologyOrder>(morphologyOrder), numMat);
           for (BigUINT i = 0; i < numVoxel; i++) {
-            voxelData[(numMat-1)*numVoxel + i].s1.x = alignmentData[3 * i + 0];
-            voxelData[(numMat-1)*numVoxel + i].s1.y = alignmentData[3 * i + 1];
-            voxelData[(numMat-1)*numVoxel + i].s1.z = alignmentData[3 * i + 2];
+            voxelData[(numMat - 1) * numVoxel + i].s1.x = alignmentData[3 * i + 0];
+            voxelData[(numMat - 1) * numVoxel + i].s1.y = alignmentData[3 * i + 1];
+            voxelData[(numMat - 1) * numVoxel + i].s1.z = alignmentData[3 * i + 2];
           }
         }
       }
     } else if (morphologyType == MorphologyType::EULER_ANGLES) {
-      /// TODO
+      {
+        std::vector<Real> scalarData(numVoxel);
+        for (int numMat = 1; numMat < NUM_MATERIAL + 1; numMat++) {
+          getScalar(file, "Euler_Angles", "_Vfrac",voxelSize, static_cast<const MorphologyOrder>(morphologyOrder),scalarData, numMat,
+                    true);
+          for (BigUINT i = 0; i < numVoxel; i++) {
+            voxelData[(numMat - 1) * numVoxel + i].s1.w = scalarData[i];
+          }
+          bool exists = getScalar(file, "Euler_Angles", "_S",voxelSize, static_cast<const MorphologyOrder>(morphologyOrder),scalarData, numMat,
+                    false);
+          for (BigUINT i = 0; i < numVoxel; i++) {
+            voxelData[(numMat - 1) * numVoxel + i].s1.x = scalarData[i];
+          }
+          if(exists){
+            getScalar(file, "Euler_Angles", "_Theta",voxelSize, static_cast<const MorphologyOrder>(morphologyOrder),scalarData, numMat,
+                      true);
+            for (BigUINT i = 0; i < numVoxel; i++) {
+              if(voxelData[(numMat - 1) * numVoxel + i].s1.x == 0) {
+                voxelData[(numMat - 1) * numVoxel + i].s1.y = 0;
+              }
+              else {
+                voxelData[(numMat - 1) * numVoxel + i].s1.y = scalarData[i];
+              }
+
+            }
+            getScalar(file, "Euler_Angles", "_Phi",voxelSize, static_cast<const MorphologyOrder>(morphologyOrder),scalarData, numMat,
+                      true);
+            for (BigUINT i = 0; i < numVoxel; i++) {
+              if(voxelData[(numMat - 1) * numVoxel + i].s1.x == 0) {
+                voxelData[(numMat - 1) * numVoxel + i].s1.z = 0;
+              }
+              else{
+                voxelData[(numMat - 1) * numVoxel + i].s1.z = scalarData[i];
+              }
+
+            }
+          }
+          else{
+            // Not sure if its needed
+            for (BigUINT i = 0; i < numVoxel; i++) {
+              voxelData[(numMat - 1) * numVoxel + i].s1.y = 0.0;
+            }
+            for (BigUINT i = 0; i < numVoxel; i++) {
+              voxelData[(numMat - 1) * numVoxel + i].s1.z = 0.0;
+            }
+          }
+
+        }
+      }
+
     } else {
       throw std::runtime_error("Wrong type of morphology");
     }
