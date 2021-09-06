@@ -529,9 +529,11 @@ private:
     }
 #endif
     void printToFile(std::ofstream & fout) const{
-        fout << "CaseType             : " << caseTypenames[caseType];
-        fout << "MorphologyType       : " << morphologyTypeName[morphologyType];
-        fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame];
+        fout << "CaseType             : " << caseTypenames[caseType] << "\n";
+        fout << "Morphology Type      : " << morphologyTypeName[morphologyType] << "\n";
+        fout << "Morphology Order     : " << morphologyOrderName[morphologyOrder] << "\n";
+        fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "\n";
+
         fout << "Dimensions           : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         fout << "PhysSize             : " << physSize << "nm \n";
         fout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";

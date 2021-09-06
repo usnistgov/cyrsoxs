@@ -56,6 +56,19 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
       std::string s = stream.str();
       const std::string outputFname = dirName + "/Energy_" + s + ".h5";
       H5::H5File file(outputFname.c_str(), H5F_ACC_TRUNC);
+      {
+        H5::Group group(file.createGroup("KIDList"));
+        std::vector<std::array<Real, 3>> _kList(inputData.kVectors.size());
+        for (int i = 0; i < _kList.size(); i++) {
+          _kList[i] = {inputData.kVectors[i].x, inputData.kVectors[i].y, inputData.kVectors[i].z};
+        }
+        const hsize_t dims[2]{inputData.kVectors.size(), 3};
+        const int RANK = 2;
+        H5::DataSpace dataspace(RANK, dims);
+        H5::DataSet dataset = group.createDataSet("KVec", H5::PredType::NATIVE_FLOAT, dataspace);
+        dataset.write(_kList.data(), H5::PredType::NATIVE_FLOAT);
+        group.close();
+      }
       for (UINT kID = 0; kID < inputData.kVectors.size(); kID++) {
         const UINT offset = csize * voxel2DSize * inputData.kVectors.size() + kID*voxel2DSize;
         std::memcpy(oneEnergyData, &projectionGPUAveraged[offset], sizeof(Real) * voxel2DSize);
@@ -154,7 +167,7 @@ static void printCopyrightInfo(std::ofstream & fout){
  */
 
 static void printMetaData(const InputData & inputData, const RotationMatrix & rotationMatrix){
-  std::ofstream file("metadata.txt");
+  std::ofstream file("CyRSoXS.log");
   printCopyrightInfo(file);
   file << "\n\nCyRSoXS: \n";
   file << "=========================================================================================\n";

@@ -45,9 +45,9 @@ void RotationMatrix::printToFile(std::ofstream & fout) const{
     fout << "K = " << kVec.x << " " << kVec.y << " " << kVec.z << "\n";
     baseCfg.matrix.printToFile(fout);
     fout << "RotAngle = " << baseCfg.baseRotAngle << "\n";
-    fout << "Base X   = " << baseAxis_[i].X.x << " " << baseAxis_[i].X.y << " " << baseAxis_[i].X.z;
-    fout << "Base Y   = " << baseAxis_[i].Y.y << " " << baseAxis_[i].Y.y << " " << baseAxis_[i].Y.z;
-    fout << "Base Z   = " << baseAxis_[i].Z.x << " " << baseAxis_[i].Z.y << " " << baseAxis_[i].Z.z;
+    fout << "Base X   = " << baseAxis_[i].X.x << " " << baseAxis_[i].X.y << " " << baseAxis_[i].X.z << "\n";
+    fout << "Base Y   = " << baseAxis_[i].Y.y << " " << baseAxis_[i].Y.y << " " << baseAxis_[i].Y.z << "\n";
+    fout << "Base Z   = " << baseAxis_[i].Z.x << " " << baseAxis_[i].Z.y << " " << baseAxis_[i].Z.z << "\n";
     fout << "-----------------------------------------\n";
   }
   fout << "-------------------------------\n";

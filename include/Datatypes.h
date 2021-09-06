@@ -141,7 +141,7 @@ enum MorphologyOrder:int{
   INVALID = -1,
   MAX_ORDER = 2
 };
-static const char *morphologyOrder[]{"ZYX","XYZ"};
-static_assert(sizeof(morphologyTypeName)/sizeof(char*) == MorphologyOrder::MAX_ORDER,
+static const char *morphologyOrderName[]{"ZYX","XYZ"};
+static_assert(sizeof(morphologyOrderName)/sizeof(char*) == MorphologyOrder::MAX_ORDER,
               "sizes dont match");
 #endif
