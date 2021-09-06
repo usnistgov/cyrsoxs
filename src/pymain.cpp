@@ -90,11 +90,11 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
 
 
 
+  RotationMatrix rotationMatrix(&inputData);
   std::cout << "\n [STAT] Executing: \n\n";
-  const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
-  cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(), voxelData.data());
+  cudaMain(inputData.voxelDims, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(), rotationMatrix,voxelData.data());
   if(ifWriteMetadata) {
-      printMetaData(inputData);
+      printMetaData(inputData,rotationMatrix);
   }
 
 
@@ -148,6 +148,11 @@ PYBIND11_MODULE(CyRSoXS, module) {
      .value("Material",ReferenceFrame::MATERIAL)
      .export_values();
 
+  py::enum_<MorphologyOrder>(module,"MorphologyOrder")
+    .value("XYZ",MorphologyOrder::XYZ)
+    .value("ZYX",MorphologyOrder::ZYX)
+    .export_values();
+
   py::class_<InputData>(module, "InputData")
       .def(py::init<>())
       .def("setEnergies", &InputData::setEnergies, "Set the energy data", py::arg("energies"))
@@ -155,7 +160,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("setERotationAngle", &InputData::setEAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
            py::arg("EndAngle"),py::arg("IncrementAngle"))
       .def("setPhysSize", &InputData::setPhysSize, "Set the Physical size (in nm)", py::arg("PhysSize"))
-      .def("setDimensions", &InputData::setDimension, "Set the Dimensions", py::arg("X"), py::arg("Y"), py::arg("Z"))
+      .def("setDimensions", &InputData::setDimension, "Set the Dimensions", py::arg("Dims"), py::arg("MorphologyOrder"))
       .def("validate", &InputData::validate, "Validate the input data")
       .def("setCaseType",&InputData::setCaseType,"case Type")
       .def("setMorphologyType",&InputData::setMorphologyType,"morphology Type")

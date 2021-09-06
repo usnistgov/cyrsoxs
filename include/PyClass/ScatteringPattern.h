@@ -44,7 +44,7 @@ public:
     :inputData_(InputData){
         const UINT
             numEnergyLevel = static_cast<UINT>(inputData_.energies.size());
-        data_ = new Real[numEnergyLevel * inputData_.numX * inputData_.numY * inputData_.kVectors.size()];
+        data_ = new Real[numEnergyLevel * inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.kVectors.size()];
     }
 
     /**
@@ -76,16 +76,14 @@ public:
      * @brief Writes Scattering pattern data to HDF5 file
      */
     void writeToHDF5(const std::string & dirName = "HDF5") const {
-      const UINT voxelDimensions[3]{inputData_.numX,inputData_.numY,inputData_.numZ};
-      writeH5(inputData_, voxelDimensions, data_,dirName);
+      writeH5(inputData_, inputData_.voxelDims, data_,dirName);
     }
 
     /**
      * @brief Writes scattering pattern data to VTI paraview format
      */
     void writeToVTI(const std::string & dirName = "VTI") const {
-      const UINT voxelDimensions[3]{inputData_.numX,inputData_.numY,inputData_.numZ};
-      writeVTI(inputData_, voxelDimensions, data_,dirName);
+      writeVTI(inputData_, inputData_.voxelDims, data_,dirName);
     }
 
     /**
@@ -122,9 +120,9 @@ public:
       });
 
       return (py::array_t<Real>(
-      {(int)inputData_.numX,(int)inputData_.numY},
-      {sizeof(Real)*inputData_.numY,sizeof(Real)},
-      &this->data_[energyID*(inputData_.numY*inputData_.numX)*inputData_.kVectors.size() + kID*(inputData_.numX*inputData_.numY)],
+      {(int)inputData_.voxelDims[0],(int)inputData_.voxelDims[1]},
+      {sizeof(Real)*inputData_.voxelDims[1],sizeof(Real)},
+      &this->data_[energyID*(inputData_.voxelDims[0]*inputData_.voxelDims[1])*inputData_.kVectors.size() + kID*(inputData_.voxelDims[0]*inputData_.voxelDims[1])],
           free_when_done));
 
 

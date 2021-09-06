@@ -43,20 +43,19 @@ namespace py = pybind11;
  */
 class VoxelData {
 private:
-    Voxel<NUM_MATERIAL> *voxel = nullptr; /// Voxel data
+    Voxel *voxel = nullptr; /// Voxel data
     const InputData &inputData_;           /// input data
     std::bitset<NUM_MATERIAL> validData_; /// Check that voxel data is correct
-    const MorphologyType morphologyType_; /// MorphologyType
 public:
     /**
      * @brief constructor
      * @param inputData Input data
      */
     VoxelData(const InputData &inputData)
-        : inputData_(inputData),morphologyType_(static_cast<MorphologyType>(inputData.morphologyType)) {
+        : inputData_(inputData) {
       clear();
-      const BigUINT numVoxels = inputData_.numX * inputData_.numY * inputData_.numZ;
-      voxel = new Voxel<NUM_MATERIAL>[numVoxels];
+      const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
+      voxel = new Voxel[numVoxels*NUM_MATERIAL];
       validData_.reset();
     }
 
@@ -65,31 +64,31 @@ public:
      * Once you add the material the bits corresponding to that bit is turned on.
      * @param matAlignementData Alignment data for the material. Must be in the order of Sx,Sy,Sz.
      * @param matUnalignedData The unalignment component for the material
-     * @param matID material ID
+     * @param matID material ID . Start from 1 to NMat
      */
     void addMaterialDataVectorMorphology(py::array_t<Real, py::array::c_style | py::array::forcecast> &matAlignementData,
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matUnalignedData,
                          const UINT matID) {
 
-      if(morphologyType_ == MorphologyType::EULER_ANGLES){
+      if(inputData_.morphologyType == MorphologyType::EULER_ANGLES){
         py::print("Error: [Expected]: Vector Morphology [Found:] Euler Angles. Returning\n");
         return;
       }
-      if (matID >= NUM_MATERIAL) {
-        throw std::logic_error("Number of material does not match with the compiled version");
+      if (matID >= NUM_MATERIAL or (matID > 0)) {
+        throw std::logic_error("Number of material does not match with the compiled version. matID must start from 1");
       }
-      if(validData_.test(matID)){
+      if(validData_.test(matID-1)){
         py::print("The material is already set. Please first reset to add the entries. Returning.");
         return;
       }
-      const BigUINT numVoxels = inputData_.numX * inputData_.numY * inputData_.numZ;
+      const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
       for (BigUINT i = 0; i < numVoxels; i++) {
-        voxel[i].s1[matID].x = matAlignementData.data()[i * 3 + 0];
-        voxel[i].s1[matID].y = matAlignementData.data()[i * 3 + 1];
-        voxel[i].s1[matID].z = matAlignementData.data()[i * 3 + 2];
-        voxel[i].s1[matID].w = matUnalignedData.data()[i];
+        voxel[(matID - 1)*numVoxels + i].s1.x = matAlignementData.data()[i * 3 + 0];
+        voxel[(matID - 1)*numVoxels + i].s1.y = matAlignementData.data()[i * 3 + 1];
+        voxel[(matID - 1)*numVoxels + i].s1.z = matAlignementData.data()[i * 3 + 2];
+        voxel[(matID - 1)*numVoxels + i].s1.w = matUnalignedData.data()[i];
       }
-      validData_.set(matID, true);
+      validData_.set(matID-1, true);
     }
 
     void addMaterialDataEulerAngles(py::array_t<Real, py::array::c_style | py::array::forcecast> &matSVector,
@@ -97,29 +96,28 @@ public:
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matPhiVector,
                          py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
                          const UINT matID) {
-      pybind11::print("Not supported");
-      return;
-        if(morphologyType_ != MorphologyType::EULER_ANGLES){
+
+        if(inputData_.morphologyType != MorphologyType::EULER_ANGLES){
           py::print("Error: [Expected]: Euler Angles / Spherical Coordinates. [Found:] VectorMorphology\n");
           return;
         }
-        if (matID >= NUM_MATERIAL) {
-            throw std::logic_error("Number of material does not match with the compiled version");
+        if ((matID >= NUM_MATERIAL) or (matID ==0)) {
+            throw std::logic_error("Number of material does not match with the compiled version. matID must start from 1");
         }
-        if(validData_.test(matID)){
+        if(validData_.test(matID - 1)){
             py::print("The material is already set. Please first reset to add the entries. Returning.");
             return;
         }
-        const BigUINT numVoxels = inputData_.numX * inputData_.numY * inputData_.numZ;
-        if(morphologyType_ == MorphologyType::EULER_ANGLES) {
+        const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
+        if(inputData_.morphologyType == MorphologyType::EULER_ANGLES) {
           for (BigUINT i = 0; i < numVoxels; i++) {
-            voxel[i].s1[matID].x = matSVector.data()[i] * cos(matPhiVector.data()[i]);
-            voxel[i].s1[matID].y = matSVector.data()[i] * sin(matPhiVector.data()[i]) * cos(matThetaVector.data()[i]);
-            voxel[i].s1[matID].z = matSVector.data()[i] * sin(matPhiVector.data()[i]) * sin(matThetaVector.data()[i]);
-            voxel[i].s1[matID].w = matVfracVector.data()[i] - matSVector.data()[i];
+            voxel[(matID - 1)*numVoxels + i].s1.x = matSVector.data()[i] * cos(matPhiVector.data()[i]);
+            voxel[(matID - 1)*numVoxels + i].s1.y = matSVector.data()[i] * sin(matPhiVector.data()[i]) * cos(matThetaVector.data()[i]);
+            voxel[(matID - 1)*numVoxels + i].s1.z = matSVector.data()[i] * sin(matPhiVector.data()[i]) * sin(matThetaVector.data()[i]);
+            voxel[(matID - 1)*numVoxels + i].s1.w = matVfracVector.data()[i] - matSVector.data()[i];
           }
         }
-        validData_.set(matID, true);
+        validData_.set(matID - 1, true);
     }
 
     /**
@@ -131,8 +129,8 @@ public:
         py::print("Some of the material is already set. Please first reset to continue. Returning.");
         return;
       }
-      const UINT voxelDim[3]{inputData_.numX, inputData_.numY, inputData_.numZ};
-      H5::readFile(fname, voxelDim, voxel,morphologyType_, true);
+
+      H5::readFile(fname, inputData_.voxelDims, voxel,(MorphologyType)inputData_.morphologyType,inputData_.morphologyOrder, true);
       validData_.flip();
     }
 
@@ -150,29 +148,8 @@ public:
       if(not(this->validate())){
         return;
       }
-      const BigUINT numVoxels = inputData_.numX * inputData_.numY * inputData_.numZ;
-      const UINT dim[3]{inputData_.numX, inputData_.numY, inputData_.numZ};
-      Real *scalarValues = new Real[numVoxels];
-      for (int nMat = 0; nMat < NUM_MATERIAL; nMat++) {
-        std::string fname = "Unalligned_" + std::to_string(nMat);
-        for (int i = 0; i < numVoxels; i++) {
-          scalarValues[i] = voxel[i].s1[nMat].w;
-        }
-        H5::writeFile3DScalar(fname, scalarValues, dim, "unalligned");
-      }
-      delete[] scalarValues;
 
-      Real *vectorValues = new Real[numVoxels * 3];
-      for (int nMat = 0; nMat < NUM_MATERIAL; nMat++) {
-        std::string fname = "Alligned_" + std::to_string(nMat);
-        for (int i = 0; i < numVoxels; i++) {
-          vectorValues[i * 3 + 0] = voxel[i].s1[nMat].x;
-          vectorValues[i * 3 + 1] = voxel[i].s1[nMat].y;
-          vectorValues[i * 3 + 2] = voxel[i].s1[nMat].z;
-        }
-        H5::writeFile3DVector(fname, vectorValues, dim, "S");
-      }
-      delete[] vectorValues;
+      H5::writeMorphologyFile("morphology",inputData_,voxel);
     }
 
     /**
@@ -196,7 +173,7 @@ public:
      * @brief returns the voxel data
      * @return The voxel data
      */
-    const Voxel<NUM_MATERIAL> *data() const {
+    const Voxel *data() const {
       return voxel;
     }
 

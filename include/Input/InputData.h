@@ -412,15 +412,26 @@ private:
         paramChecker_.set(ParamChecker::Parameters::ENERGY,true);
     }
     /**
-     * @brief Set the dimensions. Note that HDF5 file dimensions are written in (Z,Y,X)
-     * @param _numX number of voxels in X dimensions
-     * @param _numY number of voxels in Y dimensions
-     * @param _numZ number of voxels in Z dimensions
+     * @brief  Set the dimensions.
+     * @param shape of numpy / related Array
+     * @param _morphologyOrder order of morphology XYZ/ZYX
      */
-    void setDimension(const UINT & _numX, const  UINT & _numY,const  UINT & _numZ) {
-      numX = _numX;
-      numY = _numY;
-      numZ = _numZ;
+    void setDimension(const std::array<UINT,3> & shape,const MorphologyOrder & _morphologyOrder) {
+      morphologyOrder = _morphologyOrder;
+      if(morphologyOrder == MorphologyOrder::XYZ) {
+        voxelDims[0] = shape[0];
+        voxelDims[1] = shape[1];
+        voxelDims[2] = shape[2];
+      }
+      else if(morphologyOrder == MorphologyOrder::ZYX) {
+        voxelDims[2] = shape[0];
+        voxelDims[1] = shape[1];
+        voxelDims[0] = shape[2];
+      }
+      else {
+        pybind11::print("Invalid morphology order.");
+        return;
+      }
       check2D();
       paramChecker_.set(ParamChecker::Parameters::DIMENSION,true);
     }
@@ -491,7 +502,7 @@ private:
         pybind11::print("==================================================");
         pybind11::print("CaseType             : ",caseTypenames[caseType]);
         pybind11::print("MorphologyType       : ",morphologyTypeName[morphologyType]);
-        pybind11::print("Dimensions           :  [",numX,",",numY,",",numZ,"]");
+        pybind11::print("Dimensions           :  [",voxelDims[0],"," , voxelDims[1],",",voxelDims[2],"]");
         pybind11::print("PhysSize             : ", physSize , "nm");
         pybind11::print("Energy               : ",energies);
         pybind11::print("Rotation Angle       : ",startAngle , " : ", incrementAngle, " : ",endAngle);
@@ -516,8 +527,8 @@ private:
      * @return  True if the input data is correct. False otherwise.
      */
     bool validate() const {
-      if(numZ == 1) {assert(enable2D_);}
-      if(numZ != 1) {assert(not(enable2D_));}
+      if(voxelDims[2] == 1) {assert(enable2D_);}
+      if(voxelDims[0] != 1) {assert(not(enable2D_));}
 
         if(not(paramChecker_.all())) {
           for(int i = 0; i < paramChecker_.size(); i++) {
