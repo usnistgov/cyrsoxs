@@ -66,7 +66,11 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
         const int RANK = 2;
         H5::DataSpace dataspace(RANK, dims);
         H5::DataSet dataset = group.createDataSet("KVec", H5::PredType::NATIVE_FLOAT, dataspace);
+#ifdef DOUBLE_PRECISION
+        dataset.write(_kList.data(), H5::PredType::NATIVE_DOUBLE);
+#else
         dataset.write(_kList.data(), H5::PredType::NATIVE_FLOAT);
+#endif
         group.close();
       }
       for (UINT kID = 0; kID < inputData.kVectors.size(); kID++) {

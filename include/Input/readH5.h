@@ -240,11 +240,19 @@ namespace H5 {
     }
 #ifdef DOUBLE_PRECISION
     if(dataType != PredType::NATIVE_DOUBLE){
-       std::cout << "The data format is not supported for double precision \n";
+       std::cerr << "The data format is not supported for double precision \n";
        exit(EXIT_FAILURE);
     }
-    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
-
+    std::vector<double> alignedData(numVoxel * 3);
+    dataSet.read(alignedData.data(), H5::PredType::NATIVE_DOUBLE);
+    if (morphologyOrder == MorphologyOrder::XYZ) {
+      XYZ_to_ZYX(alignedData, 3, voxelSize);
+    }
+    for (BigUINT id = 0; id < numVoxel; id++) {
+      inputData[id * 3 + 0] = static_cast<Real>(alignedData[3 * id + 0]);
+      inputData[id * 3 + 1] = static_cast<Real>(alignedData[3 * id + 1]);
+      inputData[id * 3 + 2] = static_cast<Real>(alignedData[3 * id + 2]);
+    }
 #else
 
     if (dataType == PredType::NATIVE_DOUBLE) {
@@ -270,10 +278,10 @@ namespace H5 {
         inputData[id * 3 + 2] = static_cast<Real>(alignedData[3 * id + 2]);
       }
     }
+#endif
     group.close();
     dataType.close();
     dataSet.close();
-#endif
   }
 
 /**
@@ -372,10 +380,14 @@ namespace H5 {
 
 #ifdef DOUBLE_PRECISION
     if(dataType != PredType::NATIVE_DOUBLE){
-       std::cout << "The data format is not supported for double precision \n";
+       std::cerr << "The data format is not supported for double precision \n";
        exit(EXIT_FAILURE);
     }
-    dataSet.read(inputData[i - 1].data(), H5::PredType::NATIVE_DOUBLE);
+    std::vector<double> scalarData(numVoxel);
+    dataSet.read(scalarData.data(), H5::PredType::NATIVE_DOUBLE);
+    if (morphologyOrder == MorphologyOrder::XYZ) {
+      XYZ_to_ZYX(scalarData, 1, voxelSize);
+    }
 #else
     if (dataType == PredType::NATIVE_DOUBLE) {
       std::vector<double> scalarData(numVoxel);
@@ -395,10 +407,10 @@ namespace H5 {
       std::cerr << "This data format is not supported \n";
       exit(EXIT_FAILURE);
     }
+#endif
     group.close();
     dataType.close();
     dataSet.close();
-#endif
     return dataExists;
   }
 

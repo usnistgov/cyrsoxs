@@ -111,7 +111,11 @@ __host__ int computePolarization(const Complex *d_Nt, Complex *d_pX,
                                  const Matrix &rotationMatrix,const BigUINT &numVoxels);
 
 __host__ INLINE inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan) {
-    return (cufftExecC2C(plan, polarization, polarization, CUFFT_FORWARD));
+#ifdef DOUBLE_PRECISION
+    return (cufftExecZ2Z(plan, polarization, polarization, CUFFT_FORWARD));
+#else
+  return (cufftExecC2C(plan, polarization, polarization, CUFFT_FORWARD));
+#endif
 }
 
 __host__ int performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx,  const cudaStream_t stream);

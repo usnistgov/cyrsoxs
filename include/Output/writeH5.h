@@ -97,8 +97,8 @@ namespace H5 {
           }
           H5::DataSpace dataspace(RANK, dims);
 #ifdef DOUBLE_PRECISION
-          H5::DataSet dataset = group.createDataSet(morphologyDataSets[numComponent].c_str(), H5::PredType::NATIVE_FLOAT, dataspace);
-          dataset.write(data, H5::PredType::NATIVE_DOUBLE);
+          H5::DataSet dataSet = group.createDataSet(morphologyDataSets[numComponent].c_str(), H5::PredType::NATIVE_DOUBLE, dataspace);
+          dataSet.write(data, H5::PredType::NATIVE_DOUBLE);
 #else
           H5::DataSet dataSet = group.createDataSet(morphologyDataSets[numComponent].c_str(),
                                                     H5::PredType::NATIVE_FLOAT, dataspace);
