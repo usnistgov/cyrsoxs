@@ -243,15 +243,10 @@ namespace H5 {
        std::cerr << "The data format is not supported for double precision \n";
        exit(EXIT_FAILURE);
     }
-    std::vector<double> alignedData(numVoxel * 3);
-    dataSet.read(alignedData.data(), H5::PredType::NATIVE_DOUBLE);
+
+    dataSet.read(inputData.data(), H5::PredType::NATIVE_DOUBLE);
     if (morphologyOrder == MorphologyOrder::XYZ) {
-      XYZ_to_ZYX(alignedData, 3, voxelSize);
-    }
-    for (BigUINT id = 0; id < numVoxel; id++) {
-      inputData[id * 3 + 0] = static_cast<Real>(alignedData[3 * id + 0]);
-      inputData[id * 3 + 1] = static_cast<Real>(alignedData[3 * id + 1]);
-      inputData[id * 3 + 2] = static_cast<Real>(alignedData[3 * id + 2]);
+      XYZ_to_ZYX(inputData, 3, voxelSize);
     }
 #else
 
@@ -383,11 +378,12 @@ namespace H5 {
        std::cerr << "The data format is not supported for double precision \n";
        exit(EXIT_FAILURE);
     }
-    std::vector<double> scalarData(numVoxel);
-    dataSet.read(scalarData.data(), H5::PredType::NATIVE_DOUBLE);
+
+    dataSet.read(morphologyData.data(), H5::PredType::NATIVE_DOUBLE);
     if (morphologyOrder == MorphologyOrder::XYZ) {
-      XYZ_to_ZYX(scalarData, 1, voxelSize);
+      XYZ_to_ZYX(morphologyData, 1, voxelSize);
     }
+
 #else
     if (dataType == PredType::NATIVE_DOUBLE) {
       std::vector<double> scalarData(numVoxel);
@@ -395,7 +391,7 @@ namespace H5 {
       if (morphologyOrder == MorphologyOrder::XYZ) {
         XYZ_to_ZYX(scalarData, 1, voxelSize);
       }
-      for (int id = 0; id < scalarData.size(); id++) {
+      for (BigUINT id = 0; id < scalarData.size(); id++) {
         morphologyData[id] = static_cast<Real>(scalarData[id]);
       }
     } else if (dataType == PredType::NATIVE_FLOAT) {
