@@ -374,7 +374,8 @@ private:
         std::cout << "Dimensions           : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         std::cout << "PhysSize             : " << physSize << " nm \n";
         std::cout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
-        std::cout << "MorphologyType       : " << morphologyTypeName[morphologyType] << "\n";
+        std::cout << "Morphology Type      : " << morphologyTypeName[morphologyType] << "\n";
+        std::cout << "Morphology Order     : " << morphologyOrderName[morphologyOrder] << "\n";
         std::cout << "Energies simulated   : [";
         for (const auto & energy: energies) {
             std::cout << energy << " " ;
