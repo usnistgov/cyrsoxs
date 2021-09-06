@@ -65,7 +65,7 @@ namespace H5 {
       H5::DataType dataType = dataSet.getDataType();
 #ifdef DOUBLE_PRECISION
       if(dataType == PredType::NATIVE_DOUBLE) {
-        dataSet.read(&physSize,PredType::NATIVE_FLOAT);
+        dataSet.read(&physSize,PredType::NATIVE_DOUBLE);
       }
       else {
         throw std::runtime_error("Wrong Data type for physSize");
