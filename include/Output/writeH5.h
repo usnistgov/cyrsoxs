@@ -42,7 +42,7 @@ namespace H5 {
       H5::Group group(file.createGroup(groupname.c_str()));
       H5::DataSpace dataspace(RANK, dims);
 #ifdef DOUBLE_PRECISION
-      H5::DataSet dataset = file.createDataSet("projection", H5::PredType::NATIVE_DOUBLE, dataspace);
+      H5::DataSet dataset = file.createDataSet(groupname + "/projection", H5::PredType::NATIVE_DOUBLE, dataspace);
       dataset.write(data, H5::PredType::NATIVE_DOUBLE);
 #else
       H5::DataSet dataset = file.createDataSet(groupname + "/projection", H5::PredType::NATIVE_FLOAT, dataspace);
