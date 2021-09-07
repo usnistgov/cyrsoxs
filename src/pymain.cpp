@@ -194,8 +194,10 @@ PYBIND11_MODULE(CyRSoXS, module) {
            "Adds the Allignment and unaligned component to the given material", py::arg("AlignedData"),
            py::arg("UnalignedData"), py::arg("MaterialID"))
       .def("addVoxelData", &VoxelData::addMaterialDataEulerAngles,
-         "Adds the Allignment and unaligned component to the given material", py::arg("S"),
-         py::arg("Phi"),py::arg("Theta"), py::arg("vFrac"),py::arg("MaterialID"))
+         "Adds the EulerAngle components to the given material", py::arg("S"),
+         py::arg("Theta"),py::arg("Phi"), py::arg("Vfrac"),py::arg("MaterialID"))
+      .def("addVoxelData", &VoxelData::addMaterialDataEulerAnglesOnlyVFrac,
+         "Adds the EulerAngle components to the given material. S/Theta/Phi = 0", py::arg("Vfrac"),py::arg("MaterialID"))
       .def("clear", &VoxelData::clear,"Clears the voxel data")
       .def("validate", &VoxelData::validate,"validate the Voxel data")
       .def("readFromH5", &VoxelData::readFromH5, "Reads from HDF5",py::arg("Filename"))
