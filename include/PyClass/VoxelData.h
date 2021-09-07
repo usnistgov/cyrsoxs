@@ -30,6 +30,7 @@
 #include <Output/writeH5.h>
 #include <Input/readH5.h>
 
+
 namespace py = pybind11;
 /*
  * Stores the voxel data when passed through the Python.
@@ -55,7 +56,7 @@ public:
         : inputData_(inputData) {
       clear();
       const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
-      voxel = new Voxel[numVoxels*NUM_MATERIAL];
+      mallocCPUPinned(voxel,numVoxels*NUM_MATERIAL);
       validData_.reset();
     }
 
