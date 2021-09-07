@@ -92,7 +92,13 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
 
   RotationMatrix rotationMatrix(&inputData);
   std::cout << "\n [STAT] Executing: \n\n";
-  cudaMain(inputData.voxelDims, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(), rotationMatrix,voxelData.data());
+  if(inputData.algorithmType == Algorithm::CommunicationMinimizing) {
+    cudaMain(inputData.voxelDims, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(),
+             rotationMatrix, voxelData.data());
+  }
+  else{
+    cudaMainStreams(inputData.voxelDims,inputData,energyData.getRefractiveIndexData(),scatteringPattern.data(),rotationMatrix,voxelData.data());
+  }
   if(ifWriteMetadata) {
       printMetaData(inputData,rotationMatrix);
   }
@@ -165,6 +171,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("setCaseType",&InputData::setCaseType,"case Type")
       .def("setMorphologyType",&InputData::setMorphologyType,"morphology Type")
       .def("setKVectors",&InputData::setKVectors,"set K vectors")
+      .def("Algorithm",&InputData::setAlgorithm,"set Algorithm Type",py::arg("AlgorithmID"),py::arg("MaxStreams"))
       .def_readwrite("interpolationType", &InputData::ewaldsInterpolation, "Ewalds interpolation type")
       .def_readwrite("windowingType", &InputData::windowingType, "Windowing type")
       .def_readwrite("rotMask",&InputData::rotMask,"Rotation Mask")

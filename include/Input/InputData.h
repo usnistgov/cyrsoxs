@@ -283,6 +283,7 @@ private:
     if(ReadValue(cfg, "Algorithm",algorithmType)){}
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     if(ReadValue(cfg,"DumpMorphology",dumpMorphology)){}
+    if(ReadValue(cfg,"MaxStreams",numMaxStreams)){}
 
     if(caseType == CaseTypes::DEFAULT) {
       kVectors.resize(1,{0,0,1});
@@ -386,6 +387,11 @@ private:
         std::cout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
         std::cout << "HDF Output Directory : " << HDF5DirName << "\n";
         std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
+        std::cout << "Algorithm            : " << algorithmName[algorithmType] << "\n";
+         if(algorithmType==Algorithm::MemoryMinizing) {
+          std::cout  << "MaxStreams           : " << numMaxStreams << "\n";
+        }
+
 
     }
 #else
@@ -492,7 +498,15 @@ private:
       paramChecker_.set(ParamChecker::Parameters::KVECTORS,true);
     }
 
+    void setAlgorithm(const int & algID, int _numMaxStream = 1) {
+      if(algID >= Algorithm::MAXAlgorithmType) {
+        pybind11::print("Incorrect AlgID.");
+        return;
+      }
+      algorithmType = algID;
+      numMaxStreams = _numMaxStream;
 
+    }
 
     /**
      * @brief prints the input data
@@ -505,7 +519,7 @@ private:
         pybind11::print("Dimensions           :  [",voxelDims[0],"," , voxelDims[1],",",voxelDims[2],"]");
         pybind11::print("PhysSize             : ", physSize , "nm");
         pybind11::print("Energy               : ",energies);
-        pybind11::print("Rotation Angle       : ",startAngle , " : ", incrementAngle, " : ",endAngle);
+        pybind11::print("ERotation Angle      : ",startAngle , " : ", incrementAngle, " : ",endAngle);
         pybind11::print("KVectorList           ");
         for(const auto & kVec:kVectors) {
           pybind11::print("                     :  [",kVec.x,",",kVec.y,",",kVec.z,"]");
@@ -519,6 +533,10 @@ private:
         pybind11::print("Windowing Type           : ",FFT::windowingName[windowingType]);
         pybind11::print("Rotation Mask            : ",rotMask);
         pybind11::print("Reference Frame          : ",referenceFrameName[(UINT)referenceFrame]);
+        pybind11::print("Algorithm                : ",algorithmName[algorithmType]);
+        if(algorithmType==Algorithm::MemoryMinizing) {
+        pybind11::print("NumMaxStreams            : ",numMaxStreams);
+        }
 
     }
 
@@ -566,6 +584,10 @@ private:
         fout << "HDF Output Directory : " << HDF5DirName << "\n";
 #endif
         fout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
+        fout << "Algorithm            : " << algorithmName[algorithmType] << "\n";
+        if(algorithmType==Algorithm::MemoryMinizing) {
+          fout << "MaxStreams           : " << numMaxStreams << "\n";
+        }
 
 
     }

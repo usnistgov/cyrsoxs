@@ -74,8 +74,8 @@ public:
         py::print("Error: [Expected]: Vector Morphology [Found:] Euler Angles. Returning\n");
         return;
       }
-      if (matID >= NUM_MATERIAL or (matID > 0)) {
-        throw std::logic_error("Number of material does not match with the compiled version. matID must start from 1");
+      if (matID > NUM_MATERIAL or (matID > 0)) {
+        throw std::logic_error("Number of material does not match with the compiled version. matID must range from 1 to NUM_MATERIAL");
       }
       if(validData_.test(matID-1)){
         py::print("The material is already set. Please first reset to add the entries. Returning.");
@@ -101,8 +101,8 @@ public:
           py::print("Error: [Expected]: Euler Angles / Spherical Coordinates. [Found:] VectorMorphology\n");
           return;
         }
-        if ((matID >= NUM_MATERIAL) or (matID ==0)) {
-            throw std::logic_error("Number of material does not match with the compiled version. matID must start from 1");
+        if ((matID > NUM_MATERIAL) or (matID == 0)) {
+            throw std::logic_error("Number of material does not match with the compiled version. matID must range from 1 to NUM_MATERIAL");
         }
         if(validData_.test(matID - 1)){
             py::print("The material is already set. Please first reset to add the entries. Returning.");
@@ -149,7 +149,7 @@ public:
         return;
       }
 
-      H5::writeMorphologyFile("morphology",inputData_,voxel);
+      H5::writeXDMF(inputData_,voxel);
     }
 
     /**
