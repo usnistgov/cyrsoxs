@@ -83,11 +83,23 @@ public:
         return;
       }
       const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
+      std::vector<Real> _matAlignedData(numVoxels*3);
+      std::vector<Real> _matUnalignedData(numVoxels);
+      for(int i = 0; i < numVoxels; i++){
+        _matAlignedData[3*i + 0] = matAlignementData.data()[3*i+0];
+        _matAlignedData[3*i + 1] = matAlignementData.data()[3*i+1];
+        _matAlignedData[3*i + 2] = matAlignementData.data()[3*i+2];
+        _matUnalignedData[i] = matUnalignedData.data()[i];
+      }
+      if(inputData_.morphologyType == MorphologyOrder::XYZ){
+        H5::XYZ_to_ZYX(_matUnalignedData,1,inputData_.voxelDims);
+        H5::XYZ_to_ZYX(_matAlignedData,3,inputData_.voxelDims);
+      }
       for (BigUINT i = 0; i < numVoxels; i++) {
-        voxel[(matID - 1)*numVoxels + i].s1.x = matAlignementData.data()[i * 3 + 0];
-        voxel[(matID - 1)*numVoxels + i].s1.y = matAlignementData.data()[i * 3 + 1];
-        voxel[(matID - 1)*numVoxels + i].s1.z = matAlignementData.data()[i * 3 + 2];
-        voxel[(matID - 1)*numVoxels + i].s1.w = matUnalignedData.data()[i];
+        voxel[(matID - 1)*numVoxels + i].s1.x = _matAlignedData.data()[i * 3 + 0];
+        voxel[(matID - 1)*numVoxels + i].s1.y = _matAlignedData.data()[i * 3 + 1];
+        voxel[(matID - 1)*numVoxels + i].s1.z = _matAlignedData.data()[i * 3 + 2];
+        voxel[(matID - 1)*numVoxels + i].s1.w = _matUnalignedData.data()[i];
       }
       validData_.set(matID-1, true);
     }
@@ -110,12 +122,28 @@ public:
             return;
         }
         const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
+        std::vector<Real> _S(numVoxels);
+        std::vector<Real> _Theta(numVoxels);
+        std::vector<Real> _Phi(numVoxels);
+        std::vector<Real> _Vfrac(numVoxels);
+        for(int i = 0; i < numVoxels; i++){
+          _S[i]     = matSVector.data()[i];
+          _Theta[i] = matThetaVector.data()[i];
+          _Phi[i]   = matPhiVector.data()[i];
+          _Vfrac[i] = matVfracVector.data()[i];
+        }
+        if(inputData_.morphologyType == MorphologyOrder::XYZ){
+          H5::XYZ_to_ZYX(_S,1,inputData_.voxelDims);
+          H5::XYZ_to_ZYX(_Theta,1,inputData_.voxelDims);
+          H5::XYZ_to_ZYX(_Phi,1,inputData_.voxelDims);
+          H5::XYZ_to_ZYX(_Vfrac,1,inputData_.voxelDims);
+        }
         if(inputData_.morphologyType == MorphologyType::EULER_ANGLES) {
           for (BigUINT i = 0; i < numVoxels; i++) {
-            voxel[(matID - 1)*numVoxels + i].s1.x = matSVector.data()[i] * cos(matPhiVector.data()[i]);
-            voxel[(matID - 1)*numVoxels + i].s1.y = matSVector.data()[i] * sin(matPhiVector.data()[i]) * cos(matThetaVector.data()[i]);
-            voxel[(matID - 1)*numVoxels + i].s1.z = matSVector.data()[i] * sin(matPhiVector.data()[i]) * sin(matThetaVector.data()[i]);
-            voxel[(matID - 1)*numVoxels + i].s1.w = matVfracVector.data()[i] - matSVector.data()[i];
+            voxel[(matID - 1)*numVoxels + i].s1.x = _S[i];
+            voxel[(matID - 1)*numVoxels + i].s1.y = _Theta[i];
+            voxel[(matID - 1)*numVoxels + i].s1.z = _Phi[i];
+            voxel[(matID - 1)*numVoxels + i].s1.w = _Vfrac[i];
           }
         }
         validData_.set(matID - 1, true);
