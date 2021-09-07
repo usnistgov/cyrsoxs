@@ -141,8 +141,14 @@ public:
         if(inputData_.morphologyType == MorphologyType::EULER_ANGLES) {
           for (BigUINT i = 0; i < numVoxels; i++) {
             voxel[(matID - 1)*numVoxels + i].s1.x = _S[i];
-            voxel[(matID - 1)*numVoxels + i].s1.y = _Theta[i];
-            voxel[(matID - 1)*numVoxels + i].s1.z = _Phi[i];
+            if(_S[i] != 0) {
+              voxel[(matID - 1) * numVoxels + i].s1.y = _Theta[i];
+              voxel[(matID - 1) * numVoxels + i].s1.z = _Phi[i];
+            }
+            else{
+              voxel[(matID - 1) * numVoxels + i].s1.y = 0;
+              voxel[(matID - 1) * numVoxels + i].s1.z = 0;
+            }
             voxel[(matID - 1)*numVoxels + i].s1.w = _Vfrac[i];
           }
         }
