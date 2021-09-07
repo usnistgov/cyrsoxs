@@ -433,11 +433,7 @@ namespace H5 {
       {
         std::vector<Real> unalignedData(numVoxel);
         for (int numMat = 1; numMat < NUM_MATERIAL + 1; numMat++) {
-#ifdef PYBIND
-          getScalar(file, "vector_morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData,numMat,true);
-#else
-          getScalar(file, "Vector_Morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData, numMat, true);
-#endif
+          getScalar(file, "Vector_Morphology", "_unaligned", voxelSize, morphologyOrder, unalignedData,numMat,true);
           for (UINT i = 0; i < numVoxel; i++) {
             voxelData[(numMat - 1) * numVoxel + i].s1.w = unalignedData[i];
           }

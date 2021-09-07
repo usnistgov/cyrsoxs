@@ -80,7 +80,7 @@ endif ()
 if (PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
-    find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
+    find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
     set(PYBIND_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11)
     add_subdirectory(${PYBIND_LOCATION})
