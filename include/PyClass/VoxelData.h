@@ -75,7 +75,7 @@ public:
         py::print("Error: [Expected]: Vector Morphology [Found:] Euler Angles. Returning\n");
         return;
       }
-      if (matID > NUM_MATERIAL or (matID > 0)) {
+      if (matID > NUM_MATERIAL or (matID == 0)) {
         throw std::logic_error("Number of material does not match with the compiled version. matID must range from 1 to NUM_MATERIAL");
       }
       if(validData_.test(matID-1)){
