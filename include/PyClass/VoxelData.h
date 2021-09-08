@@ -93,7 +93,7 @@ public:
       _matAlignedData[3 * i + 2] = matAlignementData.data()[3 * i + 2];
       _matUnalignedData[i] = matUnalignedData.data()[i];
     }
-    if (inputData_.morphologyType == MorphologyOrder::XYZ) {
+    if (inputData_.morphologyOrder == MorphologyOrder::XYZ) {
       H5::XYZ_to_ZYX(_matUnalignedData, 1, inputData_.voxelDims);
       H5::XYZ_to_ZYX(_matAlignedData, 3, inputData_.voxelDims);
     }
@@ -129,34 +129,38 @@ public:
     std::vector<Real> _Theta(numVoxels);
     std::vector<Real> _Phi(numVoxels);
     std::vector<Real> _Vfrac(numVoxels);
-    for (int i = 0; i < numVoxels; i++) {
+    for (BigUINT i = 0; i < numVoxels; i++) {
       _S[i] = matSVector.data()[i];
       _Theta[i] = matThetaVector.data()[i];
       _Phi[i] = matPhiVector.data()[i];
       _Vfrac[i] = matVfracVector.data()[i];
     }
-    if (inputData_.morphologyType == MorphologyOrder::XYZ) {
+    if (inputData_.morphologyOrder == MorphologyOrder::XYZ) {
       H5::XYZ_to_ZYX(_S, 1, inputData_.voxelDims);
       H5::XYZ_to_ZYX(_Theta, 1, inputData_.voxelDims);
       H5::XYZ_to_ZYX(_Phi, 1, inputData_.voxelDims);
       H5::XYZ_to_ZYX(_Vfrac, 1, inputData_.voxelDims);
     }
-    if (inputData_.morphologyType == MorphologyType::EULER_ANGLES) {
-      for (BigUINT i = 0; i < numVoxels; i++) {
-        voxel[(matID - 1) * numVoxels + i].s1.x = _S[i];
-        if (_S[i] != 0) {
-          voxel[(matID - 1) * numVoxels + i].s1.y = _Theta[i];
-          voxel[(matID - 1) * numVoxels + i].s1.z = _Phi[i];
-        } else {
-          voxel[(matID - 1) * numVoxels + i].s1.y = 0;
-          voxel[(matID - 1) * numVoxels + i].s1.z = 0;
-        }
-        voxel[(matID - 1) * numVoxels + i].s1.w = _Vfrac[i];
+    for (BigUINT i = 0; i < numVoxels; i++) {
+      voxel[(matID - 1) * numVoxels + i].s1.x = _S[i];
+      if (_S[i] != 0) {
+        voxel[(matID - 1) * numVoxels + i].s1.y = _Theta[i];
+        voxel[(matID - 1) * numVoxels + i].s1.z = _Phi[i];
+      } else {
+        voxel[(matID - 1) * numVoxels + i].s1.y = 0;
+        voxel[(matID - 1) * numVoxels + i].s1.z = 0;
       }
+      voxel[(matID - 1) * numVoxels + i].s1.w = _Vfrac[i];
     }
+
     validData_.set(matID - 1, true);
   }
 
+  /**
+   * @brief Adds the Euler angle volume fraction. S, \thetha and \phi are all assumed 0
+   * @param matVfracVector Vector for volume fraction
+   * @param matID material ID
+   */
   void addMaterialDataEulerAnglesOnlyVFrac(py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
                                   const UINT matID) {
     if (inputData_.morphologyType != MorphologyType::EULER_ANGLES) {
@@ -176,17 +180,17 @@ public:
     for (int i = 0; i < numVoxels; i++) {
       _Vfrac[i] = matVfracVector.data()[i];
     }
-    if (inputData_.morphologyType == MorphologyOrder::XYZ) {
+    if (inputData_.morphologyOrder == MorphologyOrder::XYZ) {
       H5::XYZ_to_ZYX(_Vfrac, 1, inputData_.voxelDims);
     }
-    if (inputData_.morphologyType == MorphologyType::EULER_ANGLES) {
-      for (BigUINT i = 0; i < numVoxels; i++) {
-        voxel[(matID - 1) * numVoxels + i].s1.x = 0;
-        voxel[(matID - 1) * numVoxels + i].s1.y = 0;
-        voxel[(matID - 1) * numVoxels + i].s1.z = 0;
-        voxel[(matID - 1) * numVoxels + i].s1.w = _Vfrac[i];
-      }
+
+    for (BigUINT i = 0; i < numVoxels; i++) {
+      voxel[(matID - 1) * numVoxels + i].s1.x = 0;
+      voxel[(matID - 1) * numVoxels + i].s1.y = 0;
+      voxel[(matID - 1) * numVoxels + i].s1.z = 0;
+      voxel[(matID - 1) * numVoxels + i].s1.w = _Vfrac[i];
     }
+
     validData_.set(matID - 1, true);
   }
 
