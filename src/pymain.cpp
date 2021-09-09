@@ -171,6 +171,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("setCaseType",&InputData::setCaseType,"case Type")
       .def("setMorphologyType",&InputData::setMorphologyType,"morphology Type")
       .def("setKVectors",&InputData::setKVectors,"set K vectors")
+      .def("setDetectorCoordinates",&InputData::setDetectorCoordinates,"set Detector coordinates for Grazing incidence")
       .def("setAlgorithm",&InputData::setAlgorithm,"set Algorithm Type",py::arg("AlgorithmID"),py::arg("MaxStreams"))
       .def_readwrite("interpolationType", &InputData::ewaldsInterpolation, "Ewalds interpolation type")
       .def_readwrite("windowingType", &InputData::windowingType, "Windowing type")

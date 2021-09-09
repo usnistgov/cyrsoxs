@@ -49,9 +49,10 @@ namespace ParamChecker{
         KVECTORS = 4,
         MORPHOLOGY_TYPE = 5,
         CASE_TYPE = 6,
-        MAX_SIZE = 7
+        DETECTOR_COORD = 7,
+        MAX_SIZE = 8
     };
-    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","EANGLE","KVectors","MorphologyType","CaseType"};
+    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","EANGLE","KVectors","MorphologyType","CaseType","DetectorCoord"};
     static_assert(sizeof(ParamChecker::paramNames)/sizeof(char*) == ParamChecker::Parameters::MAX_SIZE,
             "sizes dont match");
 
@@ -276,8 +277,8 @@ private:
     if(ReadValue(cfg, "NumThreads", num_threads)){}
     if(ReadValue(cfg, "RotMask",rotMask)){}
     if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
-    if(ReadValue(cfg, "WriteVTI",writeVTI)){}
-    if(ReadValue(cfg, "VTIDirName",VTIDirName)){}
+//    if(ReadValue(cfg, "WriteVTI",writeVTI)){}
+//    if(ReadValue(cfg, "VTIDirName",VTIDirName)){}
     if(ReadValue(cfg, "HDF5DirName",HDF5DirName)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
     if(ReadValue(cfg, "Algorithm",algorithmType)){}
@@ -484,10 +485,11 @@ private:
         Real3 kVec({0,0,1});
         kVectors.resize(1,kVec);
         paramChecker_.set(ParamChecker::Parameters::KVECTORS,true);
+        paramChecker_.set(ParamChecker::Parameters::DETECTOR_COORD,true);
       }
     }
 
-    void setKVectors(const std::vector<Real> & _kVector) {
+    void setKVectors(const std::array<Real,3> & _kVector) {
       if(caseType == CaseTypes::DEFAULT) {
         pybind11::print("Cannot add kVectors for default case type");
         return;
@@ -496,6 +498,10 @@ private:
       normalizeVec(kVec);
       kVectors.push_back(kVec);
       paramChecker_.set(ParamChecker::Parameters::KVECTORS,true);
+      if(caseType == CaseTypes::BEAM_DIVERGENCE) {
+        paramChecker_.set(ParamChecker::Parameters::DETECTOR_COORD,true);
+      }
+
     }
 
     void setAlgorithm(const int & algID, int _numMaxStream = 1) {
@@ -506,6 +512,15 @@ private:
       algorithmType = algID;
       numMaxStreams = _numMaxStream;
 
+    }
+
+    void setDetectorCoordinates(const std::array<Real,3> & _detectorCoordinates) {
+      if(caseType != CaseTypes::GRAZING_INCIDENCE) {
+        pybind11::print("Cannot add Detector for default or Beam Divergence type");
+        return;
+      }
+      detectorCoordinates = {_detectorCoordinates[0],_detectorCoordinates[1],_detectorCoordinates[2]};
+      paramChecker_.set(ParamChecker::Parameters::DETECTOR_COORD,true);
     }
 
     /**
