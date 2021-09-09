@@ -198,4 +198,17 @@ static void printMetaData(const InputData & inputData, const RotationMatrix & ro
   file.close();
 }
 
+
+static bool checkMorphology(const Voxel * voxel, const UINT * voxelDims){
+  const BigUINT numVoxels = voxelDims[0]*voxelDims[1]*voxelDims[2];
+  for(int i = 0; i < numVoxels*NUM_MATERIAL; i++){
+    for(int id = 0; id < 4; id++){
+      if(std::isnan(voxel[i].getValueAt(id))){
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 #endif //CY_RSOXS_UTILS_H

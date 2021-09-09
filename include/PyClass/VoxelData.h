@@ -258,6 +258,10 @@ public:
    */
   bool validate() const {
     if (validData_.all()) {
+      if(not(checkMorphology(this->voxel,inputData_.voxelDims))){
+        py::print("Nan Present in the morphology");
+        return false;
+      }
       return true;
     } else {
       for (UINT i = 0; i < validData_.size(); i++) {
@@ -268,7 +272,6 @@ public:
     }
     return false;
   }
-
 };
 
 #endif //CY_RSOXS_VOXELDATA_H

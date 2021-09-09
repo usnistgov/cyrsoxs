@@ -114,6 +114,9 @@ int main(int argc, char **argv) {
   if(inputData.dumpMorphology){
     H5::writeXDMF(inputData,voxelData);
   }
+  if(not(checkMorphology(voxelData,inputData.voxelDims))){
+    throw std::runtime_error("Nan detected in the morphology");
+  }
   Real *projectionGPUAveraged;
   const UINT
     numEnergyLevel = inputData.energies.size();
