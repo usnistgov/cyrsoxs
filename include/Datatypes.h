@@ -52,6 +52,8 @@ typedef uint32_t BigUINT;
 typedef uint32_t UINT;
 
 #define NUM_THREADS 128
+
+
 namespace Interpolation{
     enum EwaldsInterpolation: UINT{
         NEARESTNEIGHBOUR = 0,

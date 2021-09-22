@@ -157,7 +157,7 @@ public:
   }
 
   /**
-   * @brief Adds the Euler angle volume fraction. S, \thetha and \phi are all assumed 0
+   * @brief Adds the Euler angle volume fraction. S, \f$\theta\f$ and \f$\phi\f$ are all assumed 0
    * @param matVfracVector Vector for volume fraction
    * @param matID material ID
    */

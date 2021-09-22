@@ -70,7 +70,7 @@ public:
      * @brief Computes the refractive index based on the optical constants Data
      * @param values The value for the material. Must be of the size (NUM_MATERIAL X 4).
      *                Note the optical constant data must be in the order of :
-     *               [$\delta_{\parallel}$,$\beta_{\parallel}$, $\delta_{\perp}$, $\beta_{\perp}$]
+     *               [\f$\delta_{\parallel}\f$,\f$\beta_{\parallel}\f$, \f$\delta_{\perp}\f$, \f$\beta_{\perp}\f$]
      * @param Energy The value of energy
      */
     void addData(const std::vector<std::vector<Real>> &values, const Real Energy) {

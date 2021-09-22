@@ -34,7 +34,7 @@
 struct BaseConfiguration{
   /// rotation Matrix
   Matrix matrix;
-  /// rotation Angle so that E.x $\approx$ 1
+  /// rotation Angle so that E.x \f$ \approx \f$ 1
   Real baseRotAngle;
 } ;
 

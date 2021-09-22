@@ -32,8 +32,10 @@
 namespace H5 {
 /**
  * @brief Writes the final scattering pattern data in HDF5 file format
- * @param data the data
- * @param dim the dimension corresponding to the X and Y
+ * @param [in] file HDF5 file name
+ * @param [in] data the data
+ * @param [in] dim the dimension corresponding to the X and Y
+ * @param groupname name of the group
  */
   void writeFile2D(H5::H5File &file, const Real *data, const UINT *dim, const std::string &groupname) {
     try {
@@ -63,6 +65,12 @@ namespace H5 {
     }
   }
 
+  /**
+   * @brief dumps the morphology file after conversion to ZYX order if required
+   * @param [in] fname file name
+   * @param [in] inputData input data
+   * @param [in] morphologyData morphology data
+   */
   void writeMorphologyFile(const std::string &fname, const InputData &inputData, const Voxel *morphologyData) {
     std::array<std::string, 4> morphologyDataSets{};
     const MorphologyType morphologyType = static_cast<MorphologyType>(inputData.morphologyType);
@@ -121,6 +129,11 @@ namespace H5 {
     }
   }
 
+  /**
+   * @brief Writes the XDMF file for loading HDF into Paraview / Visit
+   * @param [in] inputData input data
+   * @param [in] voxelData voxel data
+   */
   void writeXDMF(const InputData &inputData, const Voxel * voxelData) {
     std::array<std::string, 4> morphologyDataSets{};
     const MorphologyType morphologyType = static_cast<MorphologyType>(inputData.morphologyType);

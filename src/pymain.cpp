@@ -55,9 +55,11 @@ int getNumMaterials() {
 
 /**
  * @brief Launch the GPU kernel for CyRSoXS.
- * @param inputData InputData
- * @param energyData Energy data
- * @param voxelData Voxel data
+ * @param [in] inputData InputData
+ * @param [in] energyData Energy data
+ * @param [in] voxelData Voxel data
+ * @param [out] scatteringPattern compute I(q)
+ * @param [in] ifWriteMetadata weather to write metadata or not
  */
 void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
             const VoxelData &voxelData,ScatteringPattern & scatteringPattern,

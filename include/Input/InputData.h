@@ -249,7 +249,6 @@ private:
   /// Morphology type
   /**
    * Constructor to read input data
-   * @param refractiveIndex material input
    * @param filename filename, default is config.txt
    */
   InputData(std::string filename = "config.txt") {
