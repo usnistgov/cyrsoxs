@@ -28,16 +28,32 @@
 #include <Datatypes.h>
 #include <limits>
 #include <cudaHeaders.h>
+
+/// Class to store 3D matrix
 struct Matrix{
 private:
+  /// matrix object
   Real matrix[9]{};
 public:
+  /**
+   * @brief Default Constructor
+   */
   __host__ __device__ Matrix(){
     std::memset(matrix, 0, sizeof(Real) * 9);
   }
+  /**
+   * @brief Copies the data from array
+   * @param [in] A 3X3 matrix
+   */
   __host__  Matrix(const Real * A){
     std::memcpy(matrix, A, sizeof(Real) * 9);
   }
+  /**
+   * @brief returns the value at mat[id1,id2]
+   * @tparam id1  first id
+   * @tparam id2 second id
+   * @return the value at matrix location
+   */
   template<UINT id1, UINT id2>
   __host__ __device__ INLINE inline Real  getValue() const{
     static constexpr UINT matID = id1*3 +id2;
@@ -45,9 +61,20 @@ public:
     return matrix[matID];
   }
 
+  /**
+   * @brief Getter
+   * @param [out] mat returns the value of matrix
+   */
   __host__ INLINE inline void  getValue(Real * mat) const{
     std::memcpy(mat,matrix, sizeof(Real)*9);
   }
+
+  /**
+   * @brief sets the value at mat[id1,id2]
+   * @tparam [in] id1  first id
+   * @tparam [in] id2 second id
+   * @param [in] value value
+   */
   template<UINT id1, UINT id2>
   __host__ __device__ INLINE inline void  setValue(const Real & value) {
     static constexpr UINT matID = id1*3 +id2;
@@ -55,16 +82,29 @@ public:
     matrix[matID] = value;
   }
 
+  /**
+   * @brief sets matrix to identity matrix
+   */
   __host__ __device__ INLINE inline void  setIdentity(){
     std::memset(matrix, 0, sizeof(Real) * 9);
     this->setValue<0,0>(1);
     this->setValue<1,1>(1);
     this->setValue<2,2>(1);
   }
+  /**
+   * @brief resets all entries to 0
+   */
   __host__ __device__ INLINE inline void  reset(){
     std::memset(matrix, 0, sizeof(Real) * 9);
   }
 
+  /**
+   * @brief performs matrix multiplication
+   * @tparam transpose1 whether to compute the transpose of matrix A
+   * @tparam transpose2 whether to compute the transpose of matrix B
+   * @param A matrix A
+   * @param B matrix B
+   */
   template<bool transpose1, bool transpose2>
   __host__ __device__ INLINE inline void performMatrixMultiplication(const Matrix &A, const Matrix &B) {
     this->reset();
@@ -179,6 +219,11 @@ __host__ static inline void scaleVec(const Real3 & vecIn, Real3 & scaledVec, con
   scaledVec.z = scaleFactor*vecIn.z;
 }
 
+/**
+ * @brief returns the inverse of the matrix
+ * @param [in] matrixA matrix
+ * @param [out] inverseMatrix inverse of the matrix A
+ */
 __host__ static inline void computeInverseMatrix(const Matrix &  matrixA, Matrix & inverseMatrix){
   double det = matrixA.getValue<0,0>() * (matrixA.getValue<1,1>() * matrixA.getValue<2,2>() - matrixA.getValue<2,1>() * matrixA.getValue<1,2>()) -
                matrixA.getValue<0,1>() * (matrixA.getValue<1,0>() * matrixA.getValue<2,2>() - matrixA.getValue<1,2>() * matrixA.getValue<2,0>()) +
@@ -200,7 +245,14 @@ __host__ static inline void computeInverseMatrix(const Matrix &  matrixA, Matrix
 
 }
 
-
+/**
+  * @brief performs matrix multiplication
+  * @tparam transpose1 whether to compute the transpose of matrix A
+  * @tparam transpose2 whether to compute the transpose of matrix B
+  * @param [in] matA matrix A
+  * @param [in] matB matrix B
+  * @param [out] mat matrix product
+  */
 template<bool transpose1, bool transpose2>
 __host__ static void inline performMatrixMultiplication(const Matrix &  matA, const Matrix &  matB, Matrix &  mat) {
   mat.reset();
@@ -307,6 +359,14 @@ __host__ __device__ static void doMatVec(const Matrix & matrix, const Real3 & ve
 
 }
 
+/**
+ * @brief rotates the  complex vector according to rotation matrix
+ * @tparam transpose weather to use transpose of the rotation matrix
+ * @param [in] rotationMatrix rotation matrix
+ * @param [in,out] vecX rotated vector
+ * @param [in,out] vecY rotated vector
+ * @param [in,out] vecZ rotated vector
+ */
 template <bool transpose>
 __host__ __device__ static void rotate(const Matrix & rotationMatrix,  Complex & vecX, Complex & vecY, Complex & vecZ){
   Complex tempX, tempY, tempZ;
@@ -334,10 +394,10 @@ __host__ __device__ static void rotate(const Matrix & rotationMatrix,  Complex &
 }
 
 /**
- *
- * @param k
- * @param rotationMatrixK
- * @return
+ * @brief Computes rotation matrix by Rodrigues rotation that maps  (0,0,1) to given k
+ * @param [in] k k vector
+ * @param [out] rotationMatrixK rotation matrix
+ * @return true if rotation is successful
  */
 __host__ bool static computeRotationMatrixK(const Real3 & k, Matrix & rotationMatrixK){
   static constexpr Real3 origK{0,0,1};
@@ -351,6 +411,14 @@ __host__ bool static computeRotationMatrixK(const Real3 & k, Matrix & rotationMa
 #endif
   return true;
 }
+/**
+ * @brief finds the base configuration that corresponds to 0 degree of E rotataion
+ * @param k k vector
+ * @param [in] rotationMatrixK rotation matrix
+ * @param [out] rotationMatrix rotation matrix  for E
+ * @param [out] rotAngle rotation angle
+ * @return true if the rotation is successful
+ */
 __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, const Matrix & rotationMatrixK, Matrix & rotationMatrix, Real & rotAngle){
   static constexpr Real3 X{1,0,0};
   static constexpr UINT numInterval = 100000;
@@ -395,6 +463,14 @@ __host__ bool static computeRotationMatrixBaseConfiguration(const Real3 & k, con
 
   return true;
 }
+/**
+ *
+ * @param [in] k k vector
+ * @param [in] rotationMatrixK K rotation matrix that maps (0,0,1) to given K
+ * @param [out] rotationMatrix rotation matrix  for E
+ * @param [out] rotAngle rotation angle
+ * @return  true if the rotation is successful
+ */
 __host__ bool static computeRotationMatrix(const Real3 & k, const Matrix & rotationMatrixK, Matrix & rotationMatrix, const Real & rotAngle){
   static constexpr Real3 X{1,0,0};
   Real3 shiftedX;
@@ -406,12 +482,20 @@ __host__ bool static computeRotationMatrix(const Real3 & k, const Matrix & rotat
   performMatrixMultiplication<false,false>(rotationMatrixX,rotationMatrixK,rotationMatrix);
   return true;
 }
-
+/**
+ * @brief normalize the vector
+ * @param [in,out] vec the vector
+ */
 __host__ inline static void normalizeVec(Real3 & vec){
   Real normVec =  computeVecNorm(vec);
   scaleVec(vec,vec,1./normVec);
 }
-
+/**
+ * @brief Computes matrix for warp affine
+ * @param [in] srcPoint src point
+ * @param [in] dstPoint destination point
+ * @param [out]  warpAffineMatrix the rotation matrix
+ */
 __host__ static void INLINE inline computeWarpAffineMatrix(const double  srcPoint[][2], const double  dstPoint[][2], double  warpAffineMatrix[][3]){
   const double & x0 = srcPoint[0][0]; const double & y0 = srcPoint[0][1];
   const double & x1 = srcPoint[1][0]; const double & y1 = srcPoint[1][1];

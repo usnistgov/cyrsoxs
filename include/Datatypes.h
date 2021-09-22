@@ -140,6 +140,7 @@ static_assert(sizeof(algorithmName)/sizeof(char*) == Algorithm::MAXAlgorithmType
 static const char *scatterApproachName[]{"Partial","Full"};
 static_assert(sizeof(scatterApproachName)/sizeof(char*) == ScatterApproach::MAX_SCATTER_APPROACH,
               "sizes dont match");
+/// Comparison for floating operation
 #define FEQUALS(x, y) fabs((x) - (y)) < 1E-6 ? true : false
 
 #define RED "\e[1;31m"
