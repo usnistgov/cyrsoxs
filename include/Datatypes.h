@@ -54,10 +54,15 @@ typedef uint32_t UINT;
 #define NUM_THREADS 128
 
 
+/// Interpolation for I(q)
 namespace Interpolation{
+    /// Ewalds interpolation type
     enum EwaldsInterpolation: UINT{
+         /// Nearest neighbor interpolation
         NEARESTNEIGHBOUR = 0,
+        /// Linear interpolation
         LINEAR = 1,
+        /// Maximum Type of interpolation
         MAX_SIZE=2
     };
     static const char *interpolationName[]{"Nearest Neighbour", "Trilinear interpolation"};
@@ -65,17 +70,24 @@ namespace Interpolation{
                   "sizes dont match");
 }
 
+/// Reference Frame for computing p vector
 enum ReferenceFrame:bool{
+  /// Material : Rotate p along with E
   MATERIAL = false,
+  /// LAB: Compute in Lab axis frame
   LAB = true
 };
 static const char *referenceFrameName[]{"MATERIAL", "LAB"};
 
-
+/// Case Types based on the formation
 enum CaseTypes : UINT {
+  /// Default : k = (0,0,1) Detector = (0,0,1)
   DEFAULT = 0,
+  /// BEAM_DIVERGENCE : k = Arbitrary Detector = (0,0,1)
   BEAM_DIVERGENCE = 1,
+  /// GRAZING_INCIDENCE : k = Arbitrary Detector = Arbitrary
   GRAZING_INCIDENCE = 2,
+  /// MAX_CASE_TYPE : Maximum case type
   MAX_CASE_TYPE = 3
 };
 
@@ -85,12 +97,16 @@ static_assert(sizeof(caseTypenames) / sizeof(char*) == CaseTypes::MAX_CASE_TYPE,
 
 
 
-
+/// Fast Fourier Transform
 namespace FFT {
 
+    /// Windowing type
     enum FFTWindowing : UINT {
+        /// Hanning window
         HANNING = 1,
+        /// No window
         NONE = 0,
+        /// Maximum size
         MAX_SIZE = 2
     };
     static const char *windowingName[]{"NONE","HANNING"};
@@ -98,15 +114,23 @@ namespace FFT {
                   "sizes dont match");
 }
 
+/// X(q) computation
 enum ScatterApproach:UINT{
+    /// Partially compute X(q)
     PARTIAL = 0,
+    /// Compute Full X(q)
     FULL = 1,
+    /// Maximum type
     MAX_SCATTER_APPROACH = 2
 };
 
+/// Algorithm for CyRSoXS
 enum Algorithm:UINT{
+  /// Minimizes communication at cost of memory
   CommunicationMinimizing = 0,
+  /// Minimizes memory at cost of communication
   MemoryMinizing = 1,
+  /// Maximum type of algorithm
   MAXAlgorithmType = 2
 };
 static const char *algorithmName[]{"CommunicationMinimizing","MemoryMinimizing"};
@@ -126,10 +150,13 @@ static_assert(sizeof(scatterApproachName)/sizeof(char*) == ScatterApproach::MAX_
 #define CYN "\e[0;36m"
 #define NRM "\e[0m"
 
-
+/// Type of morphology
 enum MorphologyType:UINT{
+    /// Euler angles
     EULER_ANGLES = 0,
+    /// Vector morphology
     VECTOR_MORPHOLOGY = 1,
+    /// Maximum type of morphology
     MAX_MORPHOLOGY_TYPE = 2
 };
 static const char *morphologyTypeName[]{"EulerAngles","VectorMorphology"};
@@ -137,10 +164,15 @@ static_assert(sizeof(morphologyTypeName)/sizeof(char*) == MorphologyType::MAX_MO
               "sizes dont match");
 
 
+/// Morphology order
 enum MorphologyOrder:int{
+  /// First axis cooresponds to Z and second to Y and third to
   ZYX = 0,
+  /// First axis cooresponds to X and second to Y and third to Z
   XYZ = 1,
+  /// Invalid
   INVALID = -1,
+  /// Maximum type of order
   MAX_ORDER = 2
 };
 static const char *morphologyOrderName[]{"ZYX","XYZ"};

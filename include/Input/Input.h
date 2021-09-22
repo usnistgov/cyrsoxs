@@ -31,6 +31,7 @@
 #include <cstring>
 
 #ifndef BIAXIAL
+/// Stores the material refractive index data
 template<int num_component>
 struct Material {
 
@@ -40,6 +41,9 @@ struct Material {
   /** Perpendicular component of Refractive index **/
   Complex nperp[num_component];
 
+  /**
+   * @brief Constructor
+   */
   Material(){
       std::memset (npara, 0, sizeof (Complex)*num_component);
       std::memset (nperp, 0, sizeof (Complex)*num_component);
@@ -54,18 +58,30 @@ struct Material {
  */
 
 struct Voxel {
-  /// s1 the uniaxial director vector \n
+  /// s1 the uniaxial director vector \n for Vector Morphology
   /// s1[i].x = x component of the director vector (\f$s_x\f$) \n
   /// s1[i].y = y component of the director vector (\f$s_y\f$) \n
   /// s1[i].z = z component of the director vector (\f$s_z\f$) \n
   /// s1[i].w = fraction of unaligned component (\f$\phi_{ua}\f$)
-
+  /// s1 stores the Euler Angle information for Euler Angle
+  /// s1[i].x = fraction of aligned component \n
+  /// s1[i].y = (\f$\theta\f$)rotation angle about X-axis  \n
+  /// s1[i].z = (\f$\phi\f$) rotation angle about Z-axis \n
+  /// s1[i].w = volume fraction of the material
   Real4 s1;
 
+  /**
+   * @brief Constructor
+   */
   Voxel():
   s1{0.0,0.0,0.0,0.0}{
   }
-  Real  getValueAt(int id) const{
+  /**
+   * @brief Getter
+   * @param [in] id 0-3 depending to s.x,s.y,s.z or s.w
+   * @return values at given id
+   */
+  Real  getValueAt(const int id) const{
     const Real val[4]{s1.x,s1.y,s1.z,s1.w};
     return val[id];
   }
