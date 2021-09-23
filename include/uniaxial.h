@@ -377,7 +377,7 @@ __global__ void computeNtEulerAngles(const Material<1> material,
   Complex npar = material.npara[0];
   Complex nper = material.nperp[0];
   const Voxel matProp = voxelInput[offset + threadID];
-  const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
+  const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
   const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
   const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
   const Real & S             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S); //  S = fraction of voxel with aligned component
