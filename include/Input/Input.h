@@ -58,6 +58,13 @@ struct Material {
  */
 
 struct Voxel {
+
+  enum EULER_ANGLE:int{
+    S = 0,
+    THETA = 1,
+    PSI = 2,
+    VFRAC = 3
+  };
   /// s1 the uniaxial director vector \n for Vector Morphology
   /// s1[i].x = x component of the director vector (\f$s_x\f$) \n
   /// s1[i].y = y component of the director vector (\f$s_y\f$) \n
@@ -66,7 +73,7 @@ struct Voxel {
   /// s1 stores the Euler Angle information for Euler Angle
   /// s1[i].x = fraction of aligned component \n
   /// s1[i].y = (\f$\theta\f$)rotation angle about X-axis  \n
-  /// s1[i].z = (\f$\phi\f$) rotation angle about Z-axis \n
+  /// s1[i].z = (\f$\psi\f$) Second rotation angle about Z-axis \n
   /// s1[i].w = volume fraction of the material
   Real4 s1;
 
@@ -81,7 +88,7 @@ struct Voxel {
    * @param [in] id 0-3 depending to s.x,s.y,s.z or s.w
    * @return values at given id
    */
-  Real  getValueAt(const int id) const{
+  Real  __host__ __device__ getValueAt(const int id) const{
     const Real val[4]{s1.x,s1.y,s1.z,s1.w};
     return val[id];
   }

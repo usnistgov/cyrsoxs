@@ -76,16 +76,16 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
     Complex npar = material->npara[numMaterial];
     Complex nper = material->nperp[numMaterial];
-    const Real4 matProp = voxelInput[numVoxels * numMaterial + threadID].s1;
+    const Voxel matProp = voxelInput[numVoxels * numMaterial + threadID];
 
-    const Real & thetaAngle  = matProp.y;
-    const Real & phiAngle    = matProp.z;
-    const Real & Vfrac       = matProp.w;
-    const Real & S           = Vfrac*matProp.x;
+    const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
+    const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
+    const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
+    const Real & S             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S);
 
-    const Real   sx     =  cos(phiAngle);
-    const Real   sy     = -sin(phiAngle)*cos(thetaAngle);
-    const Real   sz     =  sin(phiAngle)*sin(thetaAngle);
+    const Real   sx     =  sin(psiAngle)*sin(thetaAngle);
+    const Real   sy     =  cos(psiAngle)*sin(thetaAngle);
+    const Real   sz     =  cos(thetaAngle);
     const Real   phi_ui = Vfrac - S;
 
     const Real  & phi =  Vfrac;
@@ -201,11 +201,11 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
     Complex npar = material->npara[numMaterial];
     Complex nper = material->nperp[numMaterial];
-    const Real4 matProp = voxelInput[numVoxels * numMaterial + threadID].s1;
-    const Real & sx     = matProp.x;
-    const Real & sy     = matProp.y;
-    const Real & sz     = matProp.z;
-    const Real & phi_ui = matProp.w;
+    const Voxel matProp = voxelInput[numVoxels * numMaterial + threadID];
+    const Real & sx     = matProp.s1.x;
+    const Real & sy     = matProp.s1.y;
+    const Real & sz     = matProp.s1.z;
+    const Real & phi_ui = matProp.s1.w;
 
     /**
      * According to Eliot Dated June 29,2021:
@@ -376,15 +376,15 @@ __global__ void computeNtEulerAngles(const Material<1> material,
   Complex nsum;
   Complex npar = material.npara[0];
   Complex nper = material.nperp[0];
-  const Real4 matProp = voxelInput[offset + threadID].s1;
-  const Real & thetaAngle  = matProp.y;
-  const Real & phiAngle    = matProp.z;
-  const Real & Vfrac       = matProp.w;
-  const Real & S           = Vfrac*matProp.x; //  S = fraction of voxel with aligned component
+  const Voxel matProp = voxelInput[offset + threadID];
+  const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
+  const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
+  const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
+  const Real & S             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S); //  S = fraction of voxel with aligned component
 
-  const Real   sx     =  cos(phiAngle);
-  const Real   sy     = -sin(phiAngle)*cos(thetaAngle);
-  const Real   sz     =  sin(phiAngle)*sin(thetaAngle);
+  const Real   sx     =  sin(psiAngle)*sin(thetaAngle);
+  const Real   sy     =  cos(psiAngle)*sin(thetaAngle);
+  const Real   sz     =  cos(thetaAngle);
   const Real   phi_ui =  Vfrac - S;
 
   const Real  & phi =  Vfrac;

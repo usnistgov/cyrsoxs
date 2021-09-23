@@ -476,7 +476,7 @@ namespace H5 {
               }
 
             }
-            getScalar(file, "Euler_Angles", "_Phi",voxelSize, static_cast<const MorphologyOrder>(morphologyOrder),scalarData, numMat,
+            getScalar(file, "Euler_Angles", "_Psi",voxelSize, static_cast<const MorphologyOrder>(morphologyOrder),scalarData, numMat,
                       true);
             for (BigUINT i = 0; i < numVoxel; i++) {
               if(voxelData[(numMat - 1) * numVoxel + i].s1.x == 0) {
