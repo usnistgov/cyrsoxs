@@ -144,8 +144,8 @@ namespace H5 {
       morphologyDataSets[3] = "UnalignedFraction";
     } else if (morphologyType == MorphologyType::EULER_ANGLES) {
       morphologyDataSets[0] = "S";
-      morphologyDataSets[1] = "phi";
-      morphologyDataSets[2] = "theta";
+      morphologyDataSets[1] = "Theta";
+      morphologyDataSets[2] = "Psi";
       morphologyDataSets[3] = "Vfrac";
     } else {
       throw std::runtime_error("Unexpected Morphology Type");
