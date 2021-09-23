@@ -59,18 +59,14 @@ namespace H5 {
     H5::DataSet dataSet = group.openDataSet(dataName.c_str());
     H5::DataType dataType = dataSet.getDataType();
     int numMaterial;
-    if(dataType == PredType::NATIVE_INT) {
-      dataSet.read(&numMaterial,PredType::NATIVE_INT);
-    }
-    else {
-      throw std::runtime_error("Wrong Data type for numMaterial");
-    }
+    dataSet.read(&numMaterial,PredType::NATIVE_INT);
+
     if(numMaterial == NUM_MATERIAL) {
       return true;
     }
     else {
-      std::cout << "Compiled with " << NUM_MATERIAL << "\n";
-      std::cout << "morphology has " << numMaterial << "\n";
+      std::cout << RED << "Compiled with " << NUM_MATERIAL << " materials\n" << NRM;
+      std::cout << RED << "morphology has " << numMaterial << "material\n" << NRM;
       throw std::runtime_error("Wrong number of material");
     }
   }
