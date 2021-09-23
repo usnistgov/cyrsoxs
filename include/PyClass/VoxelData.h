@@ -106,9 +106,17 @@ public:
     validData_.set(matID - 1, true);
   }
 
+  /**
+   * @brief Adds the Euler Morphology input to the voxel data
+   * @param matSVector Fraction of material that is aligned
+   * @param matThetaVector First "real" rotation about X axis
+   * @param matPhiVector Second rotation about Z axis
+   * @param matVfracVector Volume fraction occupied by the material
+   * @param matID material ID . Start from 1 to NMat
+   */
   void addMaterialDataEulerAngles(py::array_t<Real, py::array::c_style | py::array::forcecast> &matSVector,
                                   py::array_t<Real, py::array::c_style | py::array::forcecast> &matThetaVector,
-                                  py::array_t<Real, py::array::c_style | py::array::forcecast> &matPhiVector,
+                                  py::array_t<Real, py::array::c_style | py::array::forcecast> &matPsiVector,
                                   py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
                                   const UINT matID) {
 
@@ -127,25 +135,25 @@ public:
     const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
     std::vector<Real> _S(numVoxels);
     std::vector<Real> _Theta(numVoxels);
-    std::vector<Real> _Phi(numVoxels);
+    std::vector<Real> _Psi(numVoxels);
     std::vector<Real> _Vfrac(numVoxels);
     for (BigUINT i = 0; i < numVoxels; i++) {
       _S[i] = matSVector.data()[i];
       _Theta[i] = matThetaVector.data()[i];
-      _Phi[i] = matPhiVector.data()[i];
+      _Psi[i] = matPsiVector.data()[i];
       _Vfrac[i] = matVfracVector.data()[i];
     }
     if (inputData_.morphologyOrder == MorphologyOrder::XYZ) {
       H5::XYZ_to_ZYX(_S, 1, inputData_.voxelDims);
       H5::XYZ_to_ZYX(_Theta, 1, inputData_.voxelDims);
-      H5::XYZ_to_ZYX(_Phi, 1, inputData_.voxelDims);
+      H5::XYZ_to_ZYX(_Psi, 1, inputData_.voxelDims);
       H5::XYZ_to_ZYX(_Vfrac, 1, inputData_.voxelDims);
     }
     for (BigUINT i = 0; i < numVoxels; i++) {
       voxel[(matID - 1) * numVoxels + i].s1.x = _S[i];
       if (_S[i] != 0) {
         voxel[(matID - 1) * numVoxels + i].s1.y = _Theta[i];
-        voxel[(matID - 1) * numVoxels + i].s1.z = _Phi[i];
+        voxel[(matID - 1) * numVoxels + i].s1.z = _Psi[i];
       } else {
         voxel[(matID - 1) * numVoxels + i].s1.y = 0;
         voxel[(matID - 1) * numVoxels + i].s1.z = 0;
