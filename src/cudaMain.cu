@@ -588,7 +588,6 @@ int cudaMain(const UINT *voxel,
             VTI::writeDataScalar(polarizationZ, voxel, fname.c_str(), "polarizeZfft");
           }
 #endif
-#pragma message "Make me callbacks"
           performFFTShift(d_polarizationX, BlockSize, vx,streams[0]);
           performFFTShift(d_polarizationY, BlockSize, vx,streams[1]);
           performFFTShift(d_polarizationZ, BlockSize, vx,streams[2]);
