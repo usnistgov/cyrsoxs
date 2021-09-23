@@ -68,6 +68,7 @@ namespace H5 {
       std::cout << RED << "Compiled with " << NUM_MATERIAL << " materials\n" << NRM;
       std::cout << RED << "morphology has " << numMaterial << "material\n" << NRM;
       throw std::runtime_error("Wrong number of material");
+      exit(EXIT_FAILURE);
     }
   }
   static inline void
