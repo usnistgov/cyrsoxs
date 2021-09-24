@@ -1,5 +1,12 @@
 Cy-RSoXS Changes History
 ====================================
+Version 1.0.0 - Beta
+=================
+* Support for k rotation added
+* Morphology dimensions now read from HDF5 file
+* HDF5 file format changed to be more rigorous
+* Euler angle support added
+
 Version 0.9.0
 =================
 * Energies now accepted as lists

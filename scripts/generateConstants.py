@@ -131,7 +131,7 @@ def main(energies, dict, labelEnergy, numMaterial):
     NumEnergy = len(energies)
 
     for numMat in range(0, numMaterial):
-        f = open("Material" + str(numMat) + ".txt", "w")
+        f = open("Material" + str(numMat + 1) + ".txt", "w")
         fname = dict["Material" + str(numMat)]
         if (fname != 'vacuum'):
             Data = np.loadtxt(fname, skiprows=1)
@@ -160,7 +160,9 @@ if __name__ == "__main__":
     windowingType = 0
     morphologyType = 0  # 0: Euler angles 1: Vector Morphology
     scatterApproach = 0  # 0 : Partial (Default) 1: Full
-
+    algorithm = 1
+    maxStreams = 1
+    dumpMorphology = False
 
     # Files corresponding to Each material. For vacuum pass vacuum
     dict = {'Material0': '../OpticalConstants/PEOlig2018.txt'}
@@ -181,8 +183,10 @@ if __name__ == "__main__":
     f.write("RotMask = " + str(rotMask) + ";\n")
     f.write("EwaldsInterpolation= " + str(EwaldsInterpolation) + ";\n")
     f.write("WindowingType = " + str(windowingType) + ";\n")
-    f.write("MorphologyType = " + str(morphologyType) + ";\n")
-    f.write("ScatterApproach = " + str(scatterApproach) + ";\n")
+    f.write("Algorithm = " + str(algorithm) + ";\n")
+    f.write("MaxStreams = " + str(maxStreams) + ";\n")
+    f.write("DumpMorphology = " + str(dumpMorphology) + ";\n")
+
 
     f.close()
 

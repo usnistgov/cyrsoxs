@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (0.9.0)
+GPU enabled RSoXS simulation (1.0.0 - Beta)
 ====================================
 
 # With Pybind support
@@ -10,7 +10,7 @@ Without Pybind support
 
 ## Generating config and constant files
 
-In order to run RSoXs, first we need to generate the confiig file.
+In order to run CyRSoXS, first we need to generate the confiig file.
 To generate the config file, you need to run the python script `generateConstants.py` 
 from the scripts folder.
 
@@ -18,23 +18,20 @@ Here are the description of the individual parameters that you would need to cha
 in `__main__`.
 ```
 #Required options
-energies = [280.0, 285.0, 281.0]
-eAngleRotation = [0.0, 2.0, 180.0]  # [start : increment: end]
-morphologyType = 0  # 0: Euler angles 1: Vector Morphology 2: Spherical coordinate
-numX = 2048; # number of voxels in X direction
-numY = 2048;# number of voxels in Y direction
-numZ = 1;# number of voxels in Z direction
-physSize = 5.0; #Physical size
+caseType = 0
+energies: list = [280.0, 285.0, 281.0]
+eAngleRotation: list = [0.0, 2.0, 180.0]  # [start : increment: end]
+morphologyType = 0  # 0: Euler angles 1: Vector Morphology
 
 #Optional options
 numThreads = 4; number of threads for execution
 RotMask = False; #Default: False
 EwaldsInterpolation = 1; # 1 : Linear Interpolation (default) 0: Nearest Neighbour 
-WriteVTI = False; # Default : False
 WindowingType = 0; # 0: None (Default) 1: Hanning 
 scatterApproach = 0  # 0 : Partial (Default) 1: Full
-kRotationType = 0 # 0: No rotation 1: kRotation
-kAngleRotation: list = [0.0, 2.0, 180.0]  # [start : increment: end]
+Algorithm=1
+DumpMorphology=True 
+MaxStreams = 1
 ``` 
 
 This code also generate the optical constants for each Energy level
@@ -75,8 +72,8 @@ The python script can be ran directly by:
 python generateConstants.py
 ``` 
 
-Once the script has successfully completed, it will generate the files `config.txt` and `Material0.txt` ,
- `Material1.txt` and so on for each individual material. 
+Once the script has successfully completed, it will generate the files `config.txt` and `Material1.txt` ,
+ `Material2.txt` and so on for each individual material. 
  
  
 ## Running Cy-RSoXS
