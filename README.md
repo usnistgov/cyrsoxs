@@ -7,7 +7,7 @@ Currently it supports the operation with 32 bit / 64 bit float datatypes.
 or directly through the executable.
 
 
-Version  : 0.9.0
+Version  : 1.0.0 - Beta
 ================
 
 Dependencies
