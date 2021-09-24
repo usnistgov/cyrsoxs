@@ -57,7 +57,7 @@ public:
     : inputData_(inputData) {
     clear();
     const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
-    mallocCPUPinned(voxel, numVoxels * NUM_MATERIAL);
+    mallocCPU(voxel, numVoxels * NUM_MATERIAL);
     validData_.reset();
   }
 

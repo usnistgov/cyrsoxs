@@ -228,8 +228,8 @@ __host__ static inline void computeInverseMatrix(const Matrix &  matrixA, Matrix
   double det = matrixA.getValue<0,0>() * (matrixA.getValue<1,1>() * matrixA.getValue<2,2>() - matrixA.getValue<2,1>() * matrixA.getValue<1,2>()) -
                matrixA.getValue<0,1>() * (matrixA.getValue<1,0>() * matrixA.getValue<2,2>() - matrixA.getValue<1,2>() * matrixA.getValue<2,0>()) +
                matrixA.getValue<0,2>() * (matrixA.getValue<1,0>() * matrixA.getValue<2,1>() - matrixA.getValue<1,1>() * matrixA.getValue<2,0>());
-  bool val = fabs(det) < 1E-12;
-  assert(not(val));
+//  bool val = fabs(det) < 1E-12;
+//  assert(not(val));
 
   Real invdet = 1. / det;
 
@@ -401,6 +401,7 @@ __host__ __device__ static void rotate(const Matrix & rotationMatrix,  Complex &
  */
 __host__ bool static computeRotationMatrixK(const Real3 & k, Matrix & rotationMatrixK){
   static constexpr Real3 origK{0,0,1};
+  std::cout << "Here " << k.x << " "<< k.y << " " << k.z << "\n";
   computeRotationMatrix(origK,k,rotationMatrixK);
 #if DEBUG
   {

@@ -143,8 +143,30 @@ static void printCopyrightInfo(){
   std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
   std::cout << "Git patch : " << GIT_HASH << "\n";
   std::cout << "\n";
-}
 
+}
+/**
+ * Prints the copyRight Info
+ */
+static void printPyBindCopyrightInfo(){
+
+  pybind11::print(" __________________________________________________________________________________________________");
+  pybind11::print("|                                 Thanks for using Cy-RSoXS                                        |");
+  pybind11::print("|--------------------------------------------------------------------------------------------------|");
+  pybind11::print("|  Copyright          : Iowa State University                                                      |");
+  pybind11::print("|  License            : MIT                                                                        |");
+  pybind11::print("|  Acknowledgement    : ONR MURI                                                                   |");
+  pybind11::print("|  Developed at Iowa State University in collaboration with NIST                                   |");
+  pybind11::print("|  Please cite the following publication :                                                         |");
+  pybind11::print("|  Comments/Questions :                                                                            |");
+  pybind11::print("|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |");
+  pybind11::print("|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |");
+  pybind11::print(" -------------------------------------------------------------------------------------------------- ");
+
+  pybind11::print("Version   : " , VERSION_MAJOR , ".", VERSION_MINOR , ".", VERSION_PATCH );
+  pybind11::print("Git patch : " , GIT_HASH );
+
+}
 /**
  * Prints the copyRight Info to file
  */

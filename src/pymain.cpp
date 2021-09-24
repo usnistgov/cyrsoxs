@@ -81,18 +81,10 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
 
 
   py::gil_scoped_release release;
-  static bool printCopyInfo = true;
-  if(printCopyInfo) {
-      printCopyrightInfo();
-      std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
-      std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
-      std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
-      printCopyInfo = false;
-  }
-
 
 
   RotationMatrix rotationMatrix(&inputData);
+
   std::cout << "\n [STAT] Executing: \n\n";
   if(inputData.algorithmType == Algorithm::CommunicationMinimizing) {
     cudaMain(inputData.voxelDims, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(),
@@ -124,6 +116,10 @@ PYBIND11_MODULE(CyRSoXS, module) {
   py::print("============================================================================");
   py::print("Number of materials : ", NUM_MATERIAL);
   py::print("Size of Real        :", sizeof(Real));
+  printPyBindCopyrightInfo();
+  std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
+  std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
   py::add_ostream_redirect(module, "ostream_redirect");
   py::enum_<Interpolation::EwaldsInterpolation>(module, "InterpolationType")
       .value("Linear", Interpolation::EwaldsInterpolation::LINEAR)
