@@ -160,12 +160,14 @@ if __name__ == "__main__":
     windowingType = 0
     morphologyType = 0  # 0: Euler angles 1: Vector Morphology
     scatterApproach = 0  # 0 : Partial (Default) 1: Full
-    algorithm = 1
+    algorithm = 0
     maxStreams = 1
     dumpMorphology = False
+    numThreads = 4
 
     # Files corresponding to Each material. For vacuum pass vacuum
-    dict = {'Material0': '../OpticalConstants/PEOlig2018.txt'}
+    dict = {'Material0': '../OpticalConstants/PEOlig2018.txt',
+    'Material1': '../OpticalConstants/PEOlig2018.txt'}
 
     # Label of energy to look for
     labelEnergy = {"BetaPara": 0,
@@ -179,6 +181,7 @@ if __name__ == "__main__":
     writeList("Energies=", value=energies, file=f)
     writeList("EAngleRotation=", value=eAngleRotation, file=f)
     f.write("CaseType = " + str(caseType) + ";\n")
+    f.write("MorphologyType = " + str(morphologyType) + ";\n")
     f.write("NumThreads = " + str(numThreads) + ";\n")
     f.write("RotMask = " + str(rotMask) + ";\n")
     f.write("EwaldsInterpolation= " + str(EwaldsInterpolation) + ";\n")
