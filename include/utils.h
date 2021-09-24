@@ -145,6 +145,7 @@ static void printCopyrightInfo(){
   std::cout << "\n";
 
 }
+#ifdef PYBIND
 /**
  * Prints the copyRight Info
  */
@@ -167,6 +168,7 @@ static void printPyBindCopyrightInfo(){
   pybind11::print("Git patch : " , GIT_HASH );
 
 }
+#endif
 /**
  * Prints the copyRight Info to file
  */
