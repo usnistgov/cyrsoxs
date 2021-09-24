@@ -131,7 +131,7 @@ def main(energies, dict, labelEnergy, numMaterial):
     NumEnergy = len(energies)
 
     for numMat in range(0, numMaterial):
-        f = open("Material" + str(numMat) + ".txt", "w")
+        f = open("Material" + str(numMat + 1) + ".txt", "w")
         fname = dict["Material" + str(numMat)]
         if (fname != 'vacuum'):
             Data = np.loadtxt(fname, skiprows=1)
@@ -151,24 +151,23 @@ def main(energies, dict, labelEnergy, numMaterial):
 
 
 if __name__ == "__main__":
+    ## This is minimal version. Refer Manual for more details
+    caseType = 0
     energies: list = [280.0, 285.0, 281.0]
     eAngleRotation: list = [0.0, 2.0, 180.0]  # [start : increment: end]
-    numThreads = 4  # number of threads for execution
-    numX = 2048  # number of voxels in X direction
-    numY = 2048  # number of voxels in Y direction
-    numZ = 1  # number of voxels in Z direction
-    kRotationType = 0 # 0: No rotation 1: kRotation
-    kAngleRotation: list = [0.0, 2.0, 180.0]  # [start : increment: end]
-    physSize = 5.0
     rotMask = False
     EwaldsInterpolation = 1  # 1 : Linear Interpolation 0: Nearest Neighbour
-    writeVTI = False
     windowingType = 0
-    morphologyType = 0  # 0: Euler angles 1: Vector Morphology 2: Spherical coordinate
+    morphologyType = 0  # 0: Euler angles 1: Vector Morphology
     scatterApproach = 0  # 0 : Partial (Default) 1: Full
+    algorithm = 0
+    maxStreams = 1
+    dumpMorphology = False
+    numThreads = 4
 
     # Files corresponding to Each material. For vacuum pass vacuum
-    dict = {'Material0': '../OpticalConstants/PEOlig2018.txt'}
+    dict = {'Material0': '../OpticalConstants/PEOlig2018.txt',
+    'Material1': '../OpticalConstants/PEOlig2018.txt'}
 
     # Label of energy to look for
     labelEnergy = {"BetaPara": 0,
@@ -181,19 +180,17 @@ if __name__ == "__main__":
     f = open("config.txt", "w")
     writeList("Energies=", value=energies, file=f)
     writeList("EAngleRotation=", value=eAngleRotation, file=f)
+    f.write("CaseType = " + str(caseType) + ";\n")
+    f.write("MorphologyType = " + str(morphologyType) + ";\n")
     f.write("NumThreads = " + str(numThreads) + ";\n")
-    f.write("NumX = " + str(numX) + ";\n")
-    f.write("NumY = " + str(numY) + ";\n")
-    f.write("NumZ = " + str(numZ) + ";\n")
-    f.write("PhysSize = " + str(physSize) + ";\n")
     f.write("RotMask = " + str(rotMask) + ";\n")
     f.write("EwaldsInterpolation= " + str(EwaldsInterpolation) + ";\n")
-    f.write("WriteVTI = " + str(writeVTI) + ";\n")
     f.write("WindowingType = " + str(windowingType) + ";\n")
-    f.write("MorphologyType = " + str(morphologyType) + ";\n")
-    f.write("ScatterApproach = " + str(scatterApproach) + ";\n")
-    f.write("KRotationType = " + str(kRotationType) + ";\n")
-    writeList("KAngleRotation=", value=kAngleRotation, file=f)
+    f.write("Algorithm = " + str(algorithm) + ";\n")
+    f.write("MaxStreams = " + str(maxStreams) + ";\n")
+    f.write("DumpMorphology = " + str(dumpMorphology) + ";\n")
+
+
     f.close()
 
     main(energies, dict, labelEnergy, len(dict))
