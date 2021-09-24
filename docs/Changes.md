@@ -6,6 +6,7 @@ Version 1.0.0 - Beta
 * Morphology dimensions now read from HDF5 file
 * HDF5 file format changed to be more rigorous
 * Euler angle support added
+* Material information now starts from 1 to be consistent with HDF5
 
 Version 0.9.0
 =================
