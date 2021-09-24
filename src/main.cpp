@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020 Iowa State University
+//Copyright (c) 2019 - 2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -77,6 +77,7 @@
 #include <omp.h>
 #include <iomanip>
 #include <utils.h>
+//#include <RotationMatrix.h>
 
 /**
  * main function
@@ -86,40 +87,66 @@
  */
 int main(int argc, char **argv) {
 
-    if(argc < 2){
-        std::cout << "Usage : " << argv[0] << " "<< "HDF5FileName" << "[optional] HDF5OutputDirname";
-        exit(EXIT_FAILURE);
-    }
-    std::vector<Material<NUM_MATERIAL> > materialInput;
-    InputData inputData(materialInput);
-    inputData.validate();
-    if(argc > 2){
-        inputData.HDF5DirName = argv[2];
-    }
-    inputData.print();
-    const UINT voxelSize[3]{inputData.numX, inputData.numY, inputData.numZ};
 
-    std::string fname = argv[1];
-    Voxel<NUM_MATERIAL> *voxelData;
-    H5::readFile(fname, voxelSize, voxelData,static_cast<MorphologyType>(inputData.morphologyType));
-    Real *projectionGPUAveraged;
-    const UINT
-      numEnergyLevel = inputData.energies.size();
-    projectionGPUAveraged = new Real[numEnergyLevel * inputData.numX * inputData.numY];
-    printCopyrightInfo();
-    cudaMain(voxelSize, inputData, materialInput, projectionGPUAveraged, voxelData);
-    if(inputData.writeHDF5) {
-      writeH5(inputData, voxelSize, projectionGPUAveraged,inputData.HDF5DirName);
-    }
-    if(inputData.writeVTI) {
-      writeVTI(inputData, voxelSize, projectionGPUAveraged,inputData.VTIDirName);
-    }
-    printMetaData(inputData);
-    delete[] projectionGPUAveraged;
-    delete[] voxelData;
-    std::cout << "Complete. Exiting \n";
+  if (argc < 2) {
+    std::cout << "Usage : " << argv[0] << " " << "HDF5FileName" << "[optional] HDF5OutputDirname";
+    exit(EXIT_FAILURE);
+  }
+  std::string fname = argv[1];
+  std::vector<Material<NUM_MATERIAL> > materialInput;
+  InputData inputData;
+  inputData.readRefractiveIndexData(materialInput);
+  inputData.validate();
+  if (argc > 2) {
+    inputData.HDF5DirName = argv[2];
+  }
+  H5::getDimensionAndOrder(fname, (MorphologyType) inputData.morphologyType, inputData.voxelDims,inputData.physSize,
+                           inputData.morphologyOrder);
+  inputData.check2D();
+  inputData.print();
+  if(inputData.caseType != CaseTypes::DEFAULT){
+    std::cout << BLU << "This is an experimental feature which is not tested. " << NRM <<"\n";
+  }
+  RotationMatrix matrix(&inputData);
+  Voxel *voxelData;
+  BigUINT voxelSize = inputData.voxelDims[0] * inputData.voxelDims[1] * inputData.voxelDims[2];
 
-    return EXIT_SUCCESS;
+  mallocCPUPinned(voxelData, voxelSize * NUM_MATERIAL);
+  H5::readFile(fname, inputData.voxelDims, voxelData, static_cast<MorphologyType>(inputData.morphologyType),
+               inputData.morphologyOrder, true);
+  if(inputData.dumpMorphology){
+    H5::writeXDMF(inputData,voxelData);
+  }
+  if(not(checkMorphology(voxelData,inputData.voxelDims))){
+    throw std::runtime_error("Nan detected in the morphology");
+  }
+  Real *projectionGPUAveraged;
+  const UINT
+    numEnergyLevel = inputData.energies.size();
+
+
+  projectionGPUAveraged = new Real[numEnergyLevel * (inputData.voxelDims[0] * inputData.voxelDims[1]) *
+                                   inputData.kVectors.size()];
+
+  printCopyrightInfo();
+  RotationMatrix rotationMatrix(&inputData);
+  if (inputData.algorithmType == Algorithm::MemoryMinizing) {
+    cudaMainStreams(inputData.voxelDims, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
+  } else {
+    cudaMain(inputData.voxelDims, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
+  }
+  if (inputData.writeHDF5) {
+    writeH5(inputData, inputData.voxelDims, projectionGPUAveraged, inputData.HDF5DirName);
+  }
+  if (inputData.writeVTI) {
+    writeVTI(inputData, inputData.voxelDims, projectionGPUAveraged, inputData.VTIDirName);
+  }
+  printMetaData(inputData, rotationMatrix);
+  delete[] projectionGPUAveraged;
+  cudaFreeHost(voxelData);
+  std::cout << "Complete. Exiting \n";
+
+  return EXIT_SUCCESS;
 
 }
 

@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020 Iowa State University
+//Copyright (c) 2019 - 2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -55,9 +55,11 @@ int getNumMaterials() {
 
 /**
  * @brief Launch the GPU kernel for CyRSoXS.
- * @param inputData InputData
- * @param energyData Energy data
- * @param voxelData Voxel data
+ * @param [in] inputData InputData
+ * @param [in] energyData Energy data
+ * @param [in] voxelData Voxel data
+ * @param [out] scatteringPattern compute I(q)
+ * @param [in] ifWriteMetadata weather to write metadata or not
  */
 void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
             const VoxelData &voxelData,ScatteringPattern & scatteringPattern,
@@ -66,7 +68,9 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
     py::print("Issues with Input Data");
     return ;
   }
-
+  if(inputData.caseType != CaseTypes::DEFAULT){
+    py::print("This is an experimental feature which is not tested");
+  }
   if (not(energyData.validate())) {
     py::print("Issues with Energy data");
     return ;
@@ -79,22 +83,20 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
 
 
   py::gil_scoped_release release;
-  static bool printCopyInfo = true;
-  if(printCopyInfo) {
-      printCopyrightInfo();
-      std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
-      std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
-      std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
-      printCopyInfo = false;
-  }
 
 
+  RotationMatrix rotationMatrix(&inputData);
 
   std::cout << "\n [STAT] Executing: \n\n";
-  const UINT voxelDimensions[3]{inputData.numX, inputData.numY, inputData.numZ};
-  cudaMain(voxelDimensions, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(), voxelData.data());
+  if(inputData.algorithmType == Algorithm::CommunicationMinimizing) {
+    cudaMain(inputData.voxelDims, inputData, energyData.getRefractiveIndexData(), scatteringPattern.data(),
+             rotationMatrix, voxelData.data());
+  }
+  else{
+    cudaMainStreams(inputData.voxelDims,inputData,energyData.getRefractiveIndexData(),scatteringPattern.data(),rotationMatrix,voxelData.data());
+  }
   if(ifWriteMetadata) {
-      printMetaData(inputData);
+      printMetaData(inputData,rotationMatrix);
   }
 
 
@@ -116,6 +118,10 @@ PYBIND11_MODULE(CyRSoXS, module) {
   py::print("============================================================================");
   py::print("Number of materials : ", NUM_MATERIAL);
   py::print("Size of Real        :", sizeof(Real));
+  printPyBindCopyrightInfo();
+  std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
+  std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
   py::add_ostream_redirect(module, "ostream_redirect");
   py::enum_<Interpolation::EwaldsInterpolation>(module, "InterpolationType")
       .value("Linear", Interpolation::EwaldsInterpolation::LINEAR)
@@ -132,17 +138,26 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .value("Full", ScatterApproach::FULL)
       .export_values();
 
-  py::enum_<KRotationType>(module, "KRotationType")
-      .value("NoRotation", KRotationType::NOROTATION)
-      .value("Rotation", KRotationType::ROTATION)
-      .export_values();
   py::enum_<MorphologyType>(module, "MorphologyType")
     .value("EulerAngles", MorphologyType::EULER_ANGLES)
-    .value("SphericalCoordinates", MorphologyType::SPHERICAL_COORDINATES)
     .value("VectorMorphology", MorphologyType::VECTOR_MORPHOLOGY)
     .export_values();
 
+  py::enum_<CaseTypes>(module,"CaseType")
+    .value("Default", CaseTypes::DEFAULT)
+    .value("BeamDivergence", CaseTypes::BEAM_DIVERGENCE)
+    .value("GrazingIncidence", CaseTypes::GRAZING_INCIDENCE)
+    .export_values();
 
+  py::enum_<ReferenceFrame>(module,"ReferenceFrame")
+     .value("Lab",ReferenceFrame::LAB)
+     .value("Material",ReferenceFrame::MATERIAL)
+     .export_values();
+
+  py::enum_<MorphologyOrder>(module,"MorphologyOrder")
+    .value("XYZ",MorphologyOrder::XYZ)
+    .value("ZYX",MorphologyOrder::ZYX)
+    .export_values();
 
   py::class_<InputData>(module, "InputData")
       .def(py::init<>())
@@ -150,17 +165,20 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("print", &InputData::print, "Print the input data")
       .def("setERotationAngle", &InputData::setEAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
            py::arg("EndAngle"),py::arg("IncrementAngle"))
-      .def("setKRotationAngle", &InputData::setKAngles, "Set the rotation for K wave vector", py::arg("StartAngle"),
-           py::arg("EndAngle"),py::arg("IncrementAngle"))
-      .def("physSize", &InputData::setPhysSize, "Set the Physical size (in nm)", py::arg("PhysSize"))
-      .def("dimensions", &InputData::setDimension, "Set the Dimensions", py::arg("X"), py::arg("Y"), py::arg("Z"))
+      .def("setPhysSize", &InputData::setPhysSize, "Set the Physical size (in nm)", py::arg("PhysSize"))
+      .def("setDimensions", &InputData::setDimension, "Set the Dimensions", py::arg("Dims"), py::arg("MorphologyOrder"))
       .def("validate", &InputData::validate, "Validate the input data")
-      .def("setKRotationType",&InputData::setKRotationType,"Sets the krotation Type",py::arg("kRotation"))
+      .def("setCaseType",&InputData::setCaseType,"case Type")
+      .def("setMorphologyType",&InputData::setMorphologyType,"morphology Type")
+      .def("setKVectors",&InputData::setKVectors,"set K vectors")
+      .def("setDetectorCoordinates",&InputData::setDetectorCoordinates,"set Detector coordinates for Grazing incidence")
+      .def("setAlgorithm",&InputData::setAlgorithm,"set Algorithm Type",py::arg("AlgorithmID"),py::arg("MaxStreams"))
       .def_readwrite("interpolationType", &InputData::ewaldsInterpolation, "Ewalds interpolation type")
       .def_readwrite("windowingType", &InputData::windowingType, "Windowing type")
       .def_readwrite("rotMask",&InputData::rotMask,"Rotation Mask")
       .def_readwrite("openMP", &InputData::num_threads, "number of OpenMP threads")
-      .def_readwrite("scatterApproach", &InputData::scatterApproach, "sets the scatter approach");
+      .def_readwrite("scatterApproach", &InputData::scatterApproach, "sets the scatter approach")
+      .def_readwrite("referenceFrame",&InputData::referenceFrame,"sets the reference frame");
 
 
   py::class_<RefractiveIndexData>(module, "RefractiveIndex")
@@ -172,13 +190,14 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("print", &RefractiveIndexData::printEnergyData, "Prints the refractive index data");
 
   py::class_<VoxelData>(module, "VoxelData")
-      .def(py::init<const InputData &,const MorphologyType &>(), "Constructor",py::arg("InputData"),py::arg("MorphologyType"))
+      .def(py::init<const InputData &>(), "Constructor",py::arg("InputData"))
       .def("addVoxelData", &VoxelData::addMaterialDataVectorMorphology,
            "Adds the Allignment and unaligned component to the given material", py::arg("AlignedData"),
            py::arg("UnalignedData"), py::arg("MaterialID"))
       .def("addVoxelData", &VoxelData::addMaterialDataEulerAngles,
-         "Adds the Allignment and unaligned component to the given material", py::arg("S"),
-         py::arg("Phi"),py::arg("Theta"), py::arg("vFrac"),py::arg("MaterialID"))
+         "Adds the EulerAngle components to the given material", py::arg("S"),py::arg("Theta"),py::arg("Psi"), py::arg("Vfrac"),py::arg("MaterialID"))
+      .def("addVoxelData", &VoxelData::addMaterialDataEulerAnglesOnlyVFrac,
+         "Adds the EulerAngle components to the given material. S/Theta/Phi = 0", py::arg("Vfrac"),py::arg("MaterialID"))
       .def("clear", &VoxelData::clear,"Clears the voxel data")
       .def("validate", &VoxelData::validate,"validate the Voxel data")
       .def("readFromH5", &VoxelData::readFromH5, "Reads from HDF5",py::arg("Filename"))
@@ -190,12 +209,12 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("clear",&ScatteringPattern::clear,"Clears the memory")
       .def("writeToHDF5",&ScatteringPattern::writeToHDF5,"Dumps data in  HDF5 file format")
       .def("writeToVTI",&ScatteringPattern::writeToVTI,"Dumps data in  VTI file format")
-      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"));
+      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"),py::arg("kID"));
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);
   module.def("cleanup", &cleanup, "Cleanup",  py::arg("RefractiveIndex"), py::arg("VoxelData"),py::arg("ScatteringPattern"));
-  module.def("get_n_materials", &getNumMaterials, "Get number of materials");
+  module.def("getNumMaterials", &getNumMaterials, "Get number of materials");
 
 
 }

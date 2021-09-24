@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020 Iowa State University
+//Copyright (c) 2019 - 2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -295,5 +295,17 @@ __device__ inline Real computeMagVec1TimesVec1TTimesVec2(const Real *vec1 ,const
 
 }
 
+
+
+__device__ inline void RotateZ(Complex & pX, Complex & pY, Complex & pZ, const Real & angle){
+  Complex temp;
+  temp.x = pX.x*cos(angle) + pY.x*sin(angle);
+  temp.y = pX.y*cos(angle) + pY.y*sin(angle);
+
+  pY.x = pY.x*cos(angle) - pX.x*sin(angle);
+  pY.y = pY.y*cos(angle) - pX.y*sin(angle);
+
+  pX = temp;
+}
 
 #endif //WRITER_CUDAUTILS_H

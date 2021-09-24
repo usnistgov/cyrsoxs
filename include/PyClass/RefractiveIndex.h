@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020 Iowa State University
+//Copyright (c) 2019 - 2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -70,7 +70,7 @@ public:
      * @brief Computes the refractive index based on the optical constants Data
      * @param values The value for the material. Must be of the size (NUM_MATERIAL X 4).
      *                Note the optical constant data must be in the order of :
-     *               [$\delta_{\parallel}$,$\beta_{\parallel}$, $\delta_{\perp}$, $\beta_{\perp}$]
+     *               [\f$\delta_{\parallel}\f$,\f$\beta_{\parallel}\f$, \f$\delta_{\perp}\f$, \f$\beta_{\perp}\f$]
      * @param Energy The value of energy
      */
     void addData(const std::vector<std::vector<Real>> &values, const Real Energy) {

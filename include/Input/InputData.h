@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020 Iowa State University
+//Copyright (c) 2019 - 2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -27,13 +27,14 @@
 #include <string>
 #ifndef PYBIND
 #include <libconfig.h++>
+#include <array>
 #endif
 #include <iostream>
 #include <Input/Input.h>
 #include <vector>
 #include <cmath>
 #include <fstream>
-
+#include <Rotation.h>
 #ifdef PYBIND
 #include <pybind11/pybind11.h>
 #include <bitset>
@@ -45,10 +46,13 @@ namespace ParamChecker{
         DIMENSION = 1,
         PHYSSIZE = 2,
         EANGLE = 3,
-        KANGLE = 4,
-        MAX_SIZE = 5
+        KVECTORS = 4,
+        MORPHOLOGY_TYPE = 5,
+        CASE_TYPE = 6,
+        DETECTOR_COORD = 7,
+        MAX_SIZE = 8
     };
-    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","EANGLE","KANGLE"};
+    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","EANGLE","KVectors","MorphologyType","CaseType","DetectorCoord"};
     static_assert(sizeof(ParamChecker::paramNames)/sizeof(char*) == ParamChecker::Parameters::MAX_SIZE,
             "sizes dont match");
 
@@ -75,6 +79,12 @@ private:
       exit(EXIT_FAILURE);
     }
   }
+  template<typename T,int size>
+  static void ReadArray(const libconfig::Setting &setting,const std::string &key_name, std::array<T,size>  &value) {
+    for (int i = 0; i < setting.getLength(); ++i) {
+      value[i] = setting[i];
+    }
+  }
   /**
    *
    * @tparam T
@@ -92,6 +102,15 @@ private:
     return res;
   }
 
+  template <const char ** enumVarname,int maxEnums>
+  static UINT convertStringToEnums(const char * stringName){
+    for(int i = 0; i < maxEnums; i++){
+      if(strcmp(stringName,enumVarname[i]) == 0){
+        return i;
+      }
+    }
+    throw std::logic_error("String did not match not found");
+  }
     /**
    * Reads an array from the input file and stores it in the given vector.
    *
@@ -159,14 +178,7 @@ private:
   /**
    * @brief sets the flag for 2D computataion.
    */
-  inline void check2D() {
-    if (numZ != 1) {
-      enable2D_ = false;
-    } else {
-      std::cout << "[INFO] 2D computation enabled\n";
-      enable2D_ = true;
-    }
-  }
+
 
  public:
   /// start of energy
@@ -180,11 +192,7 @@ private:
   /// number of threads
   UINT num_threads = 4;
   /// Number of voxels in X direction.
-  UINT numX;
-  /// Number of voxels in Y direction.
-  UINT numY;
-  /// Number of voxels in Z direction.
-  UINT numZ;
+  UINT voxelDims[3];
   /// Physical Size
   Real physSize;
   /// Write HDF5 file
@@ -197,19 +205,27 @@ private:
   int ewaldsInterpolation = Interpolation::EwaldsInterpolation::LINEAR;
   /// Windowing Type
   UINT windowingType = FFT::FFTWindowing::NONE;
-  /// Start of k rotation
-  Real kStart = 0;
-  /// End of k rotation
-  Real kEnd = 0;
-  /// k Intcrement
-  Real kIncrement = 1.0;
-  /// kRotationType
-  UINT kRotationType = KRotationType::NOROTATION;
+  /// k
+  std::vector<Real3> kVectors;
+
   /// scatter Approach
   UINT scatterApproach = ScatterApproach::PARTIAL;
 
   std::string VTIDirName = "VTI";
   std::string HDF5DirName = "HDF5";
+
+  UINT caseType;
+  UINT morphologyType;
+  bool referenceFrame = ReferenceFrame::MATERIAL;
+
+  Real3 detectorCoordinates{0,0,1};
+  int algorithmType = Algorithm::CommunicationMinimizing;
+  int numMaxStreams = 1;
+
+
+  MorphologyOrder morphologyOrder = MorphologyOrder::INVALID;
+
+  bool dumpMorphology = false;
 
   /**
    *
@@ -218,69 +234,105 @@ private:
   inline bool if2DComputation() const {
      return enable2D_;
   }
+  inline void check2D() {
+    if (voxelDims[2] != 1) {
+      enable2D_ = false;
+    } else {
+      std::cout << "[INFO] 2D computation enabled\n";
+      enable2D_ = true;
+    }
+  }
 
 
 #ifndef PYBIND
 
   /// Morphology type
-  UINT morphologyType;
   /**
    * Constructor to read input data
-   * @param refractiveIndex material input
    * @param filename filename, default is config.txt
    */
-  InputData(std::vector<Material<NUM_MATERIAL> > &refractiveIndex, std::string filename = "config.txt") {
+  InputData(std::string filename = "config.txt") {
     libconfig::Config cfg;
-    cfg.readFile(filename.c_str());
+    try {
+      cfg.readFile(filename.c_str());
+    }
+    catch (libconfig::FileIOException & e) {
+      std::cerr << " Cannot read " << filename << "\n";
+      exit(EXIT_FAILURE);
+    }catch (libconfig::ParseException &e) {
+      std::cerr << "Parse error at " << e.getFile() << ":" << e.getLine()
+                << " - " << e.getError() <<"\n";
+      exit(EXIT_FAILURE);
+    }
+    ReadValueRequired(cfg, "CaseType",caseType);
     ReadArrayRequired(cfg, "Energies", energies);
     std::vector<Real> _temp;
     ReadArrayRequired(cfg, "EAngleRotation", _temp,3);
+
     startAngle = _temp[0]; incrementAngle = _temp[1]; endAngle = _temp[2];
 
-    ReadValueRequired(cfg, "NumThreads", num_threads);
-    ReadValueRequired(cfg, "NumX", numX);
-    ReadValueRequired(cfg, "NumY", numY);
-    ReadValueRequired(cfg, "NumZ", numZ);
-    ReadValueRequired(cfg, "PhysSize", physSize);
     ReadValueRequired(cfg, "MorphologyType", morphologyType);
+
+    if(ReadValue(cfg, "NumThreads", num_threads)){}
     if(ReadValue(cfg, "RotMask",rotMask)){}
     if(ReadValue(cfg, "EwaldsInterpolation",ewaldsInterpolation)){}
-    if(ReadValue(cfg, "WriteVTI",writeVTI)){}
-    if(ReadValue(cfg, "VTIDirName",VTIDirName)){}
+//    if(ReadValue(cfg, "WriteVTI",writeVTI)){}
+//    if(ReadValue(cfg, "VTIDirName",VTIDirName)){}
     if(ReadValue(cfg, "HDF5DirName",HDF5DirName)){}
     if(ReadValue(cfg, "WindowingType",windowingType)){}
-    if(ReadValue(cfg,"KRotationType",kRotationType)){}
+    if(ReadValue(cfg, "Algorithm",algorithmType)){}
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
-    else{
-        if(numZ < 4){
-            scatterApproach = ScatterApproach::FULL;
-        }
-    }
-    if(kRotationType == KRotationType::ROTATION){
-        ReadArrayRequired(cfg, "KAngleRotation", _temp,3);
-        kStart = _temp[0];kIncrement = _temp[1];kEnd = _temp[2];
-        if(FEQUALS(kStart,kEnd)){
-                kIncrement = 1.0;
-        }
-        else{
-            if(FEQUALS(kIncrement,0.0)){
-                throw std::logic_error("kIncrement can not be 0\n");
-            }
-        }
-        std::cout << MAG << "[WARNING] : This is an experimental routine that you are trying to use " << NRM << "\n";
-    } else{
-        kStart = 0.0;
-        kEnd = 0.0;
-        kIncrement = 1.0;
-    }
+    if(ReadValue(cfg,"DumpMorphology",dumpMorphology)){}
+    if(ReadValue(cfg,"MaxStreams",numMaxStreams)){}
 
-    check2D();
+    if(caseType == CaseTypes::DEFAULT) {
+      kVectors.resize(1,{0,0,1});
+    }
+    else {
+      const std::string key = "listKVectors";
+      if (!cfg.exists(key)) {
+        std::cerr << "[Input Error] No value corresponding to " << key
+                  << " found. Exiting\n";
+        exit(EXIT_FAILURE);
+      }
+      const libconfig::Setting & listOfKVectors = cfg.getRoot()[key];
+      kVectors.resize(listOfKVectors.getLength());
+      for(int i = 0; i < kVectors.size(); i++) {
+        const libconfig::Setting & kRoot = listOfKVectors[i].lookup("k");
+        std::array<Real,3> k;
+        ReadArray<Real,3>(kRoot,"k",k);
+        kVectors[i].x = k[0];
+        kVectors[i].y = k[1];
+        kVectors[i].z = k[2];
+        normalizeVec(kVectors[i]);
+      }
+    }
+    if(caseType == CaseTypes::GRAZING_INCIDENCE){
+      ReadArrayRequired(cfg, "DetectorCoordinates", _temp,3);
+      detectorCoordinates.x = _temp[0];
+      detectorCoordinates.y = _temp[1];
+      detectorCoordinates.z = _temp[2];
+      normalizeVec(detectorCoordinates);
+    }
+  }
 
+  void readRefractiveIndexData(std::vector<Material<NUM_MATERIAL> > &refractiveIndex) const {
+    libconfig::Config cfg;
     refractiveIndex.resize(energies.size());
     const UINT & numEnergy = energies.size();
     for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
-      std::string fname = "Material" + std::to_string(numMaterial) + ".txt";
-      cfg.readFile(fname.c_str());
+      std::string fname = "Material" + std::to_string(numMaterial+1) + ".txt";
+      try {
+        cfg.readFile(fname.c_str());
+      }
+      catch (libconfig::FileIOException & e) {
+        std::cerr << " Cannot read " << fname << "\n";
+        exit(EXIT_FAILURE);
+      }catch (libconfig::ParseException &e) {
+        std::cerr << "Parse error at " << e.getFile() << ":" << e.getLine()
+                  << " - " << e.getError() <<"\n";
+        exit(EXIT_FAILURE);
+      }
       for (int i = 0; i < numEnergy; i++) {
         const auto &global = cfg.getRoot()["EnergyData" + std::to_string(i)];
         Real energy = global["Energy"];
@@ -292,28 +344,26 @@ private:
           exit(EXIT_FAILURE);
         }
 
-          /** Diagonal enteries **/
-          Real deltaPara = global["DeltaPara"];
-          Real betaPara = global["BetaPara"];
-          Real deltaPerp = global["DeltaPerp"];
-          Real betaPerp = global["BetaPerp"];
-          /** Diagonal enteries **/
-          refractiveIndex[i].npara[numMaterial].x = 1 - deltaPara;
-          refractiveIndex[i].npara[numMaterial].y = betaPara;
+        Real deltaPara = global["DeltaPara"];
+        Real betaPara = global["BetaPara"];
+        Real deltaPerp = global["DeltaPerp"];
+        Real betaPerp = global["BetaPerp"];
 
-          refractiveIndex[i].nperp[numMaterial].x = 1 - deltaPerp;
-          refractiveIndex[i].nperp[numMaterial].y = betaPerp;
+        refractiveIndex[i].npara[numMaterial].x = 1 - deltaPara;
+        refractiveIndex[i].npara[numMaterial].y = betaPara;
+
+        refractiveIndex[i].nperp[numMaterial].x = 1 - deltaPerp;
+        refractiveIndex[i].nperp[numMaterial].y = betaPerp;
       }
 
     }
   }
-
   void validate() const{
       validate("FFT Windowing",windowingType,FFT::FFTWindowing::MAX_SIZE);
-      validate("K Rotation",kRotationType,KRotationType::MAX_ROTATION_TYPE);
       validate("Scatter Approach",scatterApproach,ScatterApproach::MAX_SCATTER_APPROACH);
       validate("Ewalds Interpolation",ewaldsInterpolation,Interpolation::EwaldsInterpolation::MAX_SIZE);
       validate("Morphology Type",ewaldsInterpolation,MorphologyType::MAX_MORPHOLOGY_TYPE);
+      validate("Case Type",caseType,CaseTypes::MAX_CASE_TYPE);
       std::cout << GRN << "Input Data : [OK] " << NRM << "\n";
   }
     /**
@@ -321,14 +371,12 @@ private:
      */
     void print() const{
 
-        std::cout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
+
+        std::cout << "Dimensions           : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         std::cout << "PhysSize             : " << physSize << " nm \n";
         std::cout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
-        std::cout << "K RotationType       : " << kRotationTypeName[kRotationType] << "\n";
-        if(kRotationType == KRotationType::ROTATION) {
-            std::cout << "kRotationAngle       : " << kStart << " : " << kIncrement << " : " << kEnd << "\n";
-        }
-        std::cout << "MorphologyType       : " << morphologyTypeName[morphologyType] << "\n";
+        std::cout << "Morphology Type      : " << morphologyTypeName[morphologyType] << "\n";
+        std::cout << "Morphology Order     : " << morphologyOrderName[morphologyOrder] << "\n";
         std::cout << "Energies simulated   : [";
         for (const auto & energy: energies) {
             std::cout << energy << " " ;
@@ -339,6 +387,11 @@ private:
         std::cout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
         std::cout << "HDF Output Directory : " << HDF5DirName << "\n";
         std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
+        std::cout << "Algorithm            : " << algorithmName[algorithmType] << "\n";
+         if(algorithmType==Algorithm::MemoryMinizing) {
+          std::cout  << "MaxStreams           : " << numMaxStreams << "\n";
+        }
+
 
     }
 #else
@@ -348,7 +401,6 @@ private:
     InputData(){
       writeHDF5 = false;
       paramChecker_.reset();
-      paramChecker_.set(ParamChecker::Parameters::KANGLE,true);
     }
     /**
      * @brief Adds the energy data
@@ -366,15 +418,26 @@ private:
         paramChecker_.set(ParamChecker::Parameters::ENERGY,true);
     }
     /**
-     * @brief Set the dimensions. Note that HDF5 file dimensions are written in (Z,Y,X)
-     * @param _numX number of voxels in X dimensions
-     * @param _numY number of voxels in Y dimensions
-     * @param _numZ number of voxels in Z dimensions
+     * @brief  Set the dimensions.
+     * @param shape of numpy / related Array
+     * @param _morphologyOrder order of morphology XYZ/ZYX
      */
-    void setDimension(const UINT & _numX, const  UINT & _numY,const  UINT & _numZ) {
-      numX = _numX;
-      numY = _numY;
-      numZ = _numZ;
+    void setDimension(const std::array<UINT,3> & shape,const MorphologyOrder & _morphologyOrder) {
+      morphologyOrder = _morphologyOrder;
+      if(morphologyOrder == MorphologyOrder::XYZ) {
+        voxelDims[0] = shape[0];
+        voxelDims[1] = shape[1];
+        voxelDims[2] = shape[2];
+      }
+      else if(morphologyOrder == MorphologyOrder::ZYX) {
+        voxelDims[2] = shape[0];
+        voxelDims[1] = shape[1];
+        voxelDims[0] = shape[2];
+      }
+      else {
+        pybind11::print("Invalid morphology order.");
+        return;
+      }
       check2D();
       paramChecker_.set(ParamChecker::Parameters::DIMENSION,true);
     }
@@ -408,53 +471,74 @@ private:
       }
       paramChecker_.set(ParamChecker::Parameters::EANGLE,true);
     }
-    /**
-     * @brief Set the angles for rotation for Electric field
-     * @param _startAngle start Angle (in degrees)
-     * @param _endAngle   end Angle (in degrees)
-     * @param _incrementAngle increment in Angle (in degrees)
-     */
-    void setKAngles(const Real & _startAngle, const Real & _endAngle, const Real & _incrementAngle) {
-        if(kRotationType == KRotationType::NOROTATION) {
-            pybind11::print("[ERROR] : Trying to set angles with K rotation type set to NONE. First change the KRotationType. Returning." );
-            return;
-        }
-        kStart = _startAngle;
-        kEnd = _endAngle;
-        kIncrement = _incrementAngle;
-        if(FEQUALS(kStart,kEnd)) {
-            kIncrement = 1.0;
-        }
-        else {
-            if(FEQUALS(kIncrement,0.0)) {
-                pybind11::print("[ERROR] :  Increment angle for K rotation cannot be 0");
-                return;
-            }
-        }
-        paramChecker_.set(ParamChecker::Parameters::KANGLE,true);
+
+    void setMorphologyType(const MorphologyType _morphologyType) {
+      morphologyType = _morphologyType;
+      paramChecker_.set(ParamChecker::Parameters::MORPHOLOGY_TYPE,true);
     }
 
-    void setKRotationType(const KRotationType & _rotationType) {
-        kRotationType = _rotationType;
-        if(kRotationType == KRotationType::ROTATION) {
-            paramChecker_.set(ParamChecker::Parameters::KANGLE,false);
-        }
+    void setCaseType(const CaseTypes _caseType) {
+      caseType = _caseType;
+      paramChecker_.set(ParamChecker::Parameters::CASE_TYPE,true);
+      if(caseType == CaseTypes::DEFAULT) {
+        Real3 kVec({0,0,1});
+        kVectors.resize(1,kVec);
+        paramChecker_.set(ParamChecker::Parameters::KVECTORS,true);
+        paramChecker_.set(ParamChecker::Parameters::DETECTOR_COORD,true);
+      }
+    }
+
+    void setKVectors(const std::array<Real,3> & _kVector) {
+      if(caseType == CaseTypes::DEFAULT) {
+        pybind11::print("Cannot add kVectors for default case type");
+        return;
+      }
+      Real3 kVec({_kVector[0],_kVector[1],_kVector[2]});
+      normalizeVec(kVec);
+      kVectors.push_back(kVec);
+      paramChecker_.set(ParamChecker::Parameters::KVECTORS,true);
+      if(caseType == CaseTypes::BEAM_DIVERGENCE) {
+        paramChecker_.set(ParamChecker::Parameters::DETECTOR_COORD,true);
+      }
 
     }
+
+    void setAlgorithm(const int & algID, int _numMaxStream = 1) {
+      if(algID >= Algorithm::MAXAlgorithmType) {
+        pybind11::print("Incorrect AlgID.");
+        return;
+      }
+      algorithmType = algID;
+      numMaxStreams = _numMaxStream;
+
+    }
+
+    void setDetectorCoordinates(const std::array<Real,3> & _detectorCoordinates) {
+      if(caseType != CaseTypes::GRAZING_INCIDENCE) {
+        pybind11::print("Cannot add Detector for default or Beam Divergence type");
+        return;
+      }
+      detectorCoordinates = {_detectorCoordinates[0],_detectorCoordinates[1],_detectorCoordinates[2]};
+      paramChecker_.set(ParamChecker::Parameters::DETECTOR_COORD,true);
+    }
+
     /**
      * @brief prints the input data
      */
     void print() const{
         pybind11::print("Required options:");
         pybind11::print("==================================================");
-        pybind11::print("Dimensions           :  [",numX,",",numY,",",numZ,"]");
+        pybind11::print("CaseType             : ",caseTypenames[caseType]);
+        pybind11::print("MorphologyType       : ",morphologyTypeName[morphologyType]);
+        pybind11::print("Dimensions           :  [",voxelDims[0],"," , voxelDims[1],",",voxelDims[2],"]");
         pybind11::print("PhysSize             : ", physSize , "nm");
         pybind11::print("Energy               : ",energies);
-        pybind11::print("Rotation Angle       : ",startAngle , " : ", incrementAngle, " : ",endAngle);
-        pybind11::print("K Rotation Type      : ",kRotationTypeName[kRotationType]);
-        if(kRotationType == KRotationType::ROTATION) {
-        pybind11::print("Rotation Angle       : ",kStart , " : ", kIncrement, " : ",kEnd);
+        pybind11::print("ERotation Angle      : ",startAngle , " : ", incrementAngle, " : ",endAngle);
+        pybind11::print("KVectorList           ");
+        for(const auto & kVec:kVectors) {
+          pybind11::print("                     :  [",kVec.x,",",kVec.y,",",kVec.z,"]");
         }
+
         pybind11::print("\n");
         pybind11::print("Optional options:");
         pybind11::print("==================================================");
@@ -462,6 +546,11 @@ private:
         pybind11::print("Interpolation Type       : ",Interpolation::interpolationName[ewaldsInterpolation]);
         pybind11::print("Windowing Type           : ",FFT::windowingName[windowingType]);
         pybind11::print("Rotation Mask            : ",rotMask);
+        pybind11::print("Reference Frame          : ",referenceFrameName[(UINT)referenceFrame]);
+        pybind11::print("Algorithm                : ",algorithmName[algorithmType]);
+        if(algorithmType==Algorithm::MemoryMinizing) {
+        pybind11::print("NumMaxStreams            : ",numMaxStreams);
+        }
 
     }
 
@@ -470,8 +559,8 @@ private:
      * @return  True if the input data is correct. False otherwise.
      */
     bool validate() const {
-      if(numZ == 1) {assert(enable2D_);}
-      if(numZ != 1) {assert(not(enable2D_));}
+      if(voxelDims[2] == 1) {assert(enable2D_);}
+      if(voxelDims[0] != 1) {assert(not(enable2D_));}
 
         if(not(paramChecker_.all())) {
           for(int i = 0; i < paramChecker_.size(); i++) {
@@ -484,13 +573,14 @@ private:
     }
 #endif
     void printToFile(std::ofstream & fout) const{
-        fout << "Dimensions           : ["<< numX << " " <<  numY << " " << numZ << "]\n";
+        fout << "CaseType             : " << caseTypenames[caseType] << "\n";
+        fout << "Morphology Type      : " << morphologyTypeName[morphologyType] << "\n";
+        fout << "Morphology Order     : " << morphologyOrderName[morphologyOrder] << "\n";
+        fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "\n";
+
+        fout << "Dimensions           : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         fout << "PhysSize             : " << physSize << "nm \n";
         fout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
-        fout << "K RotationType       : " << kRotationTypeName[kRotationType] << "\n";
-        if(kRotationType == KRotationType::ROTATION) {
-            std::cout << "kRotationAngle       : " << kStart << " : " << kIncrement << " : " << kEnd << "\n";
-        }
         fout << "Energies simulated   : [";
         for (const auto & energy: energies) {
             fout << energy << " " ;
@@ -499,10 +589,19 @@ private:
         fout << "Windowing Type       : " << FFT::windowingName[windowingType] << "\n";
         fout << "Rotation Mask        : " << rotMask << "\n";
         fout << "Interpolation Type   : " << Interpolation::interpolationName[ewaldsInterpolation] << "\n";
+        fout << "kVectors             : (";
+        for (const auto & kVec: kVectors) {
+          fout << "[" << kVec.x << "," << kVec.y << "," << kVec.z << "]" ;
+        }
+        fout << ")\n";
 #ifndef PYBIND
         fout << "HDF Output Directory : " << HDF5DirName << "\n";
 #endif
         fout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
+        fout << "Algorithm            : " << algorithmName[algorithmType] << "\n";
+        if(algorithmType==Algorithm::MemoryMinizing) {
+          fout << "MaxStreams           : " << numMaxStreams << "\n";
+        }
 
 
     }

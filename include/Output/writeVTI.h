@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 -2020 Iowa State University
+//Copyright (c) 2019 -2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -355,7 +355,7 @@ static void writeVariableFooter(FILE * fp) {
  * @param fname name of files
  * @param varname variable name
  */
-static void writeVoxelDataScalar(const Voxel<NUM_MATERIAL> *data,
+static void writeVoxelDataScalar(const Voxel *data,
                           const UINT *voxelSize,
                           const std::string &fname,
                           const char **varname){
@@ -372,12 +372,12 @@ static void writeVoxelDataScalar(const Voxel<NUM_MATERIAL> *data,
     writeVariableHeaderScalar(fout,varname[numMat]);
 #if VTI_BINARY
     for(int i = 0; i < totalSize; i++){
-     scalardata[i] =   data[i].s1[numMat].w;
+     scalardata[i] =   data[numMat*totalSize+i].s1.w;
     }
     vtk_write_binary(fout, (char *) scalardata, sizeof(Real) * totalSize);
 #else
     for(int i = 0; i < totalSize; i++){
-      fout  <<   data[i].s1[numMat].w << " ";
+      fout  <<   data[numMat*totalSize+i].s1.w << " ";
     }
 #endif
     writeVariableFooter(fout);
@@ -398,7 +398,7 @@ static void writeVoxelDataScalar(const Voxel<NUM_MATERIAL> *data,
  * @param fname name of files
  * @param varname variable name
  */
-static void writeVoxelDataVector(const Voxel<NUM_MATERIAL> *data,
+static void writeVoxelDataVector(const Voxel *data,
                           const UINT *voxelSize,
                           const std::string &fname,
                           const char **varname){
@@ -416,15 +416,15 @@ static void writeVoxelDataVector(const Voxel<NUM_MATERIAL> *data,
 #if VTI_BINARY
 
     for (int j = 0; j < totalSize; j++) {
-      vecdata[3 * j + 0] = data[j].s1[numMat].x;
-      vecdata[3 * j + 1] = data[j].s1[numMat].y;
-      vecdata[3 * j + 2] = data[j].s1[numMat].z;
+      vecdata[3 * j + 0] = data[totalSize*numMat + j].s1.x;
+      vecdata[3 * j + 1] = data[totalSize*numMat + j].s1.y;
+      vecdata[3 * j + 2] = data[totalSize*numMat + j].s1.z;
     }
     vtk_write_binary(fout, (char *) data, sizeof(Real) * totalSize * 3);
 #else
     for(BigUINT j = 0; j < totalSize; j++){
 
-      fout << data[j].s1[numMat].x << " " << data[j].s1[numMat].y << " " << data[j].s1[numMat].z << "\n";
+      fout << data[totalSize*numMat + j].s1.x << " " << data[totalSize*numMat + j].s1.y << " " << data[totalSize*numMat + j].s1.z << "\n";
     }
 #endif
     writeVariableFooter(fout);
@@ -492,7 +492,13 @@ static void writeDataScalar2D(Real * data,const UINT *voxelSize,
   }
 #else
   for(int i = 0; i < totalSize; i++){
-    fout << data[i]<< " "  << " ";
+    if(std::isnan(data[i])) {
+      fout << 0 << "\n";
+    }
+    else {
+      fout << data[i]<< " "  << " ";
+    }
+
   }
 #endif
   writeVariableFooter(fout);
@@ -569,7 +575,12 @@ static void writeDataScalar2DFP(Real * data,const UINT *voxelSize,
   }
 #else
   for(int i = 0; i < totalSize; i++){
-    fprintf(fp,"%f ", data[i]);
+    if(std::isnan(data[i])) {
+      fprintf(fp, "%e ", 0.0);
+    }
+    else {
+      fprintf(fp, "%e ", data[i]);
+    }
   }
 #endif
   writeVariableFooter(fp);

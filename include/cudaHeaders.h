@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020 Iowa State University
+//Copyright (c) 2019 - 2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,8 @@
 #include <numeric>
 #include <stdlib.h>
 
+#define INLINE __attribute__((always_inline))
+
 #define CUDA_CHECK_RETURN(value) CheckCudaErrorAux(__FILE__,__LINE__, #value, value)
 
 
@@ -57,10 +59,49 @@ static void CheckCudaErrorAux (const char *file, unsigned line, const char *stat
     if (err == cudaSuccess)
         return;
     std::cerr << statement<<" returned " << cudaGetErrorString(err) << "("<<err<< ") at "<<file<<":"<<line << std::endl;
-    exit (1);
+    exit (EXIT_FAILURE);
 }
 
+template <typename T, typename GI>
+__host__ INLINE inline void hostDeviceExchange(T * dest, const T * src, const GI & size, const cudaMemcpyKind direction){
+  CUDA_CHECK_RETURN(cudaMemcpy(dest,src,sizeof(T) * size ,direction));
+  gpuErrchk(cudaPeekAtLastError());
 
+}
+template <typename T, typename GI>
+__host__ INLINE inline void mallocGPU(T *& d_data, const GI & size){
+  CUDA_CHECK_RETURN(cudaMalloc((void **) &d_data, sizeof(T) * size));
+  gpuErrchk(cudaPeekAtLastError());
 
+}
+
+template <typename T, typename GI>
+__host__ INLINE inline void mallocCPU(T *& data, const GI & size){
+  data = new T[size];
+}
+
+template <typename T, typename GI>
+__host__ INLINE inline void mallocCPUPinned(T *& data, const GI & size){
+  CUDA_CHECK_RETURN(cudaMallocHost((void**)&data,sizeof(T)*size));
+  gpuErrchk(cudaPeekAtLastError());
+}
+
+template <typename T, typename GI>
+__host__ INLINE inline void cudaZeroEntries(T * d_data, const GI & size){
+  cudaMemset(d_data,0,sizeof(T)*size);
+}
+
+#define freeCudaMemory(X) CUDA_CHECK_RETURN(cudaFree(X)); gpuErrchk(cudaPeekAtLastError());
+#ifdef DOUBLE_PRECISION
+#define cublasScale cublasDscal
+#define cublasAXPY cublasDaxpy
+#define warpAffine nppiWarpAffine_64f_C1R
+#define cufftC2C cufftExecZ2Z
+#else
+#define cublasScale cublasSscal
+#define cublasAXPY cublasSaxpy
+#define warpAffine nppiWarpAffine_32f_C1R
+#define cufftC2C cufftExecC2C
+#endif
 
 #endif //CUDA_BASE_CUDAHEADERS_H

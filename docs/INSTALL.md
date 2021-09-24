@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (0.9.0)
+GPU enabled RSoXS simulation (1.0.0 - Beta)
 ====================================
 ## Compiling libconfig
 

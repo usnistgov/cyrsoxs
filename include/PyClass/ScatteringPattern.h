@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020 Iowa State University
+//Copyright (c) 2019 - 2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -44,7 +44,7 @@ public:
     :inputData_(InputData){
         const UINT
             numEnergyLevel = static_cast<UINT>(inputData_.energies.size());
-        data_ = new Real[numEnergyLevel * inputData_.numX * inputData_.numY];
+        data_ = new Real[numEnergyLevel * inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.kVectors.size()];
     }
 
     /**
@@ -76,45 +76,53 @@ public:
      * @brief Writes Scattering pattern data to HDF5 file
      */
     void writeToHDF5(const std::string & dirName = "HDF5") const {
-      const UINT voxelDimensions[3]{inputData_.numX,inputData_.numY,inputData_.numZ};
-      writeH5(inputData_, voxelDimensions, data_,dirName);
+      writeH5(inputData_, inputData_.voxelDims, data_,dirName);
     }
 
     /**
      * @brief Writes scattering pattern data to VTI paraview format
      */
     void writeToVTI(const std::string & dirName = "VTI") const {
-      const UINT voxelDimensions[3]{inputData_.numX,inputData_.numY,inputData_.numZ};
-      writeVTI(inputData_, voxelDimensions, data_,dirName);
+      writeVTI(inputData_, inputData_.voxelDims, data_,dirName);
     }
 
     /**
      * @brief returns the data in the numpy array. Note that it is the same memory allocation
      * with numpy wrapper.
      * @param energy Energy for which the numpy array is needed
+     * @param kID id of k Vector
      * @return numpy numpy array with the scattering pattern data of the energy
      */
-    py::array_t<Real> writeToNumpy(const Real energy) const {
-
-        const auto & energies = inputData_.energies;
-      if((energy < energies[0]) or (energy > energies[energies.size() - 1])){
-        py::print("[LOG]: Wrong EnergyID");
+    py::array_t<Real> writeToNumpy(const Real energy, const UINT kID = 0) const {
+      if(inputData_.caseType == DEFAULT){
+        if(kID > 0){
+          py::print("kID cannot be greater than 0 for Default");
+          return py::array_t<Real>{};
+        }
+      }
+      if(kID >= inputData_.kVectors.size()){
+        py::print("[ERROR] kID = ",kID, " must be smaller than kVector Size = ", inputData_.kVectors.size());
         return py::array_t<Real>{};
       }
-
+      const auto & energies = inputData_.energies;
+      if((energy < energies[0]) or (energy > energies[energies.size() - 1])){
+        py::print("[ERROR]: Wrong EnergyID");
+        return py::array_t<Real>{};
+      }
+      py::print("[INFO] kVector = [",inputData_.kVectors[kID].x,",",inputData_.kVectors[kID].y,",",inputData_.kVectors[kID].z,"]");
       const UINT energyID = std::lower_bound(energies.begin(),energies.end(),energy) - energies.begin();
 
       if(not(FEQUALS(energies[energyID],energy))){
-        py::print("[LOG]: Wrong EnergyID");
+        py::print("[ERROR]: Wrong EnergyID");
         return py::array_t<Real>{};
       }
       py::capsule free_when_done(this->data_, [](void *f) {
       });
 
       return (py::array_t<Real>(
-      {(int)inputData_.numX,(int)inputData_.numY},
-      {sizeof(Real)*inputData_.numY,sizeof(Real)},
-      &this->data_[energyID*(inputData_.numY*inputData_.numX)],
+      {(int)inputData_.voxelDims[0],(int)inputData_.voxelDims[1]},
+      {sizeof(Real)*inputData_.voxelDims[1],sizeof(Real)},
+      &this->data_[energyID*(inputData_.voxelDims[0]*inputData_.voxelDims[1])*inputData_.kVectors.size() + kID*(inputData_.voxelDims[0]*inputData_.voxelDims[1])],
           free_when_done));
 
 

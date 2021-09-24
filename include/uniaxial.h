@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020 Iowa State University
+//Copyright (c) 2019 - 2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -32,6 +32,7 @@
 #include <cmath>
 #include <complex>
 #include <math.h>
+#include <Rotation.h>
 
 #ifdef EOC
 #include <opencv2/opencv.hpp>
@@ -42,88 +43,111 @@
 #include <omp.h>
 #include <Output/writeVTI.h>
 
-
-
 /**
- * @brief This function computes the polarization in real space for the uniaxial case.
+ * @brief This function computes the polarization in real space for the uniaxial case (Euler angle version).
  * @param [in] material material data for a particular energy level under consideration.
- * @param [in] angle The angle of rotation.
  * @param [in] voxelInput voxel Input data.
  * @param [in] threadID threadID to access the index of the entry.
- * @param [out] polarizationX
- * @param [out] polarizationY
- * @param [out] polarizationZ
+ * @param [out] polarizationX X polarization
+ * @param [out] polarizationY Y polarization
+ * @param [out] polarizationZ Z polarization
+ * @param [in] numVoxels number of voxels
+ * @param [in] rotationMatrix rotation matrix for given k/E
  */
+template<ReferenceFrame referenceFrame>
+__device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *material,
+                                            const Voxel *voxelInput, const BigUINT threadID,
+                                            Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
+                                            const BigUINT & numVoxels, const Matrix & rotationMatrix) {
 
-__device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *material, const Real angle,
-                                            const Voxel<NUM_MATERIAL> *voxelInput, const BigUINT threadID,
-                                            Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ) {
+  Complex pX{0.0,0.0}, pY{0.0,0.0}, pZ{0.0,0.0};
 
-  Complex pX, pY, pZ, npar[NUM_MATERIAL], nper[NUM_MATERIAL];
-  Real4 s1[NUM_MATERIAL];
-
-  pX.x = 0;
-  pX.y = 0;
-  pY.x = 0;
-  pY.y = 0;
-  pZ.x = 0;
-  pZ.y = 0;
-  const Real cos_a = cos(angle);
-  const Real sin_a = sin(angle);
   static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
-  Real temp;
-  for (int i = 0; i < NUM_MATERIAL; i++) {
-    s1[i] = voxelInput[threadID].s1[i];
-    temp = cos_a * voxelInput[threadID].s1[i].y - sin_a * voxelInput[threadID].s1[i].x;
-    s1[i].x = sin_a * s1[i].y + cos_a * s1[i].x;
-    s1[i].y = temp;
-    npar[i] = material->npara[i];
-    nper[i] = material->nperp[i];
-  }
-
+  /**
+ * [0 1 2]
+ * [1 3 4]
+ * [2 4 5]
+ */
+  Complex rotatedNr{0.0,0.0}; // Only storing what is required
+  static constexpr Real3 eleField{1,0,0};
+  Real3 matVec;
+  doMatVec<false>(rotationMatrix,eleField,matVec);
   Complex nsum;
-  for (int i = 0; i < NUM_MATERIAL; i++) {
-    const Real &sx = s1[i].x;
-    const Real &sy = s1[i].y;
-    const Real &sz = s1[i].z;
-    const Real &phi_ui = s1[i].w;
+  for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
+    Complex npar = material->npara[numMaterial];
+    Complex nper = material->nperp[numMaterial];
+    const Voxel matProp = voxelInput[numVoxels * numMaterial + threadID];
 
-    Real phi = phi_ui + sx * sx + sy * sy + sz * sz;
+    const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
+    const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
+    const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
+    const Real & S             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S);
 
-    nsum.x = npar[i].x + 2 * nper[i].x;
-    nsum.y = npar[i].y + 2 * nper[i].y;
+    const Real   sx     =  sin(psiAngle)*sin(thetaAngle);
+    const Real   sy     =  cos(psiAngle)*sin(thetaAngle);
+    const Real   sz     =  cos(thetaAngle);
+    const Real   phi_ui = Vfrac - S;
+
+    const Real  & phi =  Vfrac;
+
+    nsum.x = npar.x + 2 * nper.x;
+    nsum.y = npar.y + 2 * nper.y;
 
     computeComplexSquare(nsum);
-    computeComplexSquare(npar[i]);
-    computeComplexSquare(nper[i]);
+    computeComplexSquare(npar);
+    computeComplexSquare(nper);
 
-//    pX.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].x;
-//    pX.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].x;
-//
-//    pY.x += (npar[i].x - nper[i].x) * s1[i].z * s1[i].y;
-//    pY.y += (npar[i].y - nper[i].y) * s1[i].z * s1[i].y;
-//
-//    pZ.x +=
-//        (s1[i].w * nsum.x) / 9.0 + npar[i].x * s1[i].z * s1[i].z + nper[i].x * (s1[i].x * s1[i].x + s1[i].y * s1[i].y)
-//            - phi;
-//    pZ.y +=
-//        (s1[i].w * nsum.y) / 9.0 + npar[i].y * s1[i].z * s1[i].z + nper[i].y * (s1[i].x * s1[i].x + s1[i].y * s1[i].y);
+    // S = fraction of aligned components
+    // (0)
+    rotatedNr.x = S*(npar.x*sx*sx + nper.x*(sy*sy + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = S*(npar.y*sx*sx + nper.y*(sy*sy + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-/**
- *  npar^2*sx^2 + nper^2*sy^2 + nper^2*sz^2
-                 sx*sy*(npar^2 - nper^2)
-                 sx*sz*(npar^2 - nper^2)
- */
-    pX.x +=
-        (phi_ui * nsum.x) / (Real) 9.0 + npar[i].x * sx * sx + nper[i].x * (sz * sz + sy * sy) - phi;
-    pX.y +=
-        (phi_ui * nsum.y) / (Real) 9.0 + npar[i].y * sx * sx + nper[i].y * (sz * sz + sy * sy);
+    pX.x += rotatedNr.x*matVec.x;
+    pX.y += rotatedNr.y*matVec.x;
 
-    pY.x += (npar[i].x - nper[i].x) * sx * sy;
-    pY.y += (npar[i].y - nper[i].y) * sx * sy;
+    // (1)
+    rotatedNr.x = S*(npar.x - nper.x)*sx*sy;
+    rotatedNr.y = S*(npar.y - nper.y)*sx*sy;
 
-    pZ.x += (npar[i].x - nper[i].x) * sz * sx;
-    pZ.y += (npar[i].y - nper[i].y) * sz * sx;
+    pX.x += rotatedNr.x*matVec.y;
+    pX.y += rotatedNr.y*matVec.y;
+
+    pY.x += rotatedNr.x*matVec.x;
+    pY.y += rotatedNr.y*matVec.x;
+
+    // (2)
+    rotatedNr.x = S*(npar.x - nper.x)*sx*sz;
+    rotatedNr.y = S*(npar.y - nper.y)*sx*sz;
+
+    pX.x += rotatedNr.x*matVec.z;
+    pX.y += rotatedNr.y*matVec.z;
+
+    pZ.x += rotatedNr.x*matVec.x;
+    pZ.y += rotatedNr.y*matVec.x;
+
+    // (3)
+    rotatedNr.x = S*(npar.x*sy*sy + nper.x*(sx*sx + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = S*(npar.y*sy*sy + nper.y*(sx*sx + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+    pY.x += rotatedNr.x*matVec.y;
+    pY.y += rotatedNr.y*matVec.y;
+
+    // (4)
+    rotatedNr.x = S*(npar.x - nper.x)*sy*sz;
+    rotatedNr.y = S*(npar.y - nper.y)*sy*sz;
+
+    pY.x += rotatedNr.x*matVec.z;
+    pY.y += rotatedNr.y*matVec.z;
+
+    pZ.x += rotatedNr.x*matVec.y;
+    pZ.y += rotatedNr.y*matVec.y;
+
+    // (5)
+    rotatedNr.x = S*(npar.x*sz*sz + nper.x*(sx*sx + sy*sy)) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = S*(npar.y*sz*sz + nper.y*(sx*sx + sy*sy)) +  ((phi_ui * nsum.y) / (Real) 9.0);
+
+    pZ.x += rotatedNr.x*matVec.z;
+    pZ.y += rotatedNr.y*matVec.z;
 
   }
 
@@ -135,23 +159,393 @@ __device__ void computePolarizationUniaxial(const Material<NUM_MATERIAL> *materi
 
   pZ.x *= OneBy4Pi;
   pZ.y *= OneBy4Pi;
+  if(referenceFrame == ReferenceFrame::MATERIAL) {
+    rotate<true>(rotationMatrix,pX,pY,pZ);
+  }
+  polarizationX[threadID] = pX;
+  polarizationY[threadID] = pY;
+  polarizationZ[threadID] = pZ;
+}
 
+/**
+ * @brief This function computes the polarization in real space for the uniaxial case. (Vector Morphology)
+ * @param [in] material material data for a particular energy level under consideration.
+ * @param [in] voxelInput voxel Input data.
+ * @param [in] threadID threadID to access the index of the entry.
+ * @param [out] polarizationX X polarization
+ * @param [out] polarizationY Y polarization
+ * @param [out] polarizationZ Z polarization
+ * @param [in] numVoxels number of voxels
+ * @param [in] rotationMatrix rotation matrix for given k/E
+ */
+
+template<ReferenceFrame referenceFrame>
+__device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_MATERIAL> *material,
+                                                    const Voxel *voxelInput, const BigUINT & threadID,
+                                                    Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
+                                                    const BigUINT & numVoxels, const Matrix & rotationMatrix) {
+
+  Complex pX{0.0,0.0}, pY{0.0,0.0}, pZ{0.0,0.0};
+
+  static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
+  /**
+ * [0 1 2]
+ * [1 3 4]
+ * [2 4 5]
+ */
+  Complex rotatedNr{0.0,0.0}; // Only storing what is required
+  static constexpr Real3 eleField{1,0,0};
+  Real3 matVec;
+  doMatVec<false>(rotationMatrix,eleField,matVec);
+  Complex nsum;
+  for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
+    Complex npar = material->npara[numMaterial];
+    Complex nper = material->nperp[numMaterial];
+    const Voxel matProp = voxelInput[numVoxels * numMaterial + threadID];
+    const Real & sx     = matProp.s1.x;
+    const Real & sy     = matProp.s1.y;
+    const Real & sz     = matProp.s1.z;
+    const Real & phi_ui = matProp.s1.w;
+
+    /**
+     * According to Eliot Dated June 29,2021:
+     * In old morphology generator: Vfrac = |s|^2 + phi_ui
+     */
+    const Real  phi = phi_ui + sx * sx + sy * sy + sz * sz;
+
+    nsum.x = npar.x + 2 * nper.x;
+    nsum.y = npar.y + 2 * nper.y;
+
+    computeComplexSquare(nsum);
+    computeComplexSquare(npar);
+    computeComplexSquare(nper);
+
+    // (0)
+    rotatedNr.x = npar.x*sx*sx + nper.x*(sy*sy + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = npar.y*sx*sx + nper.y*(sy*sy + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+    pX.x += rotatedNr.x*matVec.x;
+    pX.y += rotatedNr.y*matVec.x;
+
+    // (1)
+    rotatedNr.x = (npar.x - nper.x)*sx*sy;
+    rotatedNr.y = (npar.y - nper.y)*sx*sy;
+
+    pX.x += rotatedNr.x*matVec.y;
+    pX.y += rotatedNr.y*matVec.y;
+
+    pY.x += rotatedNr.x*matVec.x;
+    pY.y += rotatedNr.y*matVec.x;
+
+    // (2)
+    rotatedNr.x = (npar.x - nper.x)*sx*sz;
+    rotatedNr.y = (npar.y - nper.y)*sx*sz;
+
+    pX.x += rotatedNr.x*matVec.z;
+    pX.y += rotatedNr.y*matVec.z;
+
+    pZ.x += rotatedNr.x*matVec.x;
+    pZ.y += rotatedNr.y*matVec.x;
+
+    // (3)
+    rotatedNr.x = npar.x*sy*sy + nper.x*(sx*sx + sz*sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = npar.y*sy*sy + nper.y*(sx*sx + sz*sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+    pY.x += rotatedNr.x*matVec.y;
+    pY.y += rotatedNr.y*matVec.y;
+
+    // (4)
+    rotatedNr.x = (npar.x - nper.x)*sy*sz;
+    rotatedNr.y = (npar.y - nper.y)*sy*sz;
+
+    pY.x += rotatedNr.x*matVec.z;
+    pY.y += rotatedNr.y*matVec.z;
+
+    pZ.x += rotatedNr.x*matVec.y;
+    pZ.y += rotatedNr.y*matVec.y;
+
+    // (5)
+    rotatedNr.x = npar.x*sz*sz + nper.x*(sx*sx + sy*sy) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = npar.y*sz*sz + nper.y*(sx*sx + sy*sy) +  ((phi_ui * nsum.y) / (Real) 9.0);
+
+    pZ.x += rotatedNr.x*matVec.z;
+    pZ.y += rotatedNr.y*matVec.z;
+  }
+
+  pX.x *= OneBy4Pi;
+  pX.y *= OneBy4Pi;
+
+  pY.x *= OneBy4Pi;
+  pY.y *= OneBy4Pi;
+
+  pZ.x *= OneBy4Pi;
+  pZ.y *= OneBy4Pi;
+  if(referenceFrame == ReferenceFrame::MATERIAL) {
+    rotate<true>(rotationMatrix,pX,pY,pZ);
+  }
+  polarizationX[threadID] = pX;
+  polarizationY[threadID] = pY;
+  polarizationZ[threadID] = pZ;
+
+}
+/**
+ * @brief computes Nt for Algorithm 2 for Vector morpholgy
+ * @param [in] material refractive index of the material
+ * @param [in] voxelInput voxel data
+ * @param [out] Nt  computes Nt = (NR:NR - I)
+ * @param [in] offset offset in voxels according to streams
+ * @param [in] endID finish ID for this particular stream
+ * @param [in] numVoxels number of voxels
+ */
+
+__global__ void computeNtVectorMorphology(const Material<1> material,
+                          const Voxel * __restrict__ voxelInput,
+                          Complex * Nt, const BigUINT  offset, const BigUINT  endID,
+                          const BigUINT numVoxels) {
+  const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  if((threadID + offset) >= endID){
+    return;
+  }
+  Complex rotatedNr[6]; // Only storing what is required
+  memset(rotatedNr,0,sizeof(Complex)*6);
+  Complex nsum;
+  Complex npar = material.npara[0];
+  Complex nper = material.nperp[0];
+  const Real4 matProp = voxelInput[offset + threadID].s1;
+  const Real &sx = matProp.x;
+  const Real &sy = matProp.y;
+  const Real &sz = matProp.z;
+  const Real &phi_ui = matProp.w;
+
+  const Real &phi = phi_ui + sx * sx + sy * sy + sz * sz;
+
+  nsum.x = npar.x + 2 * nper.x;
+  nsum.y = npar.y + 2 * nper.y;
+
+  computeComplexSquare(nsum);
+  computeComplexSquare(npar);
+  computeComplexSquare(nper);
+
+  rotatedNr[0].x += npar.x * sx * sx + nper.x * (sy * sy + sz * sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[0].y += npar.y * sx * sx + nper.y * (sy * sy + sz * sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+  rotatedNr[1].x += (npar.x - nper.x) * sx * sy;
+  rotatedNr[1].y += (npar.y - nper.y) * sx * sy;
+
+  rotatedNr[2].x += (npar.x - nper.x) * sx * sz;
+  rotatedNr[2].y += (npar.y - nper.y) * sx * sz;
+
+  rotatedNr[3].x += npar.x * sy * sy + nper.x * (sx * sx + sz * sz) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[3].y += npar.y * sy * sy + nper.y * (sx * sx + sz * sz) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+  rotatedNr[4].x += (npar.x - nper.x) * sy * sz;
+  rotatedNr[4].y += (npar.y - nper.y) * sy * sz;
+
+  rotatedNr[5].x += npar.x * sz * sz + nper.x * (sx * sx + sy * sy) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[5].y += npar.y * sz * sz + nper.y * (sx * sx + sy * sy) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+
+  Nt[2*(threadID+offset) + 0+  0*numVoxels].x += rotatedNr[0].x; Nt[2*(threadID+offset) + 0  +  0*numVoxels ].y += rotatedNr[0].y;
+  Nt[2*(threadID+offset) + 1 + 0*numVoxels].x += rotatedNr[1].x; Nt[2*(threadID+offset) + 1  +  0*numVoxels ].y += rotatedNr[1].y;
+  Nt[2*(threadID+offset) + 0 + 2*numVoxels].x += rotatedNr[2].x; Nt[2*(threadID+offset) + 0  +  2*numVoxels ].y += rotatedNr[2].y;
+  Nt[2*(threadID+offset) + 1 + 2*numVoxels].x += rotatedNr[3].x; Nt[2*(threadID+offset) + 1  +  2*numVoxels ].y += rotatedNr[3].y;
+  Nt[2*(threadID+offset) + 0 + 4*numVoxels].x += rotatedNr[4].x; Nt[2*(threadID+offset) + 0  +  4*numVoxels ].y += rotatedNr[4].y;
+  Nt[2*(threadID+offset) + 1 + 4*numVoxels].x += rotatedNr[5].x; Nt[2*(threadID+offset) + 1  +  4*numVoxels ].y += rotatedNr[5].y;
+}
+
+/**
+ * @brief computes Nt for Algorithm 2 using Euler angles
+ * @param [in] material refractive index of the material
+ * @param [in] voxelInput voxel data
+ * @param [out] Nt  computes Nt = (NR:NR - I)
+ * @param offset offset in voxels according to streams
+ * @param endID finish ID for this particular stream
+ * @param numVoxels number of voxels
+ */
+__global__ void computeNtEulerAngles(const Material<1> material,
+                                          const Voxel * __restrict__ voxelInput,
+                                          Complex * Nt, const BigUINT  offset, const BigUINT  endID,
+                                          const BigUINT numVoxels) {
+
+  const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  if((threadID + offset) >= endID){
+    return;
+  }
+  Complex rotatedNr[6]; // Only storing what is required
+  memset(rotatedNr,0,sizeof(Complex)*6);
+  Complex nsum;
+  Complex npar = material.npara[0];
+  Complex nper = material.nperp[0];
+  const Voxel matProp = voxelInput[offset + threadID];
+  const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
+  const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
+  const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
+  const Real & S             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S); //  S = fraction of voxel with aligned component
+
+  const Real   sx     =  sin(psiAngle)*sin(thetaAngle);
+  const Real   sy     =  cos(psiAngle)*sin(thetaAngle);
+  const Real   sz     =  cos(thetaAngle);
+  const Real   phi_ui =  Vfrac - S;
+
+  const Real  & phi =  Vfrac;
+
+  nsum.x = npar.x + 2 * nper.x;
+  nsum.y = npar.y + 2 * nper.y;
+
+  computeComplexSquare(nsum);
+  computeComplexSquare(npar);
+  computeComplexSquare(nper);
+
+  rotatedNr[0].x += S*(npar.x * sx * sx + nper.x * (sy * sy + sz * sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[0].y += S*(npar.y * sx * sx + nper.y * (sy * sy + sz * sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+  rotatedNr[1].x += S*(npar.x - nper.x) * sx * sy;
+  rotatedNr[1].y += S*(npar.y - nper.y) * sx * sy;
+
+  rotatedNr[2].x += S*(npar.x - nper.x) * sx * sz;
+  rotatedNr[2].y += S*(npar.y - nper.y) * sx * sz;
+
+  rotatedNr[3].x += S*(npar.x * sy * sy + nper.x * (sx * sx + sz * sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[3].y += S*(npar.y * sy * sy + nper.y * (sx * sx + sz * sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+  rotatedNr[4].x += S*(npar.x - nper.x) * sy * sz;
+  rotatedNr[4].y += S*(npar.y - nper.y) * sy * sz;
+
+  rotatedNr[5].x += S*(npar.x * sz * sz + nper.x * (sx * sx + sy * sy)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[5].y += S*(npar.y * sz * sz + nper.y * (sx * sx + sy * sy)) + ((phi_ui * nsum.y) / (Real) 9.0);
+
+
+  Nt[2*(threadID+offset) + 0+  0*numVoxels].x += rotatedNr[0].x; Nt[2*(threadID+offset) + 0  +  0*numVoxels ].y += rotatedNr[0].y;
+  Nt[2*(threadID+offset) + 1 + 0*numVoxels].x += rotatedNr[1].x; Nt[2*(threadID+offset) + 1  +  0*numVoxels ].y += rotatedNr[1].y;
+  Nt[2*(threadID+offset) + 0 + 2*numVoxels].x += rotatedNr[2].x; Nt[2*(threadID+offset) + 0  +  2*numVoxels ].y += rotatedNr[2].y;
+  Nt[2*(threadID+offset) + 1 + 2*numVoxels].x += rotatedNr[3].x; Nt[2*(threadID+offset) + 1  +  2*numVoxels ].y += rotatedNr[3].y;
+  Nt[2*(threadID+offset) + 0 + 4*numVoxels].x += rotatedNr[4].x; Nt[2*(threadID+offset) + 0  +  4*numVoxels ].y += rotatedNr[4].y;
+  Nt[2*(threadID+offset) + 1 + 4*numVoxels].x += rotatedNr[5].x; Nt[2*(threadID+offset) + 1  +  4*numVoxels ].y += rotatedNr[5].y;
+}
+/**
+ * @brief computes polarization by ALgorithm 2
+ * @tparam referenceFrame reference frame LAB/MATERIAL
+ * @param [in] Nt Nt = (NR:NR - I)
+ * @param [out] polarizationX pX
+ * @param [out] polarizationY pY
+ * @param [out] polarizationZ pZ
+ * @param [in] rotationMatrix rotation matrix corresponding to E/k
+ * @param [in] numVoxels number of voxels
+ */
+template<ReferenceFrame referenceFrame>
+__global__ void computePolarizationVectorMorphologyLowMemory(const Real4 * __restrict__ Nt,Complex *polarizationX,
+                                                             Complex *polarizationY, Complex *polarizationZ,
+                                                             const Matrix rotationMatrix, const BigUINT numVoxels) {
+  const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+  if(threadID > numVoxels){
+    return;
+  }
+  Complex pX{0,0}, pY{0,0}, pZ{0,0};
+
+  /**
+ * [0 1 2]
+ * [1 3 4]
+ * [2 4 5]
+ */
+  static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
+
+
+  static constexpr Real3 eleField{1,0,0};
+  Real3 matVec;
+  doMatVec<false>(rotationMatrix,eleField,matVec);
+  Real4 _rotatedNr;
+  _rotatedNr = Nt[threadID + 0*numVoxels]; // (0) and (1)
+  Complex  rotatedNr[2];
+  rotatedNr[0] = {_rotatedNr.x,_rotatedNr.y};
+  rotatedNr[1] = {_rotatedNr.z,_rotatedNr.w};
+
+  // (0)
+  pX.x += rotatedNr[0].x*matVec.x;
+  pX.y += rotatedNr[0].y*matVec.x;
+
+ // (1)
+  pX.x += rotatedNr[1].x*matVec.y;
+  pX.y += rotatedNr[1].y*matVec.y;
+
+  pY.x += rotatedNr[1].x*matVec.x;
+  pY.y += rotatedNr[1].y*matVec.x;
+
+  _rotatedNr = Nt[threadID + 1*numVoxels]; // (2) and (3)
+  rotatedNr[0] = {_rotatedNr.x,_rotatedNr.y};
+  rotatedNr[1] = {_rotatedNr.z,_rotatedNr.w};
+  // (2)
+  pX.x += rotatedNr[0].x*matVec.z;
+  pX.y += rotatedNr[0].y*matVec.z;
+
+  pZ.x += rotatedNr[0].x*matVec.x;
+  pZ.y += rotatedNr[0].y*matVec.x;
+
+  //(3)
+  pY.x += rotatedNr[1].x*matVec.y;
+  pY.y += rotatedNr[1].y*matVec.y;
+
+  _rotatedNr = Nt[threadID + 2*numVoxels]; // (4) and (5)
+  rotatedNr[0] = {_rotatedNr.x,_rotatedNr.y};
+  rotatedNr[1] = {_rotatedNr.z,_rotatedNr.w};
+  // (4)
+  pY.x += rotatedNr[0].x*matVec.z;
+  pY.y += rotatedNr[0].y*matVec.z;
+
+  pZ.x += rotatedNr[0].x*matVec.y;
+  pZ.y += rotatedNr[0].y*matVec.y;
+  // (5)
+  pZ.x += rotatedNr[1].x*matVec.z;
+  pZ.y += rotatedNr[1].y*matVec.z;
+
+  pX.x *= OneBy4Pi;
+  pX.y *= OneBy4Pi;
+
+  pY.x *= OneBy4Pi;
+  pY.y *= OneBy4Pi;
+
+  pZ.x *= OneBy4Pi;
+  pZ.y *= OneBy4Pi;
+  if(referenceFrame == ReferenceFrame::MATERIAL) {
+    rotate<true>(rotationMatrix,pX,pY,pZ);
+  }
   polarizationX[threadID] = pX;
   polarizationY[threadID] = pY;
   polarizationZ[threadID] = pZ;
 
 }
 
+/**
+ * @brief flattens 3D array to 1D array
+ * @param [in] i X id
+ * @param [in] j Y id
+ * @param [in] k Z id
+ * @param [in] voxel voxel dimensions
+ * @return flattened id
+ */
 __host__ __device__ inline BigUINT reshape3Dto1D(UINT i, UINT j, UINT k, uint3 voxel) {
   return ((i) + (j) * voxel.x + (k) * voxel.x * voxel.y);
 }
 
+/**
+ * @brief returns 3D index corresponding to 1D array
+ * @param [in] id 1D flattened id
+ * @param [out] X X id
+ * @param [out] Y Y id
+ * @param [out] Z Z id
+ * @param voxel voxel dimension in each direction
+ */
 __host__ __device__ inline void reshape1Dto3D(BigUINT id, UINT &X, UINT &Y, UINT &Z, uint3 voxel) {
   Z = static_cast<UINT>(id / (voxel.y * voxel.x * 1.0));
   Y = static_cast<UINT>(id - Z * voxel.y * voxel.x) / (voxel.x * 1.0);
   X = static_cast<UINT>(id - Y * voxel.x - Z * voxel.y * voxel.x);
 }
 
+/**
+ * @brief swaps two variable
+ * @tparam T  template
+ * @param [in,out] var1 variable 1
+ * @param [in,out] var2 variable 2
+ */
 template<typename T>
 __device__ inline void swap(T &var1, T &var2) {
   T temp;
@@ -160,6 +554,12 @@ __device__ inline void swap(T &var1, T &var2) {
   var2 = temp;
 }
 
+/**
+ * @brief performs FFT shift. The shift logic is consistent with Igor version
+ * @tparam T template
+ * @param  [in,out] polarization polarization vector in Fourier space
+ * @param  [in] voxel voxel dimensions
+ */
 
 template<typename T>
 __global__ void FFTIgor(T *polarization, uint3 voxel) {
@@ -206,75 +606,32 @@ __global__ void FFTIgor(T *polarization, uint3 voxel) {
 
 }
 
-template<typename T>
-__device__ void FFTShift(T *array, uint3 voxel) {
-  uint3 mid;
-  mid.x = voxel.x / 2;
-  mid.y = voxel.y / 2;
-  mid.z = voxel.z / 2;
-  UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
-  BigUINT totalSize = (voxel.x * voxel.y * voxel.z);
-  if (threadID >= totalSize) {
-    return;
-  }
 
-  UINT X, Y, Z;
-  reshape1Dto3D(threadID, X, Y, Z, voxel);
-  if (voxel.z == 1) {
-    if ((X < mid.x) and (Y < mid.y)) {
-      BigUINT copyID = reshape3Dto1D(X + mid.x, Y + mid.y, Z + mid.z, voxel);
-      BigUINT currID = threadID;
-      swap(array[currID], array[copyID]);
-
-      copyID = reshape3Dto1D(mid.x + X, Y, mid.z + Z, voxel);
-      currID = reshape3Dto1D(X, mid.y + Y, Z, voxel);
-      swap(array[currID], array[copyID]);
-    }
-    return;
-  }
-  if ((X < mid.x) and (Y < mid.y) and (Z < mid.z)) {
-    BigUINT copyID = reshape3Dto1D(X + mid.x, Y + mid.y, Z + mid.z, voxel);
-    BigUINT currID = threadID;
-    swap(array[currID], array[copyID]);
-
-    copyID = reshape3Dto1D(mid.x + X, mid.y + Y, Z, voxel);
-    currID = reshape3Dto1D(X, Y, mid.z + Z, voxel);
-    swap(array[currID], array[copyID]);
-
-    copyID = reshape3Dto1D(mid.x + X, Y, mid.z + Z, voxel);
-    currID = reshape3Dto1D(X, mid.y + Y, Z, voxel);
-    swap(array[currID], array[copyID]);
-
-    copyID = reshape3Dto1D(X, mid.y + Y, mid.z + Z, voxel);
-    currID = reshape3Dto1D(mid.x + X, Y, Z, voxel);
-    swap(array[currID], array[copyID]);
-
-    copyID = reshape3Dto1D(mid.x + X, mid.y + Y, mid.z + Z, voxel);
-    currID = reshape3Dto1D(X, Y, mid.z + Z, voxel);
-    swap(array[currID], array[copyID]);
-  }
-
-
-}
-
-
-
+/**
+ * @brief computes X(q) at each voxel
+ * @param [in] polarizationX X polarization
+ * @param [in] polarizationY Y polarization
+ * @param [in] polarizationZ Z polarization
+ * @param [in] k magnitude of k vector
+ * @param [in] dX spacing in each direction
+ * @param [in] physSize physical Size
+ * @param [in] id voxel id
+ * @param [in] voxel voxel dimensions in each direction
+ * @param [in] enable2D whether 2D morphology
+ * @param [in] kVector 3D k vector
+ * @return X(q) for a given voxel
+ */
 inline __device__ Real computeScatter3D(const Complex * polarizationX,
                                         const Complex * polarizationY,
                                         const Complex * polarizationZ,
                                         const Real & k,
-                                        const Real & eAngle,
-                                        const Real & kAngle,
                                         const Real3 & dX,
                                         const Real & physSize,
                                         const BigUINT & id,
                                         const uint3 & voxel,
-                                        const bool enable2D
+                                        const bool enable2D,
+                                        const Real3 & kVector
 ){
-    const Real cosPhi   = cos(eAngle);
-    const Real cosTheta = cos(kAngle);
-    const Real sinPhi   = sin(eAngle);
-    const Real sinTheta = sin(kAngle);
 
     UINT X, Y, Z;
     reshape1Dto3D(id, X, Y, Z, voxel);
@@ -287,9 +644,9 @@ inline __device__ Real computeScatter3D(const Complex * polarizationX,
     }
 
     Real qVec[3];
-    qVec[0] = -k*sinPhi*sinTheta + q.x;
-    qVec[1] =  k*cosPhi*sinTheta + q.y;
-    qVec[2] =  k*cosTheta + q.z;
+    qVec[0] =  k*kVector.x + q.x;
+    qVec[1] =  k*kVector.y + q.y;
+    qVec[2] =  k*kVector.z + q.z;
 
     Complex pVec[3]{polarizationX[id],polarizationY[id],polarizationZ[id]};
     return (computeMagVec1TimesVec1TTimesVec2(qVec,pVec,k));
@@ -303,22 +660,23 @@ inline __device__ Real computeScatter3D(const Complex * polarizationX,
 * @param [in] polarizationY  Y component of polarization in Fourier space
 * @param [in] polarizationZ  Z component of polarization in Fourier space
 * @param [out] Scatter3D     Scatter 3D result
-* @param [in] elefield       Electric field
+* @param [in] k              magntude of k vector
 * @param [in] voxelNum       Number of total voxel
 * @param [in] voxel          Number of voxel in each direciton.
 * @param [in] physSize       Physical Size
+* @param [in] enable2D       2D morphology or not
+* @param [in] kVector        3D k Vector
 */
 __global__ void computeScatter3D(const Complex *polarizationX,
                                  const Complex *polarizationY,
                                  const Complex *polarizationZ,
                                  Real *Scatter3D,
-                                 const ElectricField elefield,
-                                 const Real eAngle,
-                                 const Real kAngle,
+                                 const Real k,
                                  const BigUINT voxelNum,
                                  const uint3 voxel,
                                  const Real physSize,
-                                 const bool enable2D) {
+                                 const bool enable2D,
+                                 const Real3 kVector) {
 
 
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
@@ -354,7 +712,7 @@ __global__ void computeScatter3D(const Complex *polarizationX,
 //
 // Complex pVec[3]{polarizationX[threadID],polarizationY[threadID],polarizationZ[threadID]};
 
- Scatter3D[threadID] = computeScatter3D(polarizationX,polarizationY,polarizationZ,elefield.k.z,eAngle,kAngle,dx,physSize,threadID,voxel,enable2D);
+ Scatter3D[threadID] = computeScatter3D(polarizationX,polarizationY,polarizationZ,k,dx,physSize,threadID,voxel,enable2D,kVector);
 }
 
 
@@ -369,6 +727,7 @@ __global__ void computeScatter3D(const Complex *polarizationX,
  * @param [in] start start position
  * @param [in] dx the grid podition in each direction
  * @param [in] voxel voxel dimension
+ * @param [in] enable2D 2D morphology or not
  * @return the equivalent id for the given position.
  */
 __host__ __device__ BigUINT computeEquivalentID(const Real3 pos,
@@ -449,17 +808,18 @@ __device__ inline Real computeTrilinearInterpolation(const Real & data1,
  * @param [in] voxel Number of voxel in each direction
  * @param [in] k Electric field k.
  * @param [in] physSize Physical Size.
+ * @param [in] interpolation type of interpolation : Nearest neighbor / Trilinear interpolation
+ * @param [in] enable2D 2D morpholgy or not
+ * @param [in] kVector 3D k vector
  */
-/// TODO: template it
 __global__ void computeEwaldProjectionGPU(Real *projection,
                                           const Real *scatter3D,
                                           const uint3 voxel,
                                           const Real k,
-                                          const Real eAngle,
-                                          const Real kAngle,
                                           const Real physSize,
                                           const Interpolation::EwaldsInterpolation interpolation,
-                                          const bool enable2D) {
+                                          const bool enable2D,
+                                          const Real3 kVector) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   const UINT totalSize = voxel.x * voxel.y;
   if (threadID >= totalSize) {
@@ -481,14 +841,17 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
   pos.y = (start + Y * dx.y) ;
   pos.x = (start + X * dx.x) ;
 
-  val = k * k - (pos.x) * (pos.x) - (pos.y ) * (pos.y);
+  const Real & kx = k*kVector.x;
+  const Real & ky = k*kVector.y;
+  const Real & kz = k*kVector.z;
+  val = k * k - (kx + pos.x) * (kx + pos.x) - (ky + pos.y ) * (ky + pos.y);
 
   if((val < 0) or (X == (voxel.x - 1)) or (Y == (voxel.y - 1))) {
     projection[threadID] = NAN;
   }
   else
   {
-    pos.z = -k + sqrt(val);
+    pos.z = -kz + sqrt(val);
     if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
       BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
       projection[threadID] += scatter3D[id];
@@ -509,12 +872,11 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
                                           const Complex *polarizationY,
                                           const Complex *polarizationZ,
                                           const uint3 voxel,
-                                          const Real k,
-                                          const Real eAngle,
-                                          const Real kAngle,
+                                          const Real kMagnitude,
                                           const Real physSize,
                                           const Interpolation::EwaldsInterpolation interpolation,
-                                          const bool enable2D) {
+                                          const bool enable2D,
+                                          const Real3 kVector) {
     UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
     const UINT totalSize = voxel.x * voxel.y;
     if (threadID >= totalSize) {
@@ -535,23 +897,26 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
     UINT X = static_cast<UINT>(threadID - Y * voxel.x);
     pos.y = (start + Y * dx.y) ;
     pos.x = (start + X * dx.x) ;
+    const Real & kx = kMagnitude * kVector.x;
+    const Real & ky = kMagnitude * kVector.y;
+    const Real & kz = kMagnitude * kVector.z;
 
-    val = k * k - (pos.x) * (pos.x) - (pos.y ) * (pos.y);
+    val = kMagnitude * kMagnitude - (kx + pos.x) * (kx + pos.x) - (ky + pos.y ) * (ky + pos.y);
 
     if((val < 0) or (X == (voxel.x - 1)) or (Y == (voxel.y - 1))) {
         projection[threadID] = NAN;
     }
     else
     {
-        pos.z = -k + sqrt(val);
+        pos.z = -kz + sqrt(val);
         if (interpolation == Interpolation::EwaldsInterpolation::NEARESTNEIGHBOUR) {
             BigUINT id = computeEquivalentID(pos, X, Y, start, dx, voxel, enable2D);
-            projection[threadID] += computeScatter3D(polarizationX,polarizationY,polarizationZ,k,eAngle,kAngle,dx,physSize,id,voxel,enable2D);
+            projection[threadID] += computeScatter3D(polarizationX, polarizationY, polarizationZ, kMagnitude, dx, physSize, id, voxel, enable2D, kVector);
         }
         else {
             if (enable2D) {
                 BigUINT id = reshape3Dto1D(X,Y,0,voxel);
-                projection[threadID] += computeScatter3D(polarizationX,polarizationY,polarizationZ,k,eAngle,kAngle,dx,physSize,id,voxel,enable2D);
+                projection[threadID] += computeScatter3D(polarizationX, polarizationY, polarizationZ, kMagnitude, dx, physSize, id, voxel, enable2D, kVector);
 
             } else {
                 UINT Z = static_cast<UINT >(((pos.z - start) / (dx.z)));
@@ -562,10 +927,10 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
                     BigUINT id1 = reshape3Dto1D(X, Y, Z, voxel);
                     BigUINT id2 = reshape3Dto1D(X, Y, Z + 1, voxel);
 
-                    Real data1 = computeScatter3D(polarizationX, polarizationY, polarizationZ, k, eAngle, kAngle, dx,
-                                                  physSize, id1, voxel, enable2D);
-                    Real data2 = computeScatter3D(polarizationX, polarizationY, polarizationZ, k, eAngle, kAngle, dx,
-                                                  physSize, id2, voxel, enable2D);
+                    Real data1 = computeScatter3D(polarizationX, polarizationY, polarizationZ, kMagnitude, dx,
+                                                  physSize, id1, voxel, enable2D, kVector);
+                    Real data2 = computeScatter3D(polarizationX, polarizationY, polarizationZ, kMagnitude, dx,
+                                                  physSize, id2, voxel, enable2D, kVector);
 
                     projection[threadID] += computeTrilinearInterpolation(data1, data2, pos, start, dx, X, Y, Z, voxel);
                 }
@@ -582,7 +947,7 @@ __global__ void computeEwaldProjectionGPU(Real *projection,
  * the final result which has been NANs.
  * @param [in,out] rotProjection the rotated projection
  * @param [out] mask the mask vector
- * @param [in] Number of voxel in each direction
+ * @param [in] voxel Number of voxel in each direction
  */
 __global__ void computeRotationMask(Real *rotProjection, UINT *mask, const uint3 voxel) {
   UINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
@@ -751,5 +1116,9 @@ __global__ void radialIntegrate(Real *integrate,
     integrate[threadID] = 0;
   }
 }
+
+
+
+
 
 #endif //WRITER_UNIAXIAL_H

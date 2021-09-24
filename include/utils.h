@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2020 Iowa State University
+//Copyright (c) 2019 - 2021 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -49,15 +49,39 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
     UINT endID = ((threadID + 1) * chunkSize);
 
     for (UINT csize = startID; csize < std::min(endID, numEnergyLevel); csize++) {
+
       std::stringstream stream;
       Real energy = inputData.energies[csize];
       stream << std::fixed << std::setprecision(2) << energy;
       std::string s = stream.str();
-      std::memcpy(oneEnergyData, &projectionGPUAveraged[csize * voxel2DSize], sizeof(Real) * voxel2DSize);
-      const std::string outputFname = dirName + "/Energy_" + s;
-
-      H5::writeFile2D(outputFname, oneEnergyData, voxelSize);
+      const std::string outputFname = dirName + "/Energy_" + s + ".h5";
+      H5::H5File file(outputFname.c_str(), H5F_ACC_TRUNC);
+      {
+        H5::Group group(file.createGroup("KIDList"));
+        std::vector<std::array<Real, 3>> _kList(inputData.kVectors.size());
+        for (int i = 0; i < _kList.size(); i++) {
+          _kList[i] = {inputData.kVectors[i].x, inputData.kVectors[i].y, inputData.kVectors[i].z};
+        }
+        const hsize_t dims[2]{inputData.kVectors.size(), 3};
+        const int RANK = 2;
+        H5::DataSpace dataspace(RANK, dims);
+        H5::DataSet dataset = group.createDataSet("KVec", H5::PredType::NATIVE_FLOAT, dataspace);
+#ifdef DOUBLE_PRECISION
+        dataset.write(_kList.data(), H5::PredType::NATIVE_DOUBLE);
+#else
+        dataset.write(_kList.data(), H5::PredType::NATIVE_FLOAT);
+#endif
+        group.close();
+      }
+      for (UINT kID = 0; kID < inputData.kVectors.size(); kID++) {
+        const UINT offset = csize * voxel2DSize * inputData.kVectors.size() + kID*voxel2DSize;
+        std::memcpy(oneEnergyData, &projectionGPUAveraged[offset], sizeof(Real) * voxel2DSize);
+        const std::string groupname = "K" + std::to_string(kID);
+        H5::writeFile2D(file, oneEnergyData, voxelSize,groupname);
+      }
+      file.close();
     }
+
     delete[] oneEnergyData;
 }
 /**
@@ -67,6 +91,8 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
  * @param projectionGPUAveraged The scattering pattern
  */
 static void writeVTI(const InputData & inputData, const UINT * voxelSize,const Real *projectionGPUAveraged,const std::string dirName = "VTI"){
+    std::cout << "Not supported\n";
+    return;
     createDirectory(dirName);
     omp_set_num_threads(inputData.num_threads);
     const UINT numEnergyLevel = inputData.energies.size();
@@ -114,9 +140,35 @@ static void printCopyrightInfo(){
   std::cout << "|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
   std::cout << " -------------------------------------------------------------------------------------------------- \n";
 
+  std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  std::cout << "Git patch : " << GIT_HASH << "\n";
   std::cout << "\n";
-}
 
+}
+#ifdef PYBIND
+/**
+ * Prints the copyRight Info
+ */
+static void printPyBindCopyrightInfo(){
+
+  pybind11::print(" __________________________________________________________________________________________________");
+  pybind11::print("|                                 Thanks for using Cy-RSoXS                                        |");
+  pybind11::print("|--------------------------------------------------------------------------------------------------|");
+  pybind11::print("|  Copyright          : Iowa State University                                                      |");
+  pybind11::print("|  License            : MIT                                                                        |");
+  pybind11::print("|  Acknowledgement    : ONR MURI                                                                   |");
+  pybind11::print("|  Developed at Iowa State University in collaboration with NIST                                   |");
+  pybind11::print("|  Please cite the following publication :                                                         |");
+  pybind11::print("|  Comments/Questions :                                                                            |");
+  pybind11::print("|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |");
+  pybind11::print("|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |");
+  pybind11::print(" -------------------------------------------------------------------------------------------------- ");
+
+  pybind11::print("Version   : " , VERSION_MAJOR , ".", VERSION_MINOR , ".", VERSION_PATCH );
+  pybind11::print("Git patch : " , GIT_HASH );
+
+}
+#endif
 /**
  * Prints the copyRight Info to file
  */
@@ -142,8 +194,8 @@ static void printCopyrightInfo(std::ofstream & fout){
  * @param inputData Input data
  */
 
-static void printMetaData(const InputData & inputData){
-  std::ofstream file("metadata.txt");
+static void printMetaData(const InputData & inputData, const RotationMatrix & rotationMatrix){
+  std::ofstream file("CyRSoXS.log");
   printCopyrightInfo(file);
   file << "\n\nCyRSoXS: \n";
   file << "=========================================================================================\n";
@@ -154,15 +206,33 @@ static void printMetaData(const InputData & inputData){
 
   file << "\nScaling Information:\n";
   file << "=========================================================================================\n";
-  file << "Number of pixel      :[" << inputData.numX << "," << inputData.numY << "]\n";
+  file << "Number of pixel      :[" << inputData.voxelDims[0] << "," << inputData.voxelDims[1] << "]\n";
   file << "Q range              :[" << -M_PI / inputData.physSize << "," << M_PI / inputData.physSize << "]\n";
   file << "\n\n";
 
   file << "\nInputData : \n";
   file << "=========================================================================================\n";
   inputData.printToFile(file);
+  file << "\n\n";
+
+  file << "\nRotation Matrices : \n";
+  file << "=========================================================================================\n";
+  rotationMatrix.printToFile(file);
 
   file.close();
+}
+
+
+static bool checkMorphology(const Voxel * voxel, const UINT * voxelDims){
+  const BigUINT numVoxels = voxelDims[0]*voxelDims[1]*voxelDims[2];
+  for(int i = 0; i < numVoxels*NUM_MATERIAL; i++){
+    for(int id = 0; id < 4; id++){
+      if(std::isnan(voxel[i].getValueAt(id))){
+        return false;
+      }
+    }
+  }
+  return true;
 }
 
 #endif //CY_RSOXS_UTILS_H
