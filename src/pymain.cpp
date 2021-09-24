@@ -68,7 +68,9 @@ void  launch(const InputData &inputData, const RefractiveIndexData &energyData,
     py::print("Issues with Input Data");
     return ;
   }
-
+  if(inputData.caseType != CaseTypes::DEFAULT){
+    py::print("This is an experimental feature which is not tested");
+  }
   if (not(energyData.validate())) {
     py::print("Issues with Energy data");
     return ;

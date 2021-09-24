@@ -104,6 +104,9 @@ int main(int argc, char **argv) {
                            inputData.morphologyOrder);
   inputData.check2D();
   inputData.print();
+  if(inputData.caseType != CaseTypes::DEFAULT){
+    std::cout << BLU << "This is an experimental feature which is not tested. " << NRM <<"\n";
+  }
   RotationMatrix matrix(&inputData);
   Voxel *voxelData;
   BigUINT voxelSize = inputData.voxelDims[0] * inputData.voxelDims[1] * inputData.voxelDims[2];
