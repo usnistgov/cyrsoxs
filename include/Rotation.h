@@ -401,7 +401,6 @@ __host__ __device__ static void rotate(const Matrix & rotationMatrix,  Complex &
  */
 __host__ bool static computeRotationMatrixK(const Real3 & k, Matrix & rotationMatrixK){
   static constexpr Real3 origK{0,0,1};
-  std::cout << "Here " << k.x << " "<< k.y << " " << k.z << "\n";
   computeRotationMatrix(origK,k,rotationMatrixK);
 #if DEBUG
   {
