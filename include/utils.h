@@ -140,7 +140,7 @@ static void printCopyrightInfo(){
   std::cout << "|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
   std::cout << " -------------------------------------------------------------------------------------------------- \n";
 
-  std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << " " << VERSION_TWEAK << "\n";
   std::cout << "Git patch : " << GIT_HASH << "\n";
   std::cout << "\n";
 
@@ -164,7 +164,7 @@ static void printPyBindCopyrightInfo(){
   pybind11::print("|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |");
   pybind11::print(" -------------------------------------------------------------------------------------------------- ");
 
-  pybind11::print("Version   : " , VERSION_MAJOR , ".", VERSION_MINOR , ".", VERSION_PATCH );
+  pybind11::print("Version   : " , VERSION_MAJOR , ".", VERSION_MINOR , ".", VERSION_PATCH, ".", VERSION_TWEAK );
   pybind11::print("Git patch : " , GIT_HASH );
 
 }
@@ -199,7 +199,7 @@ static void printMetaData(const InputData & inputData, const RotationMatrix & ro
   printCopyrightInfo(file);
   file << "\n\nCyRSoXS: \n";
   file << "=========================================================================================\n";
-  file << "Version              : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  file << "Version              : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH <<  " "<< VERSION_TWEAK <<"\n";
   file << "Git patch            : " << GIT_HASH << "\n";
   file << "Size of Real         : " << sizeof(Real) << "\n";
   file << "Number of material   : " << NUM_MATERIAL << "\n";

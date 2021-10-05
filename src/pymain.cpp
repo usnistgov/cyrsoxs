@@ -120,7 +120,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
   py::print("Size of Real        :", sizeof(Real));
   printPyBindCopyrightInfo();
   std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
-  std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "\n";
+  std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << ".", VERSION_TWEAK , "\n";
   std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
   py::add_ostream_redirect(module, "ostream_redirect");
   py::enum_<Interpolation::EwaldsInterpolation>(module, "InterpolationType")

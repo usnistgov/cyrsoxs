@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
 
 
   if (argc < 2) {
-    std::cout << "Usage : " << argv[0] << " " << "HDF5FileName" << "[optional] HDF5OutputDirname";
+    std::cout << "Usage : " << argv[0] << " " << "HDF5FileName" << " HDF5OutputDirname [optional]";
     exit(EXIT_FAILURE);
   }
   std::string fname = argv[1];
