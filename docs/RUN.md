@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (1.0.0 - Beta)
+GPU enabled RSoXS simulation (1.0.0.1 - Beta)
 ====================================
 
 # With Pybind support
@@ -11,7 +11,7 @@ Without Pybind support
 ## Generating config and constant files
 
 In order to run CyRSoXS, first we need to generate the confiig file.
-To generate the config file, you need to run the python script `generateConstants.py` 
+To generate the config file, you need to run the python script `generateConstants.py`
 from the scripts folder.
 
 Here are the description of the individual parameters that you would need to change
@@ -26,13 +26,13 @@ morphologyType = 0  # 0: Euler angles 1: Vector Morphology
 #Optional options
 numThreads = 4; number of threads for execution
 RotMask = False; #Default: False
-EwaldsInterpolation = 1; # 1 : Linear Interpolation (default) 0: Nearest Neighbour 
-WindowingType = 0; # 0: None (Default) 1: Hanning 
+EwaldsInterpolation = 1; # 1 : Linear Interpolation (default) 0: Nearest Neighbour
+WindowingType = 0; # 0: None (Default) 1: Hanning
 scatterApproach = 0  # 0 : Partial (Default) 1: Full
 Algorithm=1
-DumpMorphology=True 
+DumpMorphology=True
 MaxStreams = 1
-``` 
+```
 
 This code also generate the optical constants for each Energy level
 by interpolating from the files provided.
@@ -51,7 +51,7 @@ dict={'Material0':'../OpticalConstants/PEOlig2018.txt',
       'Material3':'vacuum'}
 ```
 
-Here, Material0, Material1, Material2 constants are read from the 
+Here, Material0, Material1, Material2 constants are read from the
 file `PEOlig2018.txt`. The Material3 property is set to vacuum.
 
 Also, you need to provide the individual columnID.
@@ -64,18 +64,18 @@ labelEnergy={"BetaPara":0,
              "Energy":6}
 ```  
 
-This basically  says that the `0` column of the opticalConstants file corresponds to `BetaPara` , 1 
+This basically  says that the `0` column of the opticalConstants file corresponds to `BetaPara` , 1
 corresponds to `BetaPerp` and so on.
 
 The python script can be ran directly by:
 ```
 python generateConstants.py
-``` 
+```
 
 Once the script has successfully completed, it will generate the files `config.txt` and `Material1.txt` ,
- `Material2.txt` and so on for each individual material. 
- 
- 
+ `Material2.txt` and so on for each individual material.
+
+
 ## Running Cy-RSoXS
 
 Copy all the generated files to run directory.
@@ -87,7 +87,6 @@ from the run directory.
 ./$(PATH_TO_CyRSoXS_BUILD_DIR)/CyRSoXS  $(PATH_TO_HDF5_FILE)
 ```
 
-The output will be generated in the folder named `HDF5` for HDF5 files and `VTI` for VTI files (if dumped) 
+The output will be generated in the folder named `HDF5` for HDF5 files and `VTI` for VTI files (if dumped)
 that will be created in the run directory. The output are generated in `.vti` / `.hdf5` format which
 can be visualized using [Paraview](https://www.paraview.org/) or [Visit](https://wci.llnl.gov/simulation/computer-codes/visit/).
-

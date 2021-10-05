@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (1.0.0 - Beta)
+GPU enabled RSoXS simulation (1.0.0.1 - Beta)
 ====================================
 
 Installing Docker
@@ -8,7 +8,7 @@ On Ubuntu you can use the command to install docker:
 
 ```
 sudo apt-get install docker
-sudo apt-get install docker.io 
+sudo apt-get install docker.io
 ```
 
 Launching Docker

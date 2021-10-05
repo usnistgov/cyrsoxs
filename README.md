@@ -1,19 +1,19 @@
 Cy-RSoXS: GPU enabled RSoXS simulation
 ====================================
 * This code solves the X-ray scattering on Graphical processing units (GPU).
-Currently it supports the operation with 32 bit / 64 bit float datatypes. 
+Currently it supports the operation with 32 bit / 64 bit float datatypes.
 
-* The code can be executed through the Python interface (enabled through [Pybind11](https://github.com/pybind/pybind11)) 
+* The code can be executed through the Python interface (enabled through [Pybind11](https://github.com/pybind/pybind11))
 or directly through the executable.
 
 
-Version  : 1.0.0 - Beta
+Version  : 1.0.0.1 - Beta
 ================
 
 Dependencies
 =============
 #### Required Dependencies
-* A C++ compiler with C++14 support is required. 
+* A C++ compiler with C++14 support is required.
 * gcc >= 7 abd gcc <= 8 (CUDA does not support gcc > 8)
 * Cuda Toolkit (>=9)
 * HDF5
