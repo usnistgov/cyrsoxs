@@ -50,6 +50,8 @@ namespace H5 {
       H5::DataSet dataset = file.createDataSet(groupname + "/projection", H5::PredType::NATIVE_FLOAT, dataspace);
       dataset.write(data, H5::PredType::NATIVE_FLOAT);
 #endif
+      H5DSset_label(dataset.getId(),0,"Qy");
+      H5DSset_label(dataset.getId(),1,"Qx");
       dataset.close();
     }
     catch (H5::FileIException &error) {
@@ -112,6 +114,9 @@ namespace H5 {
                                                     H5::PredType::NATIVE_FLOAT, dataspace);
           dataSet.write(data, H5::PredType::NATIVE_FLOAT);
 #endif
+          H5DSset_label(dataSet.getId(),0,"Z");
+          H5DSset_label(dataSet.getId(),1,"Y");
+          H5DSset_label(dataSet.getId(),2,"X");
           dataSet.close();
         }
       }
