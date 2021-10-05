@@ -28,7 +28,7 @@
 #include <Datatypes.h>
 #include "H5Cpp.h"
 #include <Output/outputUtils.h>
-
+#include <hdf5_hl.h>
 namespace H5 {
 /**
  * @brief Writes the final scattering pattern data in HDF5 file format

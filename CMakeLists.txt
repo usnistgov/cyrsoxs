@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(Cy-RSoXS VERSION 1.0.0.1 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
+project(Cy-RSoXS VERSION 1.0.0.2 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
@@ -185,7 +185,7 @@ else ()
         target_link_libraries(CyRSoXS ${OpenCV_LIBS})
     endif ()
 endif ()
-set_property(TARGET CyRSoXS PROPERTY CUDA_ARCHITECTURES 30 35 37 50 52 53 60 61 62 70 72)
+set_property(TARGET CyRSoXS PROPERTY CUDA_ARCHITECTURES  52 53 60 61 62 70 72)
 
 if (ENABLE_TEST)
     if (PYBIND)
