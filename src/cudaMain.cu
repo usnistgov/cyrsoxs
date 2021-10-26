@@ -264,7 +264,7 @@ int cudaMain(const UINT *voxel,
 
 
   if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()) {
-    std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
+    std::cout << "[Compile error] Exiting. Compile by Enabling 64 Bit indices\n";
     exit(EXIT_FAILURE);
   }
 
@@ -281,7 +281,7 @@ int cudaMain(const UINT *voxel,
   std::cout << "Number of CUDA devices:" << num_gpu << "\n";
 
   if (num_gpu < 1) {
-    std::cout << "No GPU found. Exiting" << "\n";
+    std::cout << "[GPU error] No GPU found. Exiting" << "\n";
     return (EXIT_FAILURE);
   }
 

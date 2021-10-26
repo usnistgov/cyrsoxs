@@ -80,13 +80,13 @@ namespace H5 {
       std::string dataName = "PhysSize";
       bool groupExists = file.nameExists(groupName.c_str());
       if (not groupExists) {
-        std::cerr << "Group " << groupName << " not found";
+        std::cerr << "[HDF5 Error] Group " << groupName << " not found";
         exit(EXIT_FAILURE);
       }
       Group group = file.openGroup(groupName.c_str());
       bool dataExists = group.nameExists(dataName.c_str());
       if (not(dataExists)) {
-        std::cerr << "DataSet " << dataName << "not found";
+        std::cerr << "[HDF5 Error] DataSet " << dataName << "not found";
         exit(EXIT_FAILURE);
       }
       H5::DataSet dataSet = group.openDataSet(dataName.c_str());
@@ -96,7 +96,7 @@ namespace H5 {
         dataSet.read(&physSize,PredType::NATIVE_DOUBLE);
       }
       else {
-        throw std::runtime_error("Wrong Data type for physSize");
+        throw std::runtime_error("[HDF5 Error]: Wrong Data type for physSize");
       }
 #else
       if (dataType == PredType::NATIVE_FLOAT) {
@@ -106,7 +106,7 @@ namespace H5 {
         dataSet.read(&_physSize, PredType::NATIVE_DOUBLE);
         physSize = _physSize;
       } else {
-        throw std::runtime_error("Wrong Data type for physSize");
+        throw std::runtime_error("[HDF5 Error] Wrong Data type for physSize");
       }
 #endif
       dataSet.close();
@@ -117,7 +117,7 @@ namespace H5 {
 
     bool groupExists = file.nameExists(groupName.c_str());
     if (not groupExists) {
-      std::cerr << "Group " << groupName << " not found";
+      std::cerr << "[HDF5 Error] Group " << groupName << " not found";
       exit(EXIT_FAILURE);
     }
 
@@ -125,7 +125,7 @@ namespace H5 {
     bool dataExists = group.nameExists(dataName.c_str());
 
     if (not(dataExists)) {
-      std::cerr << "DataSet " << dataName << "not found";
+      std::cerr << "[HDF5 Error] DataSet " << dataName << "not found";
       exit(EXIT_FAILURE);
     }
     H5::DataSet dataSet = group.openDataSet(dataName.c_str());
@@ -133,7 +133,7 @@ namespace H5 {
     hsize_t voxelDims[3];
     const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
     if (ndims != 3) {
-      std::cerr << "Expected 3D array. Found Dim = " << ndims << "for " << dataName << "\n";
+      std::cerr << "[HDF5 Error] Expected 3D array. Found Dim = " << ndims << "for " << dataName << "\n";
       exit(EXIT_FAILURE);
     }
     char label[2][AXIS_LABEL_LEN];
@@ -150,7 +150,7 @@ namespace H5 {
       voxelSize[1] = voxelDims[1];
       voxelSize[2] = voxelDims[2];
     } else {
-      throw std::runtime_error("Only XYZ/ZYX ordering supported");
+      throw std::runtime_error("[HDF5 Error] Only XYZ/ZYX ordering supported");
     }
     group.close();
     file.close();
@@ -210,13 +210,13 @@ namespace H5 {
     H5::DataSet dataSet;
     bool groupExists = file.nameExists(groupName.c_str());
     if (not groupExists) {
-      std::cerr << "Group " << groupName << "not found";
+      std::cerr << "[HDF5 Error] Group " << groupName << "not found";
       exit(EXIT_FAILURE);
     }
     Group group = file.openGroup(groupName.c_str());
     bool dataExists = group.nameExists(dataName.c_str());
     if (not(dataExists)) {
-      std::cerr << "Dataset = " << dataName << "does not exists";
+      std::cerr << "[HDF5 Error] Dataset = " << dataName << "does not exists";
       exit(EXIT_FAILURE);
     }
 
@@ -226,7 +226,7 @@ namespace H5 {
     hsize_t voxelDims[4];
     const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
     if (ndims != 4) {
-      std::cerr << "Expected 4D array. Found Dim = " << ndims << "for " << dataName << "\n";
+      std::cerr << "[HDF5 Error] Expected 4D array. Found Dim = " << ndims << "for " << dataName << "\n";
       exit(EXIT_FAILURE);
     }
     char label[2][AXIS_LABEL_LEN];
@@ -236,11 +236,12 @@ namespace H5 {
     // We store voxel dimension as (X,Y,Z) irrespective of HDF axis label
     if (morphologyOrder == MorphologyOrder::ZYX) {
       if (not((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
-        std::cerr << "Axis label mismatch for morphology for " << dataName << "\n";
+        std::cerr << "[HDF5 Error] Axis label mismatch for morphology for " << dataName << "\n";
         exit(EXIT_FAILURE);
       }
       if ((voxelDims[0] != voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
           (voxelDims[2] != voxelSize[0]) or (voxelDims[3] != 3)) {
+        std::cout << "[HDF5 Error]\n";
         std::cout << "Error in " << dataName << "\n";
         std::cout << "Error in morphology for Material = " << i << "\n";
         std::cout << "Expected dimension (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
@@ -252,11 +253,12 @@ namespace H5 {
     }
     if (morphologyOrder == MorphologyOrder::XYZ) {
       if (not((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
-        std::cerr << "Axis label mismatch for morphology for " << dataName << "\n";
+        std::cerr << "[HDF5 Error] Axis label mismatch for morphology for " << dataName << "\n";
         exit(EXIT_FAILURE);
       }
       if ((voxelDims[0] != voxelSize[0]) or (voxelDims[1] != voxelSize[1]) or
           (voxelDims[2] != voxelSize[2]) or (voxelDims[3] != 3)) {
+        std::cout << "[HDF5 Error]\n";
         std::cout << "Error in " << dataName << "\n";
         std::cout << "Error in morphology for Material = " << i << "\n";
         std::cout << "Expected dimension (X,Y,Z)   = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
@@ -268,7 +270,7 @@ namespace H5 {
     }
 #ifdef DOUBLE_PRECISION
     if(dataType != PredType::NATIVE_DOUBLE){
-       std::cerr << "The data format is not supported for double precision \n";
+       std::cerr << "[HDF5 Error] The data format is not supported for double precision \n";
        exit(EXIT_FAILURE);
     }
 
@@ -332,7 +334,7 @@ namespace H5 {
 
     bool groupExists = file.nameExists(groupName.c_str());
     if (not groupExists) {
-      std::cerr << "Group " << groupName << "not found";
+      std::cerr << "[HDF5 Error] Group " << groupName << "not found";
       exit(EXIT_FAILURE);
     }
 
@@ -341,7 +343,7 @@ namespace H5 {
 
     // Check if dataset exists and required
     if (isRequired and not(dataExists)) {
-      std::cerr << "Dataset = " << dataName << "does not exists";
+      std::cerr << "[HDF5 Error] Dataset = " << dataName << "does not exists";
       exit(EXIT_FAILURE);
     }
 
@@ -357,7 +359,7 @@ namespace H5 {
     hsize_t voxelDims[3];
     const int ndims = space.getSimpleExtentDims(voxelDims, NULL);
     if (ndims != 3) {
-      std::cerr << "Expected 3D array. Found Dim = " << ndims << "for " << dataName << "\n";
+      std::cerr << "[HDF5 Error] Expected 3D array. Found Dim = " << ndims << "for " << dataName << "\n";
       exit(EXIT_FAILURE);
     }
     char label[2][AXIS_LABEL_LEN];
@@ -368,11 +370,12 @@ namespace H5 {
     // We store voxel dimension as (X,Y,Z) irrespective of HDF axis label
     if (morphologyOrder == MorphologyOrder::ZYX) {
       if (not((strcmp(label[0], "Z") == 0) and (strcmp(label[1], "X") == 0))) {
-        std::cerr << "Axis label mismatch for morphology for " << dataName << "\n";
+        std::cerr << "[HDF5 Error] Axis label mismatch for morphology for " << dataName << "\n";
         exit(EXIT_FAILURE);
       }
       if ((voxelDims[0] != voxelSize[2]) or (voxelDims[1] != voxelSize[1]) or
           (voxelDims[2] != voxelSize[0])) {
+        std::cout << "[HDF5 Error]\n";
         std::cout << "Error in " << dataName << "\n";
         std::cout << "Error in morphology for Material = " << i << "\n";
         std::cout << "Expected dimension (X,Y,Z) = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
@@ -385,11 +388,12 @@ namespace H5 {
     }
     if (morphologyOrder == MorphologyOrder::XYZ) {
       if (not((strcmp(label[0], "X") == 0) and (strcmp(label[1], "Z") == 0))) {
-        std::cerr << "Axis label mismatch for morphology for " << dataName << "\n";
+        std::cerr << "[HDF5 Error] Axis label mismatch for morphology for " << dataName << "\n";
         exit(EXIT_FAILURE);
       }
       if ((voxelDims[0] != voxelSize[0]) or (voxelDims[1] != voxelSize[1]) or
           (voxelDims[2] != voxelSize[2])) {
+        std::cout << "[HDF5 Error]\n";
         std::cout << "Error in " << dataName << "\n";
         std::cout << "Error in morphology for Material = " << i << "\n";
         std::cout << "Expected dimension (X,Y,Z)   = " << voxelSize[0] << " " << voxelSize[1] << " " << voxelSize[2]
@@ -403,7 +407,7 @@ namespace H5 {
 
 #ifdef DOUBLE_PRECISION
     if(dataType != PredType::NATIVE_DOUBLE){
-       std::cerr << "The data format is not supported for double precision \n";
+       std::cerr << "[HDF5 Error] The data format is not supported for double precision \n";
        exit(EXIT_FAILURE);
     }
 
@@ -428,7 +432,7 @@ namespace H5 {
         XYZ_to_ZYX(morphologyData, 1, voxelSize);
       }
     } else {
-      std::cerr << "This data format is not supported \n";
+      std::cerr << "[HDF5 Error] This data format is not supported \n";
       exit(EXIT_FAILURE);
     }
 #endif
@@ -532,7 +536,7 @@ namespace H5 {
       }
 
     } else {
-      throw std::runtime_error("Wrong type of morphology");
+      throw std::runtime_error("[HDF5 Error] Wrong type of morphology");
     }
     file.close();
     return EXIT_SUCCESS;
