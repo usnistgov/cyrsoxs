@@ -47,13 +47,13 @@ namespace H5 {
     std::string dataName = "NumMaterial";
     bool groupExists = file.nameExists(groupName.c_str());
     if (not groupExists) {
-      std::cerr << "Group " << groupName << " not found";
+      std::cerr << "[HDF5 Error] Group " << groupName << " not found";
       exit(EXIT_FAILURE);
     }
     Group group = file.openGroup(groupName.c_str());
     bool dataExists = group.nameExists(dataName.c_str());
     if (not(dataExists)) {
-      std::cerr << "DataSet " << dataName << "not found";
+      std::cerr << "[HDF5 Error] DataSet " << dataName << "not found";
       exit(EXIT_FAILURE);
     }
     H5::DataSet dataSet = group.openDataSet(dataName.c_str());
@@ -65,6 +65,7 @@ namespace H5 {
       return true;
     }
     else {
+      std::cout << "[HDF5 Error] \n";
       std::cout << RED << "Compiled with " << NUM_MATERIAL << " materials\n" << NRM;
       std::cout << RED << "morphology has " << numMaterial << "material\n" << NRM;
       throw std::runtime_error("Wrong number of material");
