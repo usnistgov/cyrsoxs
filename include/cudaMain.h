@@ -67,6 +67,23 @@ int cudaMain(const UINT *voxel, const InputData &idata, const std::vector<Materi
 int cudaMainStreams(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
                     Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel *voxelInput);
 
+/**
+ * @brief calls to compute polarization only. Only called with Pybind interface. Used in debugging
+ * @param [in] voxel array of size 3 which states the dimension along each axis
+ * @param [in] idata inputData object
+ * @param [in] materialInput material Input containing the information of material property
+ * @param [in] voxelInput  voxel input
+ * @param [in] rotationMatrix rotation matrices for k / E vector
+ * @param [out] polarizationX pX
+ * @param [out] polarizationY pY
+ * @param [out] polarizationZ pZ
+ * @param [out] EAngle Angle of E rotation
+ * @return
+ */
+int computePolarization(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
+                    Complex *polarizationX,Complex *polarizationY,Complex *polarizationZ,
+                    RotationMatrix & rotationMatrix, const Voxel *voxelInput, const Real EAngle, const UINT EnergyID);
+
 
 /**
  * This is done to warmup the GPU. The first instruction takes usulally
@@ -179,17 +196,17 @@ __host__ int performFFTShift(Complex *polarization, const UINT & blockSize, cons
 
 /**
  *
- * @param d_polarizationX
- * @param d_polarizationY
- * @param d_polarizationZ
- * @param d_scatter3D
- * @param kMagnitude
- * @param voxelSize
- * @param vx
- * @param physSize
- * @param enable2D
- * @param blockSize
- * @param kVector
+ * @param d_polarizationX device polarization X vector
+ * @param d_polarizationY device polarization Y vector
+ * @param d_polarizationZ device polarization Z vector
+ * @param d_scatter3D  scatter 3D computation
+ * @param kMagnitude k magnitude
+ * @param voxelSize voxel size
+ * @param vx voxel dimensions
+ * @param physSize physSize
+ * @param enable2D true for 2D morphology
+ * @param blockSize blockSize
+ * @param kVector kVector
  * @return
  */
 __host__ int performScatter3DComputation(const Complex * d_polarizationX, const Complex *d_polarizationY, const Complex * d_polarizationZ,
@@ -278,5 +295,6 @@ __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
                        const UINT & materialID,
                        const UINT & numStreams,
                        cudaStream_t stream);
+
 
 

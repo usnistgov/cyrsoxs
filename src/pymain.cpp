@@ -38,6 +38,8 @@
 #include <PyClass/VoxelData.h>
 #include <PyClass/RefractiveIndex.h>
 #include <PyClass/ScatteringPattern.h>
+#include <PyClass/Polarization.h>
+
 namespace py = pybind11;
 
 
@@ -51,6 +53,27 @@ int getNumMaterials() {
 }
 
 
+
+
+void computePolarization(const InputData &inputData, const RefractiveIndexData &energyData,
+                         const VoxelData &voxelData, Polarization & polarization,const Real Energy, const Real EAngle){
+
+  const auto & energies = inputData.energies;
+  if((Energy < energies[0]) or (Energy > energies[energies.size() - 1])){
+    py::print("[ERROR]: Wrong Energy");
+    return;
+  }
+  const UINT energyID = std::lower_bound(energies.begin(),energies.end(),Energy) - energies.begin();
+
+  if(not(FEQUALS(energies[energyID],Energy))){
+    py::print("[ERROR]: Wrong EnergyID");
+    return;
+  }
+  RotationMatrix rotationMatrix(&inputData);
+
+  computePolarization(inputData.voxelDims, inputData, energyData.getRefractiveIndexData(),
+                      polarization.getData(0),polarization.getData(1),polarization.getData(2),rotationMatrix,voxelData.data(),EAngle,energyID);
+}
 
 
 /**
@@ -210,6 +233,12 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("writeToHDF5",&ScatteringPattern::writeToHDF5,"Dumps data in  HDF5 file format")
       .def("writeToVTI",&ScatteringPattern::writeToVTI,"Dumps data in  VTI file format")
       .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"),py::arg("kID"));
+
+  py::class_<Polarization>(module,"Polarization")
+      .def(py::init<const InputData &>(), "Constructor",py::arg("InputData"))
+      .def("clear",&Polarization::clear,"Clears the memory")
+      .def("writeToHDF5",&Polarization::writeToHDF5,"write to HDF5")
+      .def("writeToNumpy",&Polarization::writeToNumpy,"retruns numpy array",py::arg("id"));
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);

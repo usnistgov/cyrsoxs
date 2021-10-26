@@ -68,6 +68,46 @@ namespace H5 {
   }
 
   /**
+   *
+   * @param value polarization
+   * @param inputData input data
+   * @param _filename filename
+   * @param dataSetName data set name
+   */
+  void writePolarization(const Complex *value, const InputData &inputData, const std::string &_filename, const std::string &dataSetName) {
+    std::array<std::string, 3> polarizationDataSets{};
+
+    const std::string filename = _filename + ".h5";
+    H5::H5File file(filename.c_str(), H5F_ACC_RDWR);
+    try {
+      const int RANK = 4;
+      const hsize_t dims[4]{inputData.voxelDims[2], inputData.voxelDims[1], inputData.voxelDims[0], 2}; // C++ order
+      const auto &group = file.createGroup(dataSetName.c_str());
+      H5::DataSpace dataspace(RANK, dims);
+#ifdef DOUBLE_PRECISION
+      H5::DataSet dataSet = group.createDataSet(dataSetName.c_str(), H5::PredType::NATIVE_DOUBLE, dataspace);
+      dataSet.write(value, H5::PredType::NATIVE_DOUBLE, dataspace);
+#else
+      H5::DataSet dataSet = group.createDataSet(dataSetName.c_str(), H5::PredType::NATIVE_FLOAT, dataspace);
+      dataSet.write(value,H5::PredType::NATIVE_FLOAT,dataspace);
+#endif
+      H5DSset_label(dataSet.getId(), 0, "Z");
+      H5DSset_label(dataSet.getId(), 1, "Y");
+      H5DSset_label(dataSet.getId(), 2, "X");
+      dataSet.close();
+    }
+    catch (H5::FileIException &error) {
+      H5::FileIException::printErrorStack();
+    }
+    catch (H5::DataSetIException &error) {
+      H5::DataSetIException::printErrorStack();
+
+    }
+    catch (H5::DataSpaceIException &error) {
+      H5::DataSpaceIException::printErrorStack();
+    }
+  }
+  /**
    * @brief dumps the morphology file after conversion to ZYX order if required
    * @param [in] fname file name
    * @param [in] inputData input data

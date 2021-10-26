@@ -1,0 +1,98 @@
+//
+// Created by maksbh on 10/26/21.
+//
+
+#ifndef CY_RSOXS_POLARIZATION_H
+#define CY_RSOXS_POLARIZATION_H
+
+#include <Input/InputData.h>
+#include <Output/writeH5.h>
+/**
+ * @brief Polarization computation for debugging
+ */
+class Polarization {
+  const InputData & inputData_;
+  Complex * polarizationX_, * polarizationY_, *polarizationZ_;
+
+public:
+  /**
+   * @brief Constructor
+   * @param inputData input data
+   */
+  Polarization(const InputData& inputData)
+  :inputData_(inputData){
+    const BigUINT numVoxels = inputData.voxelDims[0]*inputData.voxelDims[1]*inputData.voxelDims[2];
+    polarizationX_ = new Complex[numVoxels];
+    polarizationY_ = new Complex[numVoxels];
+    polarizationZ_ = new Complex[numVoxels];
+  }
+
+  /**
+   * @brief clears the memory
+   */
+  void clear(){
+    delete [] polarizationX_;
+    delete [] polarizationY_;
+    delete [] polarizationZ_;
+  }
+  /**
+   * @brief write to HDF5 in the file Polarization.h5
+   */
+  void writeToHDF5()const {
+    H5::writePolarization(polarizationX_,inputData_,"Polarization","pX");
+    H5::writePolarization(polarizationY_,inputData_,"Polarization","pY");
+    H5::writePolarization(polarizationZ_,inputData_,"Polarization","pZ");
+  }
+
+  Complex * getData(int id){
+    if(id == 0){
+      return polarizationX_;
+    }
+    else if(id == 1){
+      return polarizationY_;
+    }
+    else if(id == 2){
+      return polarizationZ_;
+    }
+    else{
+      throw std::runtime_error("Wrong id");
+    }
+  }
+  /**
+     * @brief returns the data in the numpy array. Note that it is the same memory allocation
+     * with numpy wrapper.
+     * @param id = 0/1/2 for pX/py/pZ
+     * @return numpy numpy array with the scattering pattern data of the energy
+    */
+  py::array_t<Complex> writeToNumpy(int id) const {
+    Complex * data = nullptr;
+    py::capsule free_when_done(data, [](void *f) {
+    });
+    if(id >= 3){
+      pybind11::print("Wrong id. Must be less than 2.");
+      return py::array_t<Complex>{};
+    }
+    if(id == 0) {
+      data = polarizationX_;
+    }
+    else if(id == 1){
+      data = polarizationY_;
+    }
+    else if(id == 2){
+      data = polarizationZ_;
+    }
+    return (py::array_t<Complex>(
+      {(int) inputData_.voxelDims[0], (int) inputData_.voxelDims[1] * (int) inputData_.voxelDims[2]},
+      {sizeof(Complex) * inputData_.voxelDims[2],sizeof(Complex) * inputData_.voxelDims[1], sizeof(Complex)},
+      this->polarizationX_,
+      free_when_done));
+  }
+
+  /**
+   * @brief Destructor
+   */
+  ~Polarization(){
+    clear();
+  }
+};
+#endif //CY_RSOXS_POLARIZATION_H

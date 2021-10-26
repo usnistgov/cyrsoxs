@@ -1532,3 +1532,66 @@ freeCudaMemory(d_Nt);
   return (EXIT_SUCCESS);
 
 }
+
+int computePolarization(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
+                        Complex *polarizationX,Complex *polarizationY,Complex *polarizationZ,
+                        RotationMatrix & rotationMatrix, const Voxel *voxelInput, const Real EAngle, const UINT energyID){
+  if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()) {
+    std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
+    exit(EXIT_FAILURE);
+  }
+
+  if(idata.caseType != DEFAULT){
+    std::cout << "Only implemented for Case Type = 0\n";
+    return EXIT_FAILURE;
+  }
+  const BigUINT numVoxels = voxel[0] * voxel[1] * voxel[2]; /// Voxel size
+  const uint3 vx{voxel[0], voxel[1], voxel[2]};
+  const UINT
+    numAnglesRotation = static_cast<UINT>(std::round((idata.endAngle - idata.startAngle) / idata.incrementAngle + 1));
+  const UINT &numEnergyLevel = idata.energies.size();
+
+
+  int num_gpu;
+  cudaGetDeviceCount(&num_gpu);
+  std::cout << "Number of CUDA devices:" << num_gpu << "\n";
+
+  if (num_gpu < 1) {
+    std::cout << "No GPU found. Exiting" << "\n";
+    return (EXIT_FAILURE);
+  }
+  Voxel * d_voxelInput;
+  Complex *d_polarizationZ, *d_polarizationX, *d_polarizationY;
+  mallocGPU(d_polarizationX, numVoxels);
+  mallocGPU(d_polarizationY, numVoxels);
+  mallocGPU(d_polarizationZ, numVoxels);
+  mallocGPU(d_voxelInput,numVoxels);
+  UINT BlockSize  = static_cast<UINT>(ceil(numVoxels * 1.0 / NUM_THREADS));
+
+  hostDeviceExchange(d_voxelInput, voxelInput, numVoxels*NUM_MATERIAL, cudaMemcpyHostToDevice);
+
+  // TODO: Make this async and overlap with computation
+  rotationMatrix.initComputation();
+  const auto & baseConfigurations = rotationMatrix.getBaseConfigurations();
+
+  const int kID = 0;
+  const auto & baseConfig = baseConfigurations[kID];
+  const Matrix & rotationMatrixK = baseConfig.matrix;
+  const Real3 &kVec = idata.kVectors[kID];
+  Matrix ERotationMatrix;
+  computeRotationMatrix(kVec, rotationMatrixK, ERotationMatrix, EAngle);
+  computePolarization(materialInput[energyID], d_voxelInput, vx, d_polarizationX, d_polarizationY,
+                      d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
+                      idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
+                      static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix,numVoxels);
+
+  hostDeviceExchange(polarizationX,d_polarizationX,numVoxels,cudaMemcpyDeviceToHost);
+  hostDeviceExchange(polarizationY,d_polarizationY,numVoxels,cudaMemcpyDeviceToHost);
+  hostDeviceExchange(polarizationZ,d_polarizationZ,numVoxels,cudaMemcpyDeviceToHost);
+
+  freeCudaMemory(d_voxelInput);
+  freeCudaMemory(d_polarizationX);
+  freeCudaMemory(d_polarizationY);
+  freeCudaMemory(d_polarizationZ);
+  return EXIT_SUCCESS;
+}

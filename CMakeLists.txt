@@ -143,6 +143,7 @@ if (PYBIND)
             include/PyClass/RefractiveIndex.h
             include/PyClass/VoxelData.h
             include/PyClass/ScatteringPattern.h
+            include/PyClass/Polarization.h
             )
     set(PYBIND_SRC
             src/pymain.cpp
