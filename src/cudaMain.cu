@@ -492,7 +492,7 @@ int cudaMain(const UINT *voxel,
         Real Eangle;
         Matrix ERotationMatrix;
         for (UINT i = 0; i < numAnglesRotation; i++) {
-          Eangle = static_cast<Real>((baseRotAngle + i * idata.incrementAngle) * M_PI / 180.0);
+          Eangle = static_cast<Real>((baseRotAngle + idata.startAngle + i * idata.incrementAngle) * M_PI / 180.0);
           computeRotationMatrix(kVec, rotationMatrixK, ERotationMatrix, Eangle);
 #ifdef PROFILING
           {
@@ -1189,7 +1189,7 @@ int cudaMainStreams(const UINT *voxel,
         Matrix ERotationMatrix;
 
         for (UINT i = 0; i < numAnglesRotation; i++) {
-          Eangle = static_cast<Real>((baseRotAngle + i * idata.incrementAngle) * M_PI / 180.0);
+          Eangle = static_cast<Real>((baseRotAngle + idata.startAngle + i * idata.incrementAngle) * M_PI / 180.0);
           computeRotationMatrix(kVec, rotationMatrixK, ERotationMatrix, Eangle);
 #ifdef PROFILING
           {
