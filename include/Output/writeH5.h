@@ -86,7 +86,7 @@ namespace H5 {
       H5::DataSet dataSet = file.createDataSet(dataSetName.c_str(), H5::PredType::NATIVE_DOUBLE, dataspace);
       dataSet.write(value, H5::PredType::NATIVE_DOUBLE, dataspace);
 #else
-      H5::DataSet dataSet = group.createDataSet(dataSetName.c_str(), H5::PredType::NATIVE_FLOAT, dataspace);
+      H5::DataSet dataSet = file.createDataSet(dataSetName.c_str(), H5::PredType::NATIVE_FLOAT, dataspace);
       dataSet.write(value,H5::PredType::NATIVE_FLOAT,dataspace);
 #endif
       H5DSset_label(dataSet.getId(), 0, "Z");
