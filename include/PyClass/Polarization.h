@@ -40,6 +40,10 @@ public:
    */
   void writeToHDF5()const {
     createDirectory("Polarization");
+    for(int i = 0; i < inputData_.voxelDims[0]*inputData_.voxelDims[1]*inputData_.voxelDims[2]; i++){
+      polarizationX_[i].x = i;
+      polarizationX_[i].y = 10*i;
+    }
     H5::writePolarization(polarizationX_,inputData_,"Polarization/PolarizationX","pX");
     H5::writePolarization(polarizationY_,inputData_,"Polarization/PolarizationY","pY");
     H5::writePolarization(polarizationZ_,inputData_,"Polarization/PolarizationZ","pZ");
@@ -66,6 +70,10 @@ public:
      * @return numpy numpy array with the scattering pattern data of the energy
     */
   py::array_t<std::complex<Real>> writeToNumpy(int id) const {
+    for(int i = 0; i < inputData_.voxelDims[0]*inputData_.voxelDims[1]*inputData_.voxelDims[2]; i++){
+      polarizationX_[i].x = i;
+      polarizationX_[i].y = 10*i;
+    }
     std::complex<Real> * data;
     if(id >= 3){
       pybind11::print("Wrong id. Must be less than 2.");
@@ -85,8 +93,8 @@ public:
 
     });
     return (py::array_t<std::complex<Real>>(
-      {(int) inputData_.voxelDims[2], (int) inputData_.voxelDims[1], (int) inputData_.voxelDims[0]},
-      {sizeof(std::complex<Real>) * inputData_.voxelDims[2]*inputData_.voxelDims[1],sizeof(std::complex<Real>) * inputData_.voxelDims[1], sizeof(std::complex<Real>)},
+      {(int) inputData_.voxelDims[2], (int) inputData_.voxelDims[1], (int) inputData_.voxelDims[0]}, /// C++ order (X-> fastest)
+      {sizeof(std::complex<Real>) * inputData_.voxelDims[0]*inputData_.voxelDims[1],sizeof(std::complex<Real>) * inputData_.voxelDims[1], sizeof(std::complex<Real>)},
       data,
       free_when_done));
   }
