@@ -14,3 +14,4 @@ __pycache__
 .ipynb*
 *.asv
 octave-workspace
+*.pickle
