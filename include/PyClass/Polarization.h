@@ -39,9 +39,10 @@ public:
    * @brief write to HDF5 in the file Polarization.h5
    */
   void writeToHDF5()const {
-    H5::writePolarization(polarizationX_,inputData_,"Polarization","pX");
-    H5::writePolarization(polarizationY_,inputData_,"Polarization","pY");
-    H5::writePolarization(polarizationZ_,inputData_,"Polarization","pZ");
+    createDirectory("Polarization");
+    H5::writePolarization(polarizationX_,inputData_,"Polarization/PolarizationX","pX");
+    H5::writePolarization(polarizationY_,inputData_,"Polarization/PolarizationY","pY");
+    H5::writePolarization(polarizationZ_,inputData_,"Polarization/PolarizationZ","pZ");
   }
 
   Complex * getData(int id){
@@ -64,27 +65,29 @@ public:
      * @param id = 0/1/2 for pX/py/pZ
      * @return numpy numpy array with the scattering pattern data of the energy
     */
-  py::array_t<Complex> writeToNumpy(int id) const {
-    Complex * data = nullptr;
-    py::capsule free_when_done(data, [](void *f) {
-    });
+  py::array_t<std::complex<Real>> writeToNumpy(int id) const {
+    std::complex<Real> * data;
     if(id >= 3){
       pybind11::print("Wrong id. Must be less than 2.");
-      return py::array_t<Complex>{};
+      return py::array_t<std::complex<Real>>{};
     }
     if(id == 0) {
-      data = polarizationX_;
+      data = (std::complex<Real> *)polarizationX_;
     }
     else if(id == 1){
-      data = polarizationY_;
+      data = (std::complex<Real> *)polarizationY_;
     }
     else if(id == 2){
-      data = polarizationZ_;
+      data = (std::complex<Real> *)polarizationZ_;
     }
-    return (py::array_t<Complex>(
-      {(int) inputData_.voxelDims[0], (int) inputData_.voxelDims[1] * (int) inputData_.voxelDims[2]},
-      {sizeof(Complex) * inputData_.voxelDims[2],sizeof(Complex) * inputData_.voxelDims[1], sizeof(Complex)},
-      this->polarizationX_,
+
+    py::capsule free_when_done(data, [](void *f) {
+
+    });
+    return (py::array_t<std::complex<Real>>(
+      {(int) inputData_.voxelDims[2], (int) inputData_.voxelDims[1], (int) inputData_.voxelDims[0]},
+      {sizeof(std::complex<Real>) * inputData_.voxelDims[2]*inputData_.voxelDims[1],sizeof(std::complex<Real>) * inputData_.voxelDims[1], sizeof(std::complex<Real>)},
+      data,
       free_when_done));
   }
 

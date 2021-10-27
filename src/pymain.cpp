@@ -55,7 +55,7 @@ int getNumMaterials() {
 
 
 
-void computePolarization(const InputData &inputData, const RefractiveIndexData &energyData,
+void computePolarizationDebug(const InputData &inputData, const RefractiveIndexData &energyData,
                          const VoxelData &voxelData, Polarization & polarization,const Real Energy, const Real EAngle){
 
   const auto & energies = inputData.energies;
@@ -244,6 +244,8 @@ PYBIND11_MODULE(CyRSoXS, module) {
              py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);
   module.def("cleanup", &cleanup, "Cleanup",  py::arg("RefractiveIndex"), py::arg("VoxelData"),py::arg("ScatteringPattern"));
   module.def("getNumMaterials", &getNumMaterials, "Get number of materials");
+  module.def("computePolarization", &computePolarizationDebug, "Computes the polarization vector for debugging",py::arg("InputData"),
+             py::arg("RefractiveIndex"),py::arg("VoxelData"),py::arg("Polarization"),py::arg("Energy"),py::arg("EAngle"));
 
 
 }

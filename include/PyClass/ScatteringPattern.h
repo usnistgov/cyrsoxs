@@ -120,7 +120,7 @@ public:
       });
 
       return (py::array_t<Real>(
-      {(int)inputData_.voxelDims[0],(int)inputData_.voxelDims[1]},
+      {(int)inputData_.voxelDims[1],(int)inputData_.voxelDims[0]},
       {sizeof(Real)*inputData_.voxelDims[1],sizeof(Real)},
       &this->data_[energyID*(inputData_.voxelDims[0]*inputData_.voxelDims[1])*inputData_.kVectors.size() + kID*(inputData_.voxelDims[0]*inputData_.voxelDims[1])],
           free_when_done));

@@ -1536,6 +1536,7 @@ freeCudaMemory(d_Nt);
 int computePolarization(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
                         Complex *polarizationX,Complex *polarizationY,Complex *polarizationZ,
                         RotationMatrix & rotationMatrix, const Voxel *voxelInput, const Real EAngle, const UINT energyID){
+
   if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()) {
     std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
     exit(EXIT_FAILURE);
@@ -1565,7 +1566,7 @@ int computePolarization(const UINT *voxel, const InputData &idata, const std::ve
   mallocGPU(d_polarizationX, numVoxels);
   mallocGPU(d_polarizationY, numVoxels);
   mallocGPU(d_polarizationZ, numVoxels);
-  mallocGPU(d_voxelInput,numVoxels);
+  mallocGPU(d_voxelInput,numVoxels*NUM_MATERIAL);
   UINT BlockSize  = static_cast<UINT>(ceil(numVoxels * 1.0 / NUM_THREADS));
 
   hostDeviceExchange(d_voxelInput, voxelInput, numVoxels*NUM_MATERIAL, cudaMemcpyHostToDevice);
