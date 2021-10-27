@@ -1,7 +1,7 @@
 Cy-RSoXS Changes History
 ====================================
 
-Version 1.0.0.1 - Beta
+Version 1.0.1 - Beta
 =================
 * Axis label added in all HDF5 file output
 

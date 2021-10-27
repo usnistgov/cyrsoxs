@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (1.0.0 - Beta)
+GPU enabled RSoXS simulation (1.0.1 - Beta)
 ====================================
 ## Compiling libconfig
 
@@ -28,7 +28,7 @@ source ~/.bashrc
 
 **NOTE:** On some HPC clusters (when using the Intel compiler), the `make` step gives a linker error. This is the libconfig example program failing to link with the Intel runtime. This is okay - the libconfig library itself compiles just fine. Just run `make install` and double check that `install/lib` contains some `*.a` files.
 
-## Installing HDF5 
+## Installing HDF5
 
 Cy-RSoXS needs [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format)-based binary input format.
 
@@ -51,7 +51,7 @@ source ~/.bashrc
 ```
 
 
-Downloading Cy-RSoXS 
+Downloading Cy-RSoXS
 ==================
 
 You can download Cy-RSoXS by cloning into the repository
@@ -70,19 +70,19 @@ If you want to use the Python support for Cy-RSoXS, add the submodule by
 git submodule update --init
 ```
 
-Building Cy-RSoXS 
+Building Cy-RSoXS
 ==================
 
 **Cmake options**
 
-One should have a valid C/C++ compiler and CUDA-toolkit in addition to above modules installed, in order to 
+One should have a valid C/C++ compiler and CUDA-toolkit in addition to above modules installed, in order to
 compile Cy-RSoXS.
 
 ```bash
 cd $Cy-RSoXS_DIR
-mkdir build; 
+mkdir build;
 cd build;
-cmake .. -DCMAKE_BUILD_TYPE=Release  -DNUM_MATERIAL=4 
+cmake .. -DCMAKE_BUILD_TYPE=Release  -DNUM_MATERIAL=4
 ```
 
 **Building with Pybind**
@@ -95,13 +95,13 @@ cmake .. -DCMAKE_BUILD_TYPE=Release  -DNUM_MATERIAL=4
 If you are compiling with intel compiler (Does not work with Pybind):
 ```bash
  -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc
-``` 
+```
 
 **Specifying number of material**
 
 Number of material is specified during the compile time by the flag:
 ```bash
--DNUM_MATERIAL=4 
+-DNUM_MATERIAL=4
 ```  
 The above flag will set the number of material to 4.
 
@@ -136,7 +136,7 @@ Making Cy-RSoxs
 ===============
 Once the cmake files has been generated run the following command:
 ```bash
-make 
+make
 ```
 
 In order to generate the documentation, run
