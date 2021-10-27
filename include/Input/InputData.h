@@ -270,7 +270,17 @@ private:
     ReadArrayRequired(cfg, "EAngleRotation", _temp,3);
 
     startAngle = _temp[0]; incrementAngle = _temp[1]; endAngle = _temp[2];
-
+    if(startAngle > endAngle){
+      throw std::runtime_error("Start EAngle can not be greater than end EAngle");
+    }
+    if(incrementAngle == 0){
+      if(not(FEQUALS(startAngle,endAngle))){
+        throw std::runtime_error("Increment angle = 0");
+      }
+      else {
+        incrementAngle = 1.0;
+      }
+    }
     ReadValueRequired(cfg, "MorphologyType", morphologyType);
 
     if(ReadValue(cfg, "NumThreads", num_threads)){}
@@ -371,8 +381,13 @@ private:
      */
     void print() const{
 
+        if(morphologyOrder == MorphologyOrder::XYZ){
+        std::cout << "Dimensions [X Y Z]   : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
+        }
+        else{
+        std::cout << "Dimensions [Z Y X]   : ["<< voxelDims[2] << " " <<  voxelDims[1] << " " << voxelDims[0] << "]\n";
+        }
 
-        std::cout << "Dimensions           : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         std::cout << "PhysSize             : " << physSize << " nm \n";
         std::cout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
         std::cout << "Morphology Type      : " << morphologyTypeName[morphologyType] << "\n";
@@ -460,6 +475,10 @@ private:
       startAngle = _startAngle;
       endAngle = _endAngle;
       incrementAngle = _incrementAngle;
+      if(startAngle > endAngle) {
+        pybind11::print("[ERROR]: Start EAngle cannot be greater than end EAngle");
+        return;
+      }
       if(FEQUALS(startAngle,endAngle)) {
           incrementAngle = 1.0;
       }
@@ -530,10 +549,16 @@ private:
         pybind11::print("==================================================");
         pybind11::print("CaseType             : ",caseTypenames[caseType]);
         pybind11::print("MorphologyType       : ",morphologyTypeName[morphologyType]);
-        pybind11::print("Dimensions           :  [",voxelDims[0],"," , voxelDims[1],",",voxelDims[2],"]");
+        if(morphologyOrder == MorphologyOrder::XYZ) {
+          pybind11::print("Dimensions [X Y Z]   :  [", voxelDims[0], ",", voxelDims[1], ",", voxelDims[2], "]");
+        }
+        else {
+          pybind11::print("Dimensions [Z Y X]   :  [", voxelDims[2], ",", voxelDims[1], ",", voxelDims[0], "]");
+        }
         pybind11::print("PhysSize             : ", physSize , "nm");
         pybind11::print("Energy               : ",energies);
         pybind11::print("ERotation Angle      : ",startAngle , " : ", incrementAngle, " : ",endAngle);
+        pybind11::print("Morphology Order     : ",morphologyOrderName[morphologyOrder]);
         pybind11::print("KVectorList           ");
         for(const auto & kVec:kVectors) {
           pybind11::print("                     :  [",kVec.x,",",kVec.y,",",kVec.z,"]");
@@ -577,8 +602,12 @@ private:
         fout << "Morphology Type      : " << morphologyTypeName[morphologyType] << "\n";
         fout << "Morphology Order     : " << morphologyOrderName[morphologyOrder] << "\n";
         fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "\n";
-
-        fout << "Dimensions           : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
+        if(morphologyOrder == MorphologyOrder::XYZ){
+          fout << "Dimensions [X Y Z]   : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
+        }
+        else{
+          fout << "Dimensions [Z Y X]   : ["<< voxelDims[2] << " " <<  voxelDims[1] << " " << voxelDims[0] << "]\n";
+        }
         fout << "PhysSize             : " << physSize << "nm \n";
         fout << "E Rotation Angle     : " << startAngle << " : " << incrementAngle << " : " <<endAngle << "\n";
         fout << "Energies simulated   : [";
