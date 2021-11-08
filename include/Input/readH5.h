@@ -42,7 +42,8 @@ namespace H5 {
   static constexpr int AXIS_LABEL_LEN = 2;
 
 
-  static bool checkNumberOfMaterial(const H5::H5File &file) {
+  static int getNumberOfMaterial(const std::string & hdf5file) {
+    H5::H5File file(hdf5file, H5F_ACC_RDONLY);
     std::string groupName = "Morphology_Parameters";
     std::string dataName = "NumMaterial";
     bool groupExists = file.nameExists(groupName.c_str());
@@ -60,17 +61,13 @@ namespace H5 {
     H5::DataType dataType = dataSet.getDataType();
     int numMaterial;
     dataSet.read(&numMaterial,PredType::NATIVE_INT);
-
-    if(numMaterial == NUM_MATERIAL) {
-      return true;
-    }
-    else {
-      std::cout << "[HDF5 Error] \n";
-      std::cout << RED << "Compiled with " << NUM_MATERIAL << " materials\n" << NRM;
-      std::cout << RED << "morphology has " << numMaterial << "material\n" << NRM;
-      throw std::runtime_error("Wrong number of material");
-    }
+    dataSet.close();
+    group.close();
+    file.close();
+    return numMaterial;
   }
+
+
   static inline void
   getDimensionAndOrder(const std::string &hdf5fileName, const MorphologyType &morphologyType, UINT *voxelSize,
                        Real &physSize,
@@ -457,9 +454,6 @@ namespace H5 {
                       bool isAllocated = false) {
     H5::H5File file(hdf5file, H5F_ACC_RDONLY);
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);
-
-    bool check = checkNumberOfMaterial(file);
-    assert(check == true);
 
     if (not isAllocated) {
       voxelData = new Voxel[numVoxel * NUM_MATERIAL];

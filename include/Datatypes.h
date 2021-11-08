@@ -54,6 +54,7 @@ typedef uint32_t UINT;
 #define NUM_THREADS 128
 
 
+
 /// Interpolation for I(q)
 namespace Interpolation{
     /// Ewalds interpolation type

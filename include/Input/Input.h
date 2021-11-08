@@ -32,21 +32,20 @@
 
 #ifndef BIAXIAL
 /// Stores the material refractive index data
-template<int num_component>
 struct Material {
 
   /** Parallel component of Refractive index **/
-  Complex npara[num_component];
+  Complex npara;
 
   /** Perpendicular component of Refractive index **/
-  Complex nperp[num_component];
+  Complex nperp;
 
   /**
    * @brief Constructor
    */
   Material(){
-      std::memset (npara, 0, sizeof (Complex)*num_component);
-      std::memset (nperp, 0, sizeof (Complex)*num_component);
+      std::memset (&npara, 0, sizeof (Complex));
+      std::memset (&nperp, 0, sizeof (Complex));
   }
 };
 

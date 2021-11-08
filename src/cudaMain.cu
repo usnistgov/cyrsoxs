@@ -122,7 +122,7 @@ __host__ int peformEwaldProjectionGPU(Real *d_projection,
 }
 
 template<ReferenceFrame referenceFrame>
-__global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
+__global__ void computePolarization(const Material * d_materialConstants,
                                     const Voxel *voxelInput,
                                     const uint3 voxel,
                                     Complex *polarizationX,
@@ -132,7 +132,7 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     const bool enable2D,
                                     const MorphologyType morphologyType,
                                     const Matrix rotationMatrix,
-                                    const BigUINT numVoxels
+                                    const BigUINT numVoxels, int DEVICE_NUM_MATERIAL
 ) {
   BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   if(threadID > numVoxels){
@@ -140,12 +140,12 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
   }
 #ifndef BIAXIAL
   if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-    computePolarizationVectorMorphologyOptimized<referenceFrame>(&materialInput, voxelInput, threadID, polarizationX,
+    computePolarizationVectorMorphologyOptimized<referenceFrame>(d_materialConstants, voxelInput, threadID, polarizationX,
                                                  polarizationY,
-                                                 polarizationZ,numVoxels,rotationMatrix);
+                                                 polarizationZ,numVoxels,rotationMatrix,DEVICE_NUM_MATERIAL);
   } else {
-    computePolarizationEulerAngles<referenceFrame>(&materialInput, voxelInput, threadID, polarizationX, polarizationY,
-                                   polarizationZ,numVoxels,rotationMatrix);
+    computePolarizationEulerAngles<referenceFrame>(d_materialConstants, voxelInput, threadID, polarizationX, polarizationY,
+                                   polarizationZ,numVoxels,rotationMatrix,DEVICE_NUM_MATERIAL);
   }
 #else
   printf("Kernel not spported\n");
@@ -175,7 +175,7 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
 
 }
 
-__host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
+__host__ int computePolarization(const Material  * d_materialConstants,
                                  const Voxel *d_voxelInput,
                                  const uint3 &vx,
                                  Complex *d_polarizationX,
@@ -190,27 +190,27 @@ __host__ int computePolarization(const Material<NUM_MATERIAL> &materialInput,
                                  const BigUINT & numVoxels
 ) {
   if(referenceFrame == ReferenceFrame::MATERIAL) {
-    computePolarization<ReferenceFrame::MATERIAL><<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput,
+    computePolarization<ReferenceFrame::MATERIAL><<< blockSize, NUM_THREADS >>>(d_materialConstants, d_voxelInput,
                                                                                  vx, d_polarizationX,
                                                                                 d_polarizationY, d_polarizationZ,
                                                                                 windowing,
                                                                                 enable2D,
-                                                                                morphologyType,rotationMatrix, numVoxels);
+                                                                                morphologyType,rotationMatrix, numVoxels,NUM_MATERIAL);
   }
   else  {
-    computePolarization<ReferenceFrame::LAB><<< blockSize, NUM_THREADS >>>(materialInput, d_voxelInput,
+    computePolarization<ReferenceFrame::LAB><<< blockSize, NUM_THREADS >>>(d_materialConstants, d_voxelInput,
                                                                                  vx, d_polarizationX,
                                                                                 d_polarizationY, d_polarizationZ,
                                                                                 windowing,
                                                                                 enable2D,
-                                                                                morphologyType,rotationMatrix,numVoxels);
+                                                                                morphologyType,rotationMatrix,numVoxels,NUM_MATERIAL);
   }
   cudaDeviceSynchronize();
   gpuErrchk(cudaPeekAtLastError());
   return EXIT_SUCCESS;
 }
 
-__host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
+__host__ int computeNt(const Material * d_materialConstants,
                        const Voxel *d_voxelInput,
                        Complex * d_Nt,
                        const MorphologyType &morphologyType,
@@ -223,13 +223,11 @@ __host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
                        cudaStream_t stream
 
 ) {
-  Material<1> material;
-  material.npara[0] = materialInput.npara[materialID];
-  material.nperp[0] = materialInput.nperp[materialID];
+
   if(morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
-    computeNtVectorMorphology<<<std::ceil(blockSize*1.0/numStreams), NUM_THREADS,0,stream>>>(material, d_voxelInput, d_Nt, offset,endID,numVoxels);
+    computeNtVectorMorphology<<<std::ceil(blockSize*1.0/numStreams), NUM_THREADS,0,stream>>>(d_materialConstants, d_voxelInput, d_Nt, offset,endID,materialID,numVoxels,NUM_MATERIAL);
   } else{
-    computeNtEulerAngles<<<std::ceil(blockSize*1.0/numStreams), NUM_THREADS,0,stream>>>(material, d_voxelInput, d_Nt, offset,endID,numVoxels);
+    computeNtEulerAngles<<<std::ceil(blockSize*1.0/numStreams), NUM_THREADS,0,stream>>>(d_materialConstants, d_voxelInput, d_Nt, offset,endID,materialID,numVoxels,NUM_MATERIAL);
   }
   return (EXIT_SUCCESS);
 }
@@ -257,7 +255,7 @@ __host__ int computePolarization(const Complex * __restrict__ d_Nt, Complex *d_p
 
 int cudaMain(const UINT *voxel,
              const InputData &idata,
-             const std::vector<Material<NUM_MATERIAL> > &materialInput,
+             const std::vector<Material>  &materialInput,
              Real *projectionGPUAveraged,
              RotationMatrix & rotationMatrix,
              const Voxel *voxelInput) {
@@ -426,9 +424,12 @@ int cudaMain(const UINT *voxel,
     Complex *d_polarizationZ, *d_polarizationX, *d_polarizationY;
     Real *d_scatter3D;
     UINT *d_mask;
+    Material * d_materialConstants;
+
     mallocGPU(d_polarizationX, numVoxels);
     mallocGPU(d_polarizationY, numVoxels);
     mallocGPU(d_polarizationZ, numVoxels);
+    mallocGPU(d_materialConstants, NUM_MATERIAL);
 
     if (idata.scatterApproach == ScatterApproach::FULL) {
       mallocGPU(d_scatter3D, numVoxels);
@@ -469,6 +470,8 @@ int cudaMain(const UINT *voxel,
     UINT BlockSize2 = static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
 
     for (UINT j = numStart; j < numEnd; j++) {
+
+      hostDeviceExchange(d_materialConstants, &materialInput[j * NUM_MATERIAL], NUM_MATERIAL, cudaMemcpyHostToDevice);
       const Real &energy = (idata.energies[j]);
       std::cout << " [STAT] Energy = " << energy << " starting " << "\n";
       for (UINT kstart = 0; kstart < kVectors.size(); kstart++) {
@@ -499,10 +502,10 @@ int cudaMain(const UINT *voxel,
             START_TIMER(TIMERS::POLARIZATION)
           }
 #endif
-          computePolarization(materialInput[j], d_voxelInput, vx, d_polarizationX, d_polarizationY,
+          computePolarization(d_materialConstants, d_voxelInput, vx, d_polarizationX, d_polarizationY,
                               d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
                               idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
-                              static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix,numVoxels);
+                              static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix, numVoxels);
 
 #ifdef DUMP_FILES
 
@@ -861,6 +864,7 @@ int cudaMain(const UINT *voxel,
     freeCudaMemory(d_polarizationX);
     freeCudaMemory(d_polarizationY);
     freeCudaMemory(d_polarizationZ);
+    freeCudaMemory(d_materialConstants);
     if (idata.scatterApproach == ScatterApproach::FULL) {
       freeCudaMemory(d_scatter3D);
     }
@@ -910,7 +914,7 @@ int cudaMain(const UINT *voxel,
 
 int cudaMainStreams(const UINT *voxel,
                     const InputData &idata,
-                    const std::vector<Material<NUM_MATERIAL> > &materialInput,
+                    const std::vector<Material > &materialInput,
                     Real *projectionGPUAveraged,
                     RotationMatrix & rotationMatrix,
                     const Voxel *voxelInput){
@@ -1077,8 +1081,10 @@ int cudaMainStreams(const UINT *voxel,
 
     Voxel *d_voxelInput;
     Complex * d_Nt;
+    Material * d_materialConstants;
 
     mallocGPU(d_Nt, numVoxels*6);
+    mallocGPU(d_materialConstants, NUM_MATERIAL);
     const UINT perBatchVoxels = ceil(numVoxels/(NUM_STREAMS*1.0));
     std::vector<UINT> batchID(NUM_STREAMS+1);
     batchID[0] = 0;
@@ -1106,6 +1112,7 @@ int cudaMainStreams(const UINT *voxel,
     UINT BlockSize2 = static_cast<UINT>(ceil(numVoxel2D * 1.0 / NUM_THREADS));
 
     for (UINT j = numStart; j < numEnd; j++) {
+      hostDeviceExchange(d_materialConstants,&materialInput[j*NUM_MATERIAL],NUM_MATERIAL,cudaMemcpyHostToDevice);
       const Real &energy = (idata.energies[j]);
       std::cout << " [STAT] Energy = " << energy << " starting " << "\n";
 #ifdef PROFILING
@@ -1127,7 +1134,7 @@ int cudaMainStreams(const UINT *voxel,
         for(int numMat = 0; numMat < NUM_MATERIAL; numMat++){
           cudaMemcpyAsync(&d_voxelInput[batchID[streamID]], &voxelInput[numMat*numVoxels + batchID[streamID]],
                      sizeof(Voxel)*(batchID[streamID+1] -  batchID[streamID]), cudaMemcpyHostToDevice,streams[streamID]);
-          computeNt(materialInput[j],d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,batchID[streamID],batchID[streamID+1],numMat,NUM_STREAMS,streams[streamID]);
+          computeNt(d_materialConstants,d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,batchID[streamID],batchID[streamID+1],numMat,NUM_STREAMS,streams[streamID]);
         }
       }
       cudaDeviceSynchronize();
@@ -1533,7 +1540,7 @@ freeCudaMemory(d_Nt);
 
 }
 
-int computePolarization(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
+int computePolarization(const UINT *voxel, const InputData &idata, const std::vector<Material > &materialInput,
                         Complex *polarizationX,Complex *polarizationY,Complex *polarizationZ,
                         RotationMatrix & rotationMatrix, const Voxel *voxelInput, const Real EAngle, const UINT energyID){
 
@@ -1561,15 +1568,19 @@ int computePolarization(const UINT *voxel, const InputData &idata, const std::ve
     std::cout << "No GPU found. Exiting" << "\n";
     return (EXIT_FAILURE);
   }
+  Material * d_materialConstants;
   Voxel * d_voxelInput;
   Complex *d_polarizationZ, *d_polarizationX, *d_polarizationY;
   mallocGPU(d_polarizationX, numVoxels);
   mallocGPU(d_polarizationY, numVoxels);
   mallocGPU(d_polarizationZ, numVoxels);
   mallocGPU(d_voxelInput,numVoxels*NUM_MATERIAL);
+  mallocGPU(d_materialConstants,NUM_MATERIAL);
+
   UINT BlockSize  = static_cast<UINT>(ceil(numVoxels * 1.0 / NUM_THREADS));
 
   hostDeviceExchange(d_voxelInput, voxelInput, numVoxels*NUM_MATERIAL, cudaMemcpyHostToDevice);
+  hostDeviceExchange(d_materialConstants, &materialInput[energyID*NUM_MATERIAL],NUM_MATERIAL, cudaMemcpyHostToDevice);
 
   // TODO: Make this async and overlap with computation
   rotationMatrix.initComputation();
@@ -1581,7 +1592,7 @@ int computePolarization(const UINT *voxel, const InputData &idata, const std::ve
   const Real3 &kVec = idata.kVectors[kID];
   Matrix ERotationMatrix;
   computeRotationMatrix(kVec, rotationMatrixK, ERotationMatrix, EAngle);
-  computePolarization(materialInput[energyID], d_voxelInput, vx, d_polarizationX, d_polarizationY,
+  computePolarization(d_materialConstants, d_voxelInput, vx, d_polarizationX, d_polarizationY,
                       d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
                       idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
                       static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix,numVoxels);
@@ -1594,5 +1605,7 @@ int computePolarization(const UINT *voxel, const InputData &idata, const std::ve
   freeCudaMemory(d_polarizationX);
   freeCudaMemory(d_polarizationY);
   freeCudaMemory(d_polarizationZ);
+  freeCudaMemory(d_materialConstants);
+
   return EXIT_SUCCESS;
 }

@@ -53,12 +53,13 @@
  * @param [out] polarizationZ Z polarization
  * @param [in] numVoxels number of voxels
  * @param [in] rotationMatrix rotation matrix for given k/E
+ * @param [in] NUM_MATERIAL number of material
  */
 template<ReferenceFrame referenceFrame>
-__device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *material,
+__device__ void computePolarizationEulerAngles(const Material *material,
                                             const Voxel *voxelInput, const BigUINT threadID,
                                             Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
-                                            const BigUINT & numVoxels, const Matrix & rotationMatrix) {
+                                            const BigUINT & numVoxels, const Matrix & rotationMatrix, int NUM_MATERIAL) {
 
   Complex pX{0.0,0.0}, pY{0.0,0.0}, pZ{0.0,0.0};
 
@@ -74,8 +75,8 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
   doMatVec<false>(rotationMatrix,eleField,matVec);
   Complex nsum;
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
-    Complex npar = material->npara[numMaterial];
-    Complex nper = material->nperp[numMaterial];
+    Complex npar = material[numMaterial].npara;
+    Complex nper = material[numMaterial].nperp;
     const Voxel matProp = voxelInput[numVoxels * numMaterial + threadID];
 
     const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
@@ -177,13 +178,14 @@ __device__ void computePolarizationEulerAngles(const Material<NUM_MATERIAL> *mat
  * @param [out] polarizationZ Z polarization
  * @param [in] numVoxels number of voxels
  * @param [in] rotationMatrix rotation matrix for given k/E
+ * @param [in] NUM_MATERIAL number of material
  */
 
 template<ReferenceFrame referenceFrame>
-__device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_MATERIAL> *material,
+__device__ void computePolarizationVectorMorphologyOptimized(const Material *material,
                                                     const Voxel *voxelInput, const BigUINT & threadID,
                                                     Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
-                                                    const BigUINT & numVoxels, const Matrix & rotationMatrix) {
+                                                    const BigUINT & numVoxels, const Matrix & rotationMatrix, int NUM_MATERIAL) {
 
   Complex pX{0.0,0.0}, pY{0.0,0.0}, pZ{0.0,0.0};
 
@@ -199,8 +201,8 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
   doMatVec<false>(rotationMatrix,eleField,matVec);
   Complex nsum;
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
-    Complex npar = material->npara[numMaterial];
-    Complex nper = material->nperp[numMaterial];
+    Complex npar = material[numMaterial].npara;
+    Complex nper = material[numMaterial].nperp;
     const Voxel matProp = voxelInput[numVoxels * numMaterial + threadID];
     const Real & sx     = matProp.s1.x;
     const Real & sy     = matProp.s1.y;
@@ -289,19 +291,21 @@ __device__ void computePolarizationVectorMorphologyOptimized(const Material<NUM_
 
 }
 /**
- * @brief computes Nt for Algorithm 2 for Vector morpholgy
+ * @brief computes Nt for Algorithm 2 for Vector morphology
  * @param [in] material refractive index of the material
  * @param [in] voxelInput voxel data
  * @param [out] Nt  computes Nt = (NR:NR - I)
  * @param [in] offset offset in voxels according to streams
  * @param [in] endID finish ID for this particular stream
+ * @param [in] materialID  the material ID for the current loop
  * @param [in] numVoxels number of voxels
+ * @param [in] NUM_MATERIAL number of materials
  */
 
-__global__ void computeNtVectorMorphology(const Material<1> material,
+__global__ void computeNtVectorMorphology(const Material * materialConstants,
                           const Voxel * __restrict__ voxelInput,
-                          Complex * Nt, const BigUINT  offset, const BigUINT  endID,
-                          const BigUINT numVoxels) {
+                          Complex * Nt, const BigUINT  offset, const BigUINT  endID, const UINT materialID,
+                          const BigUINT numVoxels, int NUM_MATERIAL) {
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   if((threadID + offset) >= endID){
     return;
@@ -309,8 +313,8 @@ __global__ void computeNtVectorMorphology(const Material<1> material,
   Complex rotatedNr[6]; // Only storing what is required
   memset(rotatedNr,0,sizeof(Complex)*6);
   Complex nsum;
-  Complex npar = material.npara[0];
-  Complex nper = material.nperp[0];
+  Complex npar = materialConstants[materialID].npara;
+  Complex nper = materialConstants[materialID].nperp;
   const Real4 matProp = voxelInput[offset + threadID].s1;
   const Real &sx = matProp.x;
   const Real &sy = matProp.y;
@@ -360,12 +364,14 @@ __global__ void computeNtVectorMorphology(const Material<1> material,
  * @param [out] Nt  computes Nt = (NR:NR - I)
  * @param offset offset in voxels according to streams
  * @param endID finish ID for this particular stream
+ * @param [in] materialID  the material ID for the current loop
  * @param numVoxels number of voxels
+ * @param NUM_MATERIAL number of materials
  */
-__global__ void computeNtEulerAngles(const Material<1> material,
+__global__ void computeNtEulerAngles(const Material  * materialConstants,
                                           const Voxel * __restrict__ voxelInput,
-                                          Complex * Nt, const BigUINT  offset, const BigUINT  endID,
-                                          const BigUINT numVoxels) {
+                                          Complex * Nt, const BigUINT  offset, const BigUINT  endID, const UINT materialID,
+                                          const BigUINT numVoxels, int NUM_MATERIAL) {
 
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   if((threadID + offset) >= endID){
@@ -374,8 +380,8 @@ __global__ void computeNtEulerAngles(const Material<1> material,
   Complex rotatedNr[6]; // Only storing what is required
   memset(rotatedNr,0,sizeof(Complex)*6);
   Complex nsum;
-  Complex npar = material.npara[0];
-  Complex nper = material.nperp[0];
+  Complex npar = materialConstants[materialID].npara;
+  Complex nper = materialConstants[materialID].nperp;
   const Voxel matProp = voxelInput[offset + threadID];
   const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
   const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);

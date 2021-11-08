@@ -58,6 +58,8 @@ namespace ParamChecker{
 
 }
 #endif
+
+static int NUM_MATERIAL;
 /// This function reads the input data from the file.
 class InputData {
 private:
@@ -326,9 +328,9 @@ private:
     }
   }
 
-  void readRefractiveIndexData(std::vector<Material<NUM_MATERIAL> > &refractiveIndex) const {
+  void readRefractiveIndexData(std::vector<Material> &refractiveIndex) const {
     libconfig::Config cfg;
-    refractiveIndex.resize(energies.size());
+    refractiveIndex.resize(energies.size()*NUM_MATERIAL);
     const UINT & numEnergy = energies.size();
     for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
       std::string fname = "Material" + std::to_string(numMaterial+1) + ".txt";
@@ -359,11 +361,11 @@ private:
         Real deltaPerp = global["DeltaPerp"];
         Real betaPerp = global["BetaPerp"];
 
-        refractiveIndex[i].npara[numMaterial].x = 1 - deltaPara;
-        refractiveIndex[i].npara[numMaterial].y = betaPara;
+        refractiveIndex[i*NUM_MATERIAL + numMaterial].npara.x = 1 - deltaPara;
+        refractiveIndex[i*NUM_MATERIAL + numMaterial].npara.y = betaPara;
 
-        refractiveIndex[i].nperp[numMaterial].x = 1 - deltaPerp;
-        refractiveIndex[i].nperp[numMaterial].y = betaPerp;
+        refractiveIndex[i*NUM_MATERIAL + numMaterial].nperp.x = 1 - deltaPerp;
+        refractiveIndex[i*NUM_MATERIAL + numMaterial].nperp.y = betaPerp;
       }
 
     }

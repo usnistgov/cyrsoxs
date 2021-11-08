@@ -93,7 +93,9 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
   std::string fname = argv[1];
-  std::vector<Material<NUM_MATERIAL> > materialInput;
+  NUM_MATERIAL = H5::getNumberOfMaterial(fname);
+
+  std::vector<Material> materialInput;
   InputData inputData;
   inputData.readRefractiveIndexData(materialInput);
   inputData.validate();

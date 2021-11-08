@@ -50,7 +50,7 @@ static constexpr cufftType_t fftType = CUFFT_C2C;
  * @param [in] rotationMatrix rotation matrices for k / E vector
  * @return EXIT_SUCCESS on success of execution
  */
-int cudaMain(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
+int cudaMain(const UINT *voxel, const InputData &idata, const std::vector<Material> &materialInput,
              Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel *voxelInput);
 
 
@@ -64,7 +64,7 @@ int cudaMain(const UINT *voxel, const InputData &idata, const std::vector<Materi
  * @param [in] rotationMatrix rotation matrices for k / E vector
  * @return EXIT_SUCCESS on success of execution
  */
-int cudaMainStreams(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
+int cudaMainStreams(const UINT *voxel, const InputData &idata, const std::vector<Material> &materialInput,
                     Real *projectionAverage, RotationMatrix & rotationMatrix, const Voxel *voxelInput);
 
 /**
@@ -80,7 +80,7 @@ int cudaMainStreams(const UINT *voxel, const InputData &idata, const std::vector
  * @param [out] EAngle Angle of E rotation
  * @return
  */
-int computePolarization(const UINT *voxel, const InputData &idata, const std::vector<Material<NUM_MATERIAL> > &materialInput,
+int computePolarization(const UINT *voxel, const InputData &idata, const std::vector<Material> &materialInput,
                     Complex *polarizationX,Complex *polarizationY,Complex *polarizationZ,
                     RotationMatrix & rotationMatrix, const Voxel *voxelInput, const Real EAngle, const UINT EnergyID);
 
@@ -96,7 +96,7 @@ int warmup();
 
 /**
  * @brief GPU kernel called from CPU for computing the polarization
- * @param [in] materialInput : Material property.
+ * @param [in] d_materialConstants : Material optical constants for a given energy.
  * @param [in] voxelInput : Voxel  property.
  * @param [in] voxel : dimension of morphology
  * @param [out] polarizationX: polarization X vector
@@ -107,10 +107,11 @@ int warmup();
  * @param [in] morphologyType type of morphology Euler / Vector
  * @param [in] rotationMatrix rotationMatrix that rotates E field by a given angle
  * @param [in] numVoxels Number of voxel.
+ * @param [in] DEVICE_NUM_MATERIAL Number of material on Device.
  */
 
 template<ReferenceFrame referenceFrame>
-__global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
+__global__ void computePolarization(const Material * d_materialConstants,
                                     const Voxel *voxelInput,
                                     const uint3 voxel,
                                     Complex *polarizationX,
@@ -120,12 +121,12 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
                                     const bool enable2D,
                                     const MorphologyType morphologyType,
                                     const Matrix rotationMatrix,
-                                    const BigUINT numVoxels
+                                    const BigUINT numVoxels, int DEVICE_NUM_MATERIAL
 );
 
 /**
  * @brief CPU function to compute Polarization for Algorithm 1
- * @param [in] materialInput : Material property.
+ * @param [in] d_materialConstants : Material property.
  * @param [in] d_voxelInput : Voxel  property on GPU.
  * @param [in] voxel : dimension of morphology
  * @param [out] d_polarizationX: device polarization X vector
@@ -139,7 +140,7 @@ __global__ void computePolarization(Material<NUM_MATERIAL> materialInput,
  * @param [in] rotationMatrix rotationMatrix that rotates E field by a given angle
  * @param [in] numVoxel Number of voxel.
  */
-__host__ int computePolarization(const Material<NUM_MATERIAL> & materialInput,
+__host__ int computePolarization(const Material * d_materialConstants,
                                   const Voxel *d_voxelInput,
                                   const uint3 & voxel,
                                   Complex *d_polarizationX,
@@ -269,22 +270,23 @@ __host__ int peformEwaldProjectionGPU(Real * projection,
                                       const UINT & blockSize,
                                       const Real3 & kVector);
 
+
 /**
- *
- * @param materialInput
- * @param d_voxelInput
- * @param d_Nt
- * @param morphologyType
- * @param blockSize
- * @param numVoxels
- * @param offset
- * @param endID
- * @param materialID
- * @param numStreams
- * @param stream
- * @return
+ * @brief CPU function to compute Nt for Algorithm 2
+ * @param [in] d_materialConstants : Material property.
+ * @param [in] d_voxelInput : Voxel  property on GPU.
+ * @param [out] d_Nt :  computes Nt = (NR:NR - I)
+ * @param [in] morphologyType type of morphology Euler / Vector
+ * @param [in] blockSize  blocksize for GPU
+ * @param [in] numVoxels Number of voxel.
+ * @param [in] offset offset in voxels according to streams
+ * @param [in] endID finish ID for this particular stream
+ * @param [in] materialID  the material ID for the current loop
+ * @param [in] numStreams number of streams
+ * @param [in] stream stream context
+ * @return EXIT_SUCEESS if completed
  */
-__host__ int computeNt(const Material<NUM_MATERIAL> &materialInput,
+__host__ int computeNt(const Material * d_materialConstants,
                        const Voxel *d_voxelInput,
                        Complex * d_Nt,
                        const MorphologyType &morphologyType,
