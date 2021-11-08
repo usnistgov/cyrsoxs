@@ -132,9 +132,6 @@ endif ()
 
 
 set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp -DNDEBUG --use_fast_math")
-if (NUM_MATERIAL)
-    add_definitions(-DNUM_MATERIAL=${NUM_MATERIAL})
-endif ()
 
 
 if (PYBIND)
