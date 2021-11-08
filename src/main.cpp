@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
 
   mallocCPUPinned(voxelData, voxelSize * NUM_MATERIAL);
   H5::readFile(fname, inputData.voxelDims, voxelData, static_cast<MorphologyType>(inputData.morphologyType),
-               inputData.morphologyOrder, true);
+               inputData.morphologyOrder, NUM_MATERIAL, true);
   if(inputData.dumpMorphology){
     H5::writeXDMF(inputData,voxelData);
   }
