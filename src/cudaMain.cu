@@ -132,7 +132,7 @@ __global__ void computePolarization(const Material * d_materialConstants,
                                     const bool enable2D,
                                     const MorphologyType morphologyType,
                                     const Matrix rotationMatrix,
-                                    const BigUINT numVoxels, int DEVICE_NUM_MATERIAL
+                                    const BigUINT numVoxels, const int DEVICE_NUM_MATERIAL
 ) {
   BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
   if(threadID > numVoxels){
@@ -187,7 +187,7 @@ __host__ int computePolarization(const Material  * d_materialConstants,
                                  const UINT &blockSize,
                                  const ReferenceFrame & referenceFrame,
                                  const Matrix & rotationMatrix,
-                                 const BigUINT & numVoxels
+                                 const BigUINT & numVoxels,const int NUM_MATERIAL
 ) {
   if(referenceFrame == ReferenceFrame::MATERIAL) {
     computePolarization<ReferenceFrame::MATERIAL><<< blockSize, NUM_THREADS >>>(d_materialConstants, d_voxelInput,
@@ -220,7 +220,7 @@ __host__ int computeNt(const Material * d_materialConstants,
                        const BigUINT & endID,
                        const UINT & materialID,
                        const UINT & numStreams,
-                       cudaStream_t stream
+                       cudaStream_t stream, int NUM_MATERIAL
 
 ) {
 
@@ -273,7 +273,7 @@ int cudaMain(const UINT *voxel,
     numAnglesRotation = static_cast<UINT>(std::round((idata.endAngle - idata.startAngle) / idata.incrementAngle + 1));
   const UINT &numEnergyLevel = idata.energies.size();
 
-
+  const int & NUM_MATERIAL = idata.NUM_MATERIAL;
   int num_gpu;
   cudaGetDeviceCount(&num_gpu);
   std::cout << "Number of CUDA devices:" << num_gpu << "\n";
@@ -505,7 +505,7 @@ int cudaMain(const UINT *voxel,
           computePolarization(d_materialConstants, d_voxelInput, vx, d_polarizationX, d_polarizationY,
                               d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
                               idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
-                              static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix, numVoxels);
+                              static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix, numVoxels,idata.NUM_MATERIAL);
 
 #ifdef DUMP_FILES
 
@@ -931,6 +931,7 @@ int cudaMainStreams(const UINT *voxel,
     numAnglesRotation = static_cast<UINT>(std::round((idata.endAngle - idata.startAngle) / idata.incrementAngle + 1));
   const UINT &numEnergyLevel = idata.energies.size();
 
+  const int & NUM_MATERIAL = idata.NUM_MATERIAL;
 
   int num_gpu;
   cudaGetDeviceCount(&num_gpu);
@@ -1134,7 +1135,7 @@ int cudaMainStreams(const UINT *voxel,
         for(int numMat = 0; numMat < NUM_MATERIAL; numMat++){
           cudaMemcpyAsync(&d_voxelInput[batchID[streamID]], &voxelInput[numMat*numVoxels + batchID[streamID]],
                      sizeof(Voxel)*(batchID[streamID+1] -  batchID[streamID]), cudaMemcpyHostToDevice,streams[streamID]);
-          computeNt(d_materialConstants,d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,batchID[streamID],batchID[streamID+1],numMat,NUM_STREAMS,streams[streamID]);
+          computeNt(d_materialConstants,d_voxelInput,d_Nt,(MorphologyType)idata.morphologyType,BlockSize,numVoxels,batchID[streamID],batchID[streamID+1],numMat,NUM_STREAMS,streams[streamID],NUM_MATERIAL);
         }
       }
       cudaDeviceSynchronize();
@@ -1542,7 +1543,8 @@ freeCudaMemory(d_Nt);
 
 int computePolarization(const UINT *voxel, const InputData &idata, const std::vector<Material > &materialInput,
                         Complex *polarizationX,Complex *polarizationY,Complex *polarizationZ,
-                        RotationMatrix & rotationMatrix, const Voxel *voxelInput, const Real EAngle, const UINT energyID){
+                        RotationMatrix & rotationMatrix, const Voxel *voxelInput, const Real EAngle, const UINT energyID,
+                        const int NUM_MATERIAL){
 
   if ((static_cast<uint64_t>(voxel[0]) * voxel[1] * voxel[2]) > std::numeric_limits<BigUINT>::max()) {
     std::cout << "Exiting. Compile by Enabling 64 Bit indices\n";
@@ -1595,7 +1597,7 @@ int computePolarization(const UINT *voxel, const InputData &idata, const std::ve
   computePolarization(d_materialConstants, d_voxelInput, vx, d_polarizationX, d_polarizationY,
                       d_polarizationZ, static_cast<FFT::FFTWindowing >(idata.windowingType),
                       idata.if2DComputation(), static_cast<MorphologyType>(idata.morphologyType), BlockSize,
-                      static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix,numVoxels);
+                      static_cast<ReferenceFrame>(idata.referenceFrame), ERotationMatrix,numVoxels,idata.NUM_MATERIAL);
 
   hostDeviceExchange(polarizationX,d_polarizationX,numVoxels,cudaMemcpyDeviceToHost);
   hostDeviceExchange(polarizationY,d_polarizationY,numVoxels,cudaMemcpyDeviceToHost);

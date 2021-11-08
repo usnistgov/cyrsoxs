@@ -59,7 +59,6 @@ namespace ParamChecker{
 }
 #endif
 
-static int NUM_MATERIAL;
 /// This function reads the input data from the file.
 class InputData {
 private:
@@ -228,6 +227,8 @@ private:
   MorphologyOrder morphologyOrder = MorphologyOrder::INVALID;
 
   bool dumpMorphology = false;
+
+  int NUM_MATERIAL;
 
   /**
    *

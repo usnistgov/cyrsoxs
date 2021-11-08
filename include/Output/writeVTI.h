@@ -358,7 +358,7 @@ static void writeVariableFooter(FILE * fp) {
 static void writeVoxelDataScalar(const Voxel *data,
                           const UINT *voxelSize,
                           const std::string &fname,
-                          const char **varname){
+                          const char **varname, const int NUM_MATERIAL){
   std::string filename = fname+".vti";
   std::ofstream fout(filename.c_str());
   BigUINT totalSize = voxelSize[0]*voxelSize[1]*voxelSize[2];
@@ -401,7 +401,7 @@ static void writeVoxelDataScalar(const Voxel *data,
 static void writeVoxelDataVector(const Voxel *data,
                           const UINT *voxelSize,
                           const std::string &fname,
-                          const char **varname){
+                          const char **varname, const int NUM_MATERIAL){
 
   std::string filename = fname+".vti";
   std::ofstream fout(filename.c_str());

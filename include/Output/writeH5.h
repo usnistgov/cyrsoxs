@@ -112,7 +112,7 @@ namespace H5 {
    * @param [in] inputData input data
    * @param [in] morphologyData morphology data
    */
-  void writeMorphologyFile(const std::string &fname, const InputData &inputData, const Voxel *morphologyData) {
+  void writeMorphologyFile(const std::string &fname, const InputData &inputData, const Voxel *morphologyData, const int NUM_MATERIAL) {
     std::array<std::string, 4> morphologyDataSets{};
     const MorphologyType morphologyType = static_cast<MorphologyType>(inputData.morphologyType);
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
@@ -179,6 +179,7 @@ namespace H5 {
    * @param [in] voxelData voxel data
    */
   void writeXDMF(const InputData &inputData, const Voxel * voxelData) {
+    const int & NUM_MATERIAL = inputData.NUM_MATERIAL;
     std::array<std::string, 4> morphologyDataSets{};
     const MorphologyType morphologyType = static_cast<MorphologyType>(inputData.morphologyType);
     if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY) {
@@ -238,7 +239,7 @@ namespace H5 {
     fprintf(fp,"</Xdmf>\n");
     fclose(fp);
     const std::string h5MorphologyName = dirName+"/"+fName;
-    writeMorphologyFile(h5MorphologyName,inputData,voxelData);
+    writeMorphologyFile(h5MorphologyName,inputData,voxelData,NUM_MATERIAL);
   }
 }
 

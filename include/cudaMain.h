@@ -78,11 +78,13 @@ int cudaMainStreams(const UINT *voxel, const InputData &idata, const std::vector
  * @param [out] polarizationY pY
  * @param [out] polarizationZ pZ
  * @param [out] EAngle Angle of E rotation
+ * @param [in] NUM_MATERIAL Number of material on Device.
  * @return
  */
 int computePolarization(const UINT *voxel, const InputData &idata, const std::vector<Material> &materialInput,
                     Complex *polarizationX,Complex *polarizationY,Complex *polarizationZ,
-                    RotationMatrix & rotationMatrix, const Voxel *voxelInput, const Real EAngle, const UINT EnergyID);
+                    RotationMatrix & rotationMatrix, const Voxel *voxelInput, const Real EAngle, const UINT EnergyID,
+                    const int NUM_MATERIAL);
 
 
 /**
@@ -121,7 +123,7 @@ __global__ void computePolarization(const Material * d_materialConstants,
                                     const bool enable2D,
                                     const MorphologyType morphologyType,
                                     const Matrix rotationMatrix,
-                                    const BigUINT numVoxels, int DEVICE_NUM_MATERIAL
+                                    const BigUINT numVoxels, const int DEVICE_NUM_MATERIAL
 );
 
 /**
@@ -139,6 +141,7 @@ __global__ void computePolarization(const Material * d_materialConstants,
  * @param [in] referenceFrame reference frame where the P is calculated: LAB/MATERIAL
  * @param [in] rotationMatrix rotationMatrix that rotates E field by a given angle
  * @param [in] numVoxel Number of voxel.
+ * @param [in] NUM_MATERIAL Number of material on Device.
  */
 __host__ int computePolarization(const Material * d_materialConstants,
                                   const Voxel *d_voxelInput,
@@ -152,7 +155,8 @@ __host__ int computePolarization(const Material * d_materialConstants,
                                   const UINT & blockSize,
                                   const ReferenceFrame & referenceFrame,
                                   const Matrix & rotationMatrix,
-                                  const BigUINT & numVoxel
+                                  const BigUINT & numVoxel,
+                                  const int NUM_MATERIAL
 );
 /**
  * @brief GPU kernel called from CPU for computing the polarization using Algorithm 2
@@ -284,6 +288,7 @@ __host__ int peformEwaldProjectionGPU(Real * projection,
  * @param [in] materialID  the material ID for the current loop
  * @param [in] numStreams number of streams
  * @param [in] stream stream context
+ * @param [in] NUM_MATERIAL Number of material on Device.
  * @return EXIT_SUCEESS if completed
  */
 __host__ int computeNt(const Material * d_materialConstants,
@@ -296,7 +301,8 @@ __host__ int computeNt(const Material * d_materialConstants,
                        const BigUINT & endID,
                        const UINT & materialID,
                        const UINT & numStreams,
-                       cudaStream_t stream);
+                       cudaStream_t stream,
+                       const int NUM_MATERIAL);
 
 
 

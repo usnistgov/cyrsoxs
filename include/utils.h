@@ -202,7 +202,7 @@ static void printMetaData(const InputData & inputData, const RotationMatrix & ro
   file << "Version              : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH <<  " "<< VERSION_TWEAK <<"\n";
   file << "Git patch            : " << GIT_HASH << "\n";
   file << "Size of Real         : " << sizeof(Real) << "\n";
-  file << "Number of material   : " << NUM_MATERIAL << "\n";
+  file << "Number of material   : " << inputData.NUM_MATERIAL << "\n";
 
   file << "\nScaling Information:\n";
   file << "=========================================================================================\n";
@@ -223,7 +223,7 @@ static void printMetaData(const InputData & inputData, const RotationMatrix & ro
 }
 
 
-static bool checkMorphology(const Voxel * voxel, const UINT * voxelDims){
+static bool checkMorphology(const Voxel * voxel, const UINT * voxelDims, const int NUM_MATERIAL){
   const BigUINT numVoxels = voxelDims[0]*voxelDims[1]*voxelDims[2];
   for(int i = 0; i < numVoxels*NUM_MATERIAL; i++){
     for(int id = 0; id < 4; id++){

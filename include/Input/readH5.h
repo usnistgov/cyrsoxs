@@ -451,6 +451,7 @@ namespace H5 {
 
   static int readFile(const std::string &hdf5file, const UINT *voxelSize, Voxel *&voxelData,
                       const MorphologyType &morphologyType, const MorphologyOrder &morphologyOrder,
+                      const int NUM_MATERIAL,
                       bool isAllocated = false) {
     H5::H5File file(hdf5file, H5F_ACC_RDONLY);
     BigUINT numVoxel = static_cast<BigUINT>((BigUINT) voxelSize[0] * (BigUINT) voxelSize[1] * (BigUINT) voxelSize[2]);

@@ -181,3 +181,4 @@ static const char *morphologyOrderName[]{"ZYX","XYZ"};
 static_assert(sizeof(morphologyOrderName)/sizeof(char*) == MorphologyOrder::MAX_ORDER,
               "sizes dont match");
 #endif
+

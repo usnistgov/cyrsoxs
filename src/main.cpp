@@ -93,12 +93,13 @@ int main(int argc, char **argv) {
     exit(EXIT_FAILURE);
   }
   std::string fname = argv[1];
-  NUM_MATERIAL = H5::getNumberOfMaterial(fname);
 
   std::vector<Material> materialInput;
   InputData inputData;
+  inputData.NUM_MATERIAL = H5::getNumberOfMaterial(fname);
   inputData.readRefractiveIndexData(materialInput);
   inputData.validate();
+  const int & NUM_MATERIAL = inputData.NUM_MATERIAL;
   if (argc > 2) {
     inputData.HDF5DirName = argv[2];
   }
@@ -119,7 +120,7 @@ int main(int argc, char **argv) {
   if(inputData.dumpMorphology){
     H5::writeXDMF(inputData,voxelData);
   }
-  if(not(checkMorphology(voxelData,inputData.voxelDims))){
+  if(not(checkMorphology(voxelData,inputData.voxelDims,NUM_MATERIAL))){
     throw std::runtime_error("Nan detected in the morphology");
   }
   Real *projectionGPUAveraged;
