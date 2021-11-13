@@ -43,17 +43,6 @@
 namespace py = pybind11;
 
 
-/**
- * Returns the number of materials the code was compiled with
- *
- * @return number of materials
- */
-int getNumMaterials() {
-    return NUM_MATERIAL;
-}
-
-
-
 
 void computePolarizationDebug(const InputData &inputData, const RefractiveIndexData &energyData,
                          const VoxelData &voxelData, Polarization & polarization,const Real Energy, const Real EAngle){
@@ -72,7 +61,9 @@ void computePolarizationDebug(const InputData &inputData, const RefractiveIndexD
   RotationMatrix rotationMatrix(&inputData);
 
   computePolarization(inputData.voxelDims, inputData, energyData.getRefractiveIndexData(),
-                      polarization.getData(0),polarization.getData(1),polarization.getData(2),rotationMatrix,voxelData.data(),EAngle,energyID);
+                      polarization.getData(0),polarization.getData(1),
+                      polarization.getData(2),rotationMatrix,voxelData.data(),
+                      EAngle,energyID,inputData.NUM_MATERIAL);
 }
 
 
@@ -139,7 +130,6 @@ PYBIND11_MODULE(CyRSoXS, module) {
 
   py::print("CyRSoXS");
   py::print("============================================================================");
-  py::print("Number of materials : ", NUM_MATERIAL);
   py::print("Size of Real        :", sizeof(Real));
   printPyBindCopyrightInfo();
   std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
@@ -183,7 +173,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
     .export_values();
 
   py::class_<InputData>(module, "InputData")
-      .def(py::init<>())
+      .def(py::init<int &>(),"Constructor")
       .def("setEnergies", &InputData::setEnergies, "Set the energy data", py::arg("energies"))
       .def("print", &InputData::print, "Print the input data")
       .def("setERotationAngle", &InputData::setEAngles, "Set the rotation for Electric field", py::arg("StartAngle"),
@@ -243,7 +233,6 @@ PYBIND11_MODULE(CyRSoXS, module) {
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);
   module.def("cleanup", &cleanup, "Cleanup",  py::arg("RefractiveIndex"), py::arg("VoxelData"),py::arg("ScatteringPattern"));
-  module.def("getNumMaterials", &getNumMaterials, "Get number of materials");
   module.def("computePolarization", &computePolarizationDebug, "Computes the polarization vector for debugging",py::arg("InputData"),
              py::arg("RefractiveIndex"),py::arg("VoxelData"),py::arg("Polarization"),py::arg("Energy"),py::arg("EAngle"));
 

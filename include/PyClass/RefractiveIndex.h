@@ -37,8 +37,9 @@ namespace py = pybind11;
  * @brief Class to store the refractive index data
  */
 class RefractiveIndexData {
+    const InputData & inputData_;
     const std::vector<Real> &energies; /// Start of energy
-    std::vector<Material<NUM_MATERIAL> > refractiveIndex; /// Refractive index data at all energy level
+    std::vector<Material> refractiveIndex; /// Refractive index data at all energy level
     std::vector<bool> isValid; /// A vector of bool to check if the optical constants is added at each energy level.
 public:
     /**
@@ -46,9 +47,9 @@ public:
      * @param inputData InputData
      */
     RefractiveIndexData(const InputData &inputData)
-        : energies(inputData.energies){
+        : inputData_(inputData),energies(inputData.energies){
         UINT numEnergyData = energies.size();
-        refractiveIndex.resize(numEnergyData);
+        refractiveIndex.resize(numEnergyData*inputData.NUM_MATERIAL);
         isValid.resize(numEnergyData);
         std::fill(isValid.begin(), isValid.end(), false);
     }
@@ -61,7 +62,7 @@ public:
      * @brief Clears up the memory
      */
     void clear() {
-        std::vector<Material<NUM_MATERIAL> > _materialInput;
+        std::vector<Material > _materialInput;
         std::swap(_materialInput, refractiveIndex);
     }
 
@@ -80,6 +81,7 @@ public:
             DeltaPerp = 2,
             BetaPerp = 3
         };
+        const int NUM_MATERIAL = inputData_.NUM_MATERIAL;
         if (not(values.size() == NUM_MATERIAL)) {
             py::print("Wrong input for Energy. Number not matching with number of Materials");
             return;
@@ -97,10 +99,10 @@ public:
             return;
         }
         for (UINT i = 0; i < NUM_MATERIAL; i++) {
-            refractiveIndex[counter].npara[i].x = 1 - values[i][EnergyValues::DeltaPara];
-            refractiveIndex[counter].npara[i].y = values[i][EnergyValues::BetaPara];
-            refractiveIndex[counter].nperp[i].x = 1 - values[i][EnergyValues::DeltaPerp];
-            refractiveIndex[counter].nperp[i].y = values[i][EnergyValues::BetaPerp];
+            refractiveIndex[counter*NUM_MATERIAL+i].npara.x = 1 - values[i][EnergyValues::DeltaPara];
+            refractiveIndex[counter*NUM_MATERIAL+i].npara.y = values[i][EnergyValues::BetaPara];
+            refractiveIndex[counter*NUM_MATERIAL+i].nperp.x = 1 - values[i][EnergyValues::DeltaPerp];
+            refractiveIndex[counter*NUM_MATERIAL+i].nperp.y = values[i][EnergyValues::BetaPerp];
         }
 
         isValid[counter] = true;
@@ -111,24 +113,27 @@ public:
      * @brief prints the energy Data
      */
     void printEnergyData() const {
-        UINT count = 0;
-        for (auto &values : refractiveIndex) {
-            Real currEnegy = energies[count];
-            py::print("Energy = ", currEnegy);
-            for (int i = 0; i < NUM_MATERIAL; i++) {
-                py::print("Material = ", i, "npara = ", std::complex<Real>(values.npara[i].x, values.npara[i].y),
-                          "nperp = ", std::complex<Real>(values.nperp[i].x, values.nperp[i].y));
-            }
-            count++;
 
+      for(int i = 0; i < energies.size(); i++){
+        Real currEnegy = energies[i];
+        py::print("Energy = ", currEnegy);
+        int start = i*inputData_.NUM_MATERIAL;
+        int end = (i+1)*inputData_.NUM_MATERIAL;
+        int materialID = 0;
+        for(int j = start; j < end < end; j++ ){
+          py::print("Material = ", materialID, "npara = ", std::complex<Real>(refractiveIndex[j].npara.x, refractiveIndex[j].npara.y),
+                    "nperp = ", std::complex<Real>(refractiveIndex[j].nperp.x, refractiveIndex[j].nperp.y));
+          materialID++;
         }
+
+      }
     }
 
     /**
      * @brief Getter function
      * @return The refractive index data
      */
-    const std::vector<Material<NUM_MATERIAL>> &getRefractiveIndexData() const {
+    const std::vector<Material> &getRefractiveIndexData() const {
         return refractiveIndex;
     }
 

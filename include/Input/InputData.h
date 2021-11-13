@@ -50,9 +50,10 @@ namespace ParamChecker{
         MORPHOLOGY_TYPE = 5,
         CASE_TYPE = 6,
         DETECTOR_COORD = 7,
-        MAX_SIZE = 8
+        NUM_MATERIAL = 8,
+        MAX_SIZE = 9
     };
-    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","EANGLE","KVectors","MorphologyType","CaseType","DetectorCoord"};
+    static const char* paramNames[] = {"ENERGY","DIMENSION","PHYSSIZE","EANGLE","KVectors","MorphologyType","CaseType","DetectorCoord","NUM_MATERIAL"};
     static_assert(sizeof(ParamChecker::paramNames)/sizeof(char*) == ParamChecker::Parameters::MAX_SIZE,
             "sizes dont match");
 
@@ -415,10 +416,13 @@ private:
 #else
     /**
     * @brief Constructor
+     * @param [in] numberOfMaterial number of materials
     */
-    InputData(){
+    InputData(int numberOfMaterial){
       writeHDF5 = false;
       paramChecker_.reset();
+      NUM_MATERIAL = numberOfMaterial;
+      paramChecker_[ParamChecker::Parameters::NUM_MATERIAL] = true;
     }
     /**
      * @brief Adds the energy data

@@ -45,9 +45,10 @@ namespace py = pybind11;
  */
 class VoxelData {
 private:
+  static constexpr int MAX_NUM_MATERIAL = 32;
   Voxel *voxel = nullptr; /// Voxel data
   const InputData &inputData_;           /// input data
-  std::bitset<NUM_MATERIAL> validData_; /// Check that voxel data is correct
+  std::bitset<MAX_NUM_MATERIAL> validData_; /// Check that voxel data is correct
 public:
   /**
    * @brief constructor
@@ -55,10 +56,18 @@ public:
    */
   VoxelData(const InputData &inputData)
     : inputData_(inputData) {
+    const int NUM_MATERIAL = inputData.NUM_MATERIAL;
+    if(NUM_MATERIAL >= MAX_NUM_MATERIAL){
+      py::print("Maximum number of material is set to be 32. Please increase the number of materials. Exiting");
+      return ;
+    }
     clear();
     const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
     mallocCPU(voxel, numVoxels * NUM_MATERIAL);
     validData_.reset();
+    for(int i = NUM_MATERIAL; i < MAX_NUM_MATERIAL; i++){
+      validData_[i] = true;
+    }
   }
 
   /**
@@ -71,7 +80,7 @@ public:
   void addMaterialDataVectorMorphology(py::array_t<Real, py::array::c_style | py::array::forcecast> &matAlignementData,
                                        py::array_t<Real, py::array::c_style | py::array::forcecast> &matUnalignedData,
                                        const UINT matID) {
-
+    const int NUM_MATERIAL = inputData_.NUM_MATERIAL;
     if (inputData_.morphologyType == MorphologyType::EULER_ANGLES) {
       py::print("Error: [Expected]: Vector Morphology [Found:] Euler Angles. Returning\n");
       return;
@@ -119,6 +128,7 @@ public:
                                   py::array_t<Real, py::array::c_style | py::array::forcecast> &matPsiVector,
                                   py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
                                   const UINT matID) {
+    const int NUM_MATERIAL = inputData_.NUM_MATERIAL;
 
     if (inputData_.morphologyType != MorphologyType::EULER_ANGLES) {
       py::print("Error: [Expected]: Euler Angles / Spherical Coordinates. [Found:] VectorMorphology\n");
@@ -171,6 +181,8 @@ public:
    */
   void addMaterialDataEulerAnglesOnlyVFrac(py::array_t<Real, py::array::c_style | py::array::forcecast> &matVfracVector,
                                   const UINT matID) {
+    const int NUM_MATERIAL = inputData_.NUM_MATERIAL;
+
     if (inputData_.morphologyType != MorphologyType::EULER_ANGLES) {
       py::print("Error: [Expected]: Euler Angles / Spherical Coordinates. [Found:] VectorMorphology\n");
       return;
@@ -266,7 +278,7 @@ public:
    */
   bool validate() const {
     if (validData_.all()) {
-      if(not(checkMorphology(this->voxel,inputData_.voxelDims))){
+      if(not(checkMorphology(this->voxel,inputData_.voxelDims,inputData_.NUM_MATERIAL))){
         py::print("Nan Present in the morphology");
         return false;
       }
