@@ -1,7 +1,7 @@
 Cy-RSoXS Changes History
 ====================================
 
-Version 1.0.1 - Beta
+Version 1.1.0 - Beta
 =================
 * NumMaterial requirement removed from compilation
 * Euler Angle sequence changed to ZYZ
