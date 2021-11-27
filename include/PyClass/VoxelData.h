@@ -65,9 +65,6 @@ public:
     const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
     mallocCPU(voxel, numVoxels * NUM_MATERIAL);
     validData_.reset();
-    for(int i = NUM_MATERIAL; i < MAX_NUM_MATERIAL; i++){
-      validData_[i] = true;
-    }
   }
 
   /**
@@ -245,7 +242,7 @@ public:
 
     H5::readFile(fname, inputData_.voxelDims, voxel, (MorphologyType) inputData_.morphologyType,
                  inputData_.morphologyOrder, inputData_.NUM_MATERIAL,true);
-    validData_.flip();
+    validData_.set();
   }
 
   /**
@@ -303,9 +300,9 @@ public:
       }
       return true;
     } else {
-      for (UINT i = 0; i < validData_.size(); i++) {
+      for (UINT i = 0; i < inputData_.NUM_MATERIAL; i++) {
         if (not(validData_.test(i))) {
-          py::print("Voxel Data missing / corrupt for material = ", i);
+          py::print("Voxel Data missing / corrupt for material = ", i+1);
         }
       }
     }
