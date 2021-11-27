@@ -554,6 +554,7 @@ private:
     void print() const{
         pybind11::print("Required options:");
         pybind11::print("==================================================");
+        pybind11::print("NumMaterial          : ",NUM_MATERIAL);
         pybind11::print("CaseType             : ",caseTypenames[caseType]);
         pybind11::print("MorphologyType       : ",morphologyTypeName[morphologyType]);
         if(morphologyOrder == MorphologyOrder::XYZ) {
