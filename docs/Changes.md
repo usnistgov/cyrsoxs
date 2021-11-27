@@ -3,6 +3,11 @@ Cy-RSoXS Changes History
 
 Version 1.0.1 - Beta
 =================
+* NumMaterial requirement removed from compilation
+* Euler Angle sequence changed to ZYZ
+
+Version 1.0.1 - Beta
+=================
 * Axis label added in all HDF5 file output
 
 Version 1.0.0 - Beta

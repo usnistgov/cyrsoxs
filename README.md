@@ -7,14 +7,14 @@ Currently it supports the operation with 32 bit / 64 bit float datatypes.
 or directly through the executable.
 
 
-Version  : 1.0.1 - Beta
+Version  : 1.1.0 - Beta
 ================
 
 Dependencies
 =============
 #### Required Dependencies
 * A C++ compiler with C++14 support is required.
-* gcc >= 7 abd gcc <= 8 (CUDA does not support gcc > 8)
+* gcc >= 7 (CUDA specific versions might have GCC requirements )
 * Cuda Toolkit (>=9)
 * HDF5
 * OpenMP

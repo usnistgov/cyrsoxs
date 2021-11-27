@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (1.0.0.2 - Beta)
+GPU enabled RSoXS simulation (1.1.0.0 - Beta)
 ====================================
 
 Installing Docker

@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (1.0.1 - Beta)
+GPU enabled RSoXS simulation (1.1.0 - Beta)
 ====================================
 ## Compiling libconfig
 
@@ -82,7 +82,7 @@ compile Cy-RSoXS.
 cd $Cy-RSoXS_DIR
 mkdir build;
 cd build;
-cmake .. -DCMAKE_BUILD_TYPE=Release  -DNUM_MATERIAL=4
+cmake .. -DCMAKE_BUILD_TYPE=Release
 ```
 
 **Building with Pybind**
@@ -97,14 +97,6 @@ If you are compiling with intel compiler (Does not work with Pybind):
  -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc
 ```
 
-**Specifying number of material**
-
-Number of material is specified during the compile time by the flag:
-```bash
--DNUM_MATERIAL=4
-```  
-The above flag will set the number of material to 4.
-
 Optional Cmake Flags can be added:
 
 **For compiling in double precision mode:**
@@ -115,16 +107,6 @@ Optional Cmake Flags can be added:
 **For profiling**
 ```bash
 -DPROFILING=Yes
-```
-
-**For ASCII writing of output files (This is slow as compared to BINARY)**
-```bash
--DVTI_BINARY=No
-```
-
-**To dump all intermediate files**
-```bash
--DUMP_FILES=Yes
 ```
 
 **Build Documentation**
