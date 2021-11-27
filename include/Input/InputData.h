@@ -384,7 +384,7 @@ private:
      * @brief prints the input data
      */
     void print() const{
-
+        std::cout << "NumMaterial          : " << NUM_MATERIAL << "\n";
         if(morphologyOrder == MorphologyOrder::XYZ){
         std::cout << "Dimensions [X Y Z]   : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         }
