@@ -173,7 +173,7 @@ PYBIND11_MODULE(CyRSoXS, module) {
     .export_values();
 
   py::class_<InputData>(module, "InputData")
-      .def(py::init<int &>(),"Constructor")
+      .def(py::init<int &>(),"Constructor", py::arg("NumMaterial"))
       .def("setEnergies", &InputData::setEnergies, "Set the energy data", py::arg("energies"))
       .def("print", &InputData::print, "Print the input data")
       .def("setERotationAngle", &InputData::setEAngles, "Set the rotation for Electric field", py::arg("StartAngle"),

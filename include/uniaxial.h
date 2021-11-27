@@ -84,8 +84,8 @@ __device__ void computePolarizationEulerAngles(const Material *material,
     const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
     const Real & S             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S);
 
-    const Real   sx     =  sin(psiAngle)*sin(thetaAngle);
-    const Real   sy     =  cos(psiAngle)*sin(thetaAngle);
+    const Real   sx     =  cos(psiAngle)*sin(thetaAngle);
+    const Real   sy     =  sin(psiAngle)*sin(thetaAngle);
     const Real   sz     =  cos(thetaAngle);
     const Real   phi_ui = Vfrac - S;
 
@@ -388,8 +388,8 @@ __global__ void computeNtEulerAngles(const Material  * materialConstants,
   const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
   const Real & S             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S); //  S = fraction of voxel with aligned component
 
-  const Real   sx     =  sin(psiAngle)*sin(thetaAngle);
-  const Real   sy     =  cos(psiAngle)*sin(thetaAngle);
+  const Real   sx     =  cos(psiAngle)*sin(thetaAngle);
+  const Real   sy     =  sin(psiAngle)*sin(thetaAngle);
   const Real   sz     =  cos(thetaAngle);
   const Real   phi_ui =  Vfrac - S;
 
