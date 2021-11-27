@@ -223,9 +223,28 @@ public:
       py::print("Some of the material is already set. Please first reset to continue. Returning.");
       return;
     }
+    int numMaterial = H5::getNumberOfMaterial(fname);
+    if(numMaterial != inputData_.NUM_MATERIAL){
+      py::print("[HDF5 Error]: Number of material.");
+      return;
+    }
+
+    MorphologyOrder morphologyOrder;
+    Real physSize;
+    UINT numVoxels[3];
+    H5::getDimensionAndOrder(fname,(MorphologyType)inputData_.morphologyType,numVoxels,physSize,morphologyOrder);
+    if(inputData_.morphologyOrder != morphologyOrder){
+      py::print("[HDF5 Error]: Morphology Order mismatch.");
+      return;
+    }
+
+    if(!(FEQUALS(inputData_.physSize,physSize))){
+      py::print("[HDF5 Error]: PhysSize mismatch.");
+      return;
+    }
 
     H5::readFile(fname, inputData_.voxelDims, voxel, (MorphologyType) inputData_.morphologyType,
-                 inputData_.morphologyOrder, true);
+                 inputData_.morphologyOrder, inputData_.NUM_MATERIAL,true);
     validData_.flip();
   }
 
