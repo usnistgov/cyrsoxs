@@ -293,20 +293,17 @@ public:
    * @return True if the input is correct. False otherwise
    */
   bool validate() const {
-    if (validData_.all()) {
-      if(not(checkMorphology(this->voxel,inputData_.voxelDims,inputData_.NUM_MATERIAL))){
-        py::print("Nan Present in the morphology");
+    for (UINT i = 0; i < inputData_.NUM_MATERIAL; i++) {
+      if (not(validData_.test(i))) {
+        py::print("Voxel Data missing / corrupt for material = ", i+1);
         return false;
       }
-      return true;
-    } else {
-      for (UINT i = 0; i < inputData_.NUM_MATERIAL; i++) {
-        if (not(validData_.test(i))) {
-          py::print("Voxel Data missing / corrupt for material = ", i+1);
-        }
-      }
     }
-    return false;
+    if(not(checkMorphology(this->voxel,inputData_.voxelDims,inputData_.NUM_MATERIAL))){
+      py::print("Nan Present in the morphology");
+      return false;
+    }
+    return true;
   }
 };
 
