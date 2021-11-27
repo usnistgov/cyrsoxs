@@ -120,7 +120,7 @@ public:
         int start = i*inputData_.NUM_MATERIAL;
         int end = (i+1)*inputData_.NUM_MATERIAL;
         int materialID = 0;
-        for(int j = start; j < end < end; j++ ){
+        for(int j = start; j < end; j++ ){
           py::print("Material = ", materialID, "npara = ", std::complex<Real>(refractiveIndex[j].npara.x, refractiveIndex[j].npara.y),
                     "nperp = ", std::complex<Real>(refractiveIndex[j].nperp.x, refractiveIndex[j].nperp.y));
           materialID++;
