@@ -56,7 +56,7 @@ public:
   VoxelData(const InputData &inputData)
     : inputData_(inputData) {
     const int NUM_MATERIAL = inputData.NUM_MATERIAL;
-    if(NUM_MATERIAL >= MAX_NUM_MATERIAL){
+    if(NUM_MATERIAL > MAX_NUM_MATERIAL){
       py::print("Maximum number of material is set to be 32. Please increase the number of materials. Exiting");
       return ;
     }
