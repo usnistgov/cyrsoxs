@@ -90,6 +90,12 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 -DPYBIND = Yes
 ```
 
+For Pybind maximum number of material is set to 32. To change the maximum number of material:
+```bash
+-DMAX_NUM_MATERIAL=64
+```
+The above flag will set the maximum number of material to 64.
+
 **Compiling with intel compiler**
 
 If you are compiling with intel compiler (Does not work with Pybind):
