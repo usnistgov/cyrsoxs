@@ -45,11 +45,6 @@ namespace py = pybind11;
  */
 class VoxelData {
 private:
-#ifdef MAX_NUM_MATERIAL
-
-#else
-  static constexpr int MAX_NUM_MATERIAL = 32;
-#endif
   Voxel *voxel = nullptr; /// Voxel data
   const InputData &inputData_;           /// input data
   std::bitset<MAX_NUM_MATERIAL> validData_; /// Check that voxel data is correct
@@ -62,7 +57,7 @@ public:
     : inputData_(inputData) {
     const int NUM_MATERIAL = inputData.NUM_MATERIAL;
     if(NUM_MATERIAL >= MAX_NUM_MATERIAL){
-      py::print("Maximum number of material is set to be " , MAX_NUM_MATERIAL ,". Please increase the number of materials. Exiting");
+      py::print("Maximum number of material is set to be 32. Please increase the number of materials. Exiting");
       return ;
     }
     clear();

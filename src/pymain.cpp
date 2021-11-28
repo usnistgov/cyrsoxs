@@ -130,11 +130,9 @@ PYBIND11_MODULE(CyRSoXS, module) {
 
   py::print("CyRSoXS");
   py::print("============================================================================");
-  py::print("Size of Real        :", sizeof(Real));
+  py::print("Size of Real               :", sizeof(Real));
+  py::print("Maximum Number Of Material :", MAX_NUM_MATERIAL);
   printPyBindCopyrightInfo();
-  std::cout << "\n\n[INFO] Additional Cy-RSoXS Details: \n";
-  std::cout << "[INFO] Version   = " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << ".", VERSION_TWEAK , "\n";
-  std::cout << "[INFO] Git patch = " << GIT_HASH << "\n";
   py::add_ostream_redirect(module, "ostream_redirect");
   py::enum_<Interpolation::EwaldsInterpolation>(module, "InterpolationType")
       .value("Linear", Interpolation::EwaldsInterpolation::LINEAR)

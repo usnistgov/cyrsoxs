@@ -139,7 +139,9 @@ set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp -DNDEBUG --use_fas
 if (PYBIND)
     if (MAX_NUM_MATERIAL)
         add_definitions(-DMAX_NUM_MATERIAL=${MAX_NUM_MATERIAL})
-    endif ()
+    else ()
+        add_definitions(-DMAX_NUM_MATERIAL=32)
+    endif()
     set(PYBIND_INC
             include/PyClass/RefractiveIndex.h
             include/PyClass/VoxelData.h
