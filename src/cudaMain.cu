@@ -320,21 +320,13 @@ int cudaMain(const UINT *voxel,
 
   /** Writing VTI files as a cross check **/
 
-#if (NUM_MATERIAL==2)
-  const char * varnameVector[2] = {"material1_s1","material2_s1"};
-#elif (NUM_MATERIAL==4)
   const char * varnameVector[4] = {"material1_s","material2_s","material3_s","material4_s"};
-#endif
-#if (NUM_MATERIAL==2)
-  const char * varnameScalar[2] = {"phi0","phi1"};
-#elif (NUM_MATERIAL==4)
+
   const char * varnameScalar[4] = {"phi0","phi1", "phi2", "phi3"};
-#endif
 
-  VTI::writeVoxelDataVector(voxelInput, voxel, "S1", varnameVector);
-  VTI::writeVoxelDataScalar(voxelInput, voxel, "Phi", varnameScalar);
+  VTI::writeVoxelDataVector(voxelInput, voxel, "S1", varnameVector,NUM_MATERIAL);
+  VTI::writeVoxelDataScalar(voxelInput, voxel, "Phi", varnameScalar,NUM_MATERIAL);
 #endif
-
   omp_set_num_threads(num_gpu);
 #pragma omp parallel
   {
@@ -983,19 +975,12 @@ int cudaMainStreams(const UINT *voxel,
 
   /** Writing VTI files as a cross check **/
 
-#if (NUM_MATERIAL==2)
-  const char * varnameVector[2] = {"material1_s1","material2_s1"};
-#elif (NUM_MATERIAL==4)
-  const char * varnameVector[4] = {"material1_s","material2_s","material3_s","material4_s"};
-#endif
-#if (NUM_MATERIAL==2)
-  const char * varnameScalar[2] = {"phi0","phi1"};
-#elif (NUM_MATERIAL==4)
-  const char * varnameScalar[4] = {"phi0","phi1", "phi2", "phi3"};
-#endif
 
-  VTI::writeVoxelDataVector(voxelInput, voxel, "S1", varnameVector);
-  VTI::writeVoxelDataScalar(voxelInput, voxel, "Phi", varnameScalar);
+  const char * varnameVector[4] = {"material1_s","material2_s","material3_s","material4_s"};
+  const char * varnameScalar[4] = {"phi0","phi1", "phi2", "phi3"};
+
+  VTI::writeVoxelDataVector(voxelInput, voxel, "S1", varnameVector,NUM_MATERIAL);
+  VTI::writeVoxelDataScalar(voxelInput, voxel, "Phi", varnameScalar,NUM_MATERIAL);
 #endif
 
   omp_set_num_threads(num_gpu);
