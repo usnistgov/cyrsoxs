@@ -82,12 +82,12 @@ __device__ void computePolarizationEulerAngles(const Material *material,
     const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
     const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
     const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
-    const Real & S             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S);
+    const Real & phi_a         = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S);
 
     const Real   sx     =  cos(psiAngle)*sin(thetaAngle);
     const Real   sy     =  sin(psiAngle)*sin(thetaAngle);
     const Real   sz     =  cos(thetaAngle);
-    const Real   phi_ui = Vfrac - S;
+    const Real   phi_ui = Vfrac - phi_a;
 
     const Real  & phi =  Vfrac;
 
@@ -100,15 +100,15 @@ __device__ void computePolarizationEulerAngles(const Material *material,
 
     // S = fraction of aligned components
     // (0)
-    rotatedNr.x = S*(npar.x*sx*sx + nper.x*(sy*sy + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr.y = S*(npar.y*sx*sx + nper.y*(sy*sy + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr.x = phi_a*(npar.x*sx*sx + nper.x*(sy*sy + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = phi_a*(npar.y*sx*sx + nper.y*(sy*sy + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
     pX.x += rotatedNr.x*matVec.x;
     pX.y += rotatedNr.y*matVec.x;
 
     // (1)
-    rotatedNr.x = S*(npar.x - nper.x)*sx*sy;
-    rotatedNr.y = S*(npar.y - nper.y)*sx*sy;
+    rotatedNr.x = phi_a*(npar.x - nper.x)*sx*sy;
+    rotatedNr.y = phi_a*(npar.y - nper.y)*sx*sy;
 
     pX.x += rotatedNr.x*matVec.y;
     pX.y += rotatedNr.y*matVec.y;
@@ -117,8 +117,8 @@ __device__ void computePolarizationEulerAngles(const Material *material,
     pY.y += rotatedNr.y*matVec.x;
 
     // (2)
-    rotatedNr.x = S*(npar.x - nper.x)*sx*sz;
-    rotatedNr.y = S*(npar.y - nper.y)*sx*sz;
+    rotatedNr.x = phi_a*(npar.x - nper.x)*sx*sz;
+    rotatedNr.y = phi_a*(npar.y - nper.y)*sx*sz;
 
     pX.x += rotatedNr.x*matVec.z;
     pX.y += rotatedNr.y*matVec.z;
@@ -127,15 +127,15 @@ __device__ void computePolarizationEulerAngles(const Material *material,
     pZ.y += rotatedNr.y*matVec.x;
 
     // (3)
-    rotatedNr.x = S*(npar.x*sy*sy + nper.x*(sx*sx + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr.y = S*(npar.y*sy*sy + nper.y*(sx*sx + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr.x = phi_a*(npar.x*sy*sy + nper.x*(sx*sx + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = phi_a*(npar.y*sy*sy + nper.y*(sx*sx + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
     pY.x += rotatedNr.x*matVec.y;
     pY.y += rotatedNr.y*matVec.y;
 
     // (4)
-    rotatedNr.x = S*(npar.x - nper.x)*sy*sz;
-    rotatedNr.y = S*(npar.y - nper.y)*sy*sz;
+    rotatedNr.x = phi_a*(npar.x - nper.x)*sy*sz;
+    rotatedNr.y = phi_a*(npar.y - nper.y)*sy*sz;
 
     pY.x += rotatedNr.x*matVec.z;
     pY.y += rotatedNr.y*matVec.z;
@@ -144,8 +144,8 @@ __device__ void computePolarizationEulerAngles(const Material *material,
     pZ.y += rotatedNr.y*matVec.y;
 
     // (5)
-    rotatedNr.x = S*(npar.x*sz*sz + nper.x*(sx*sx + sy*sy)) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr.y = S*(npar.y*sz*sz + nper.y*(sx*sx + sy*sy)) +  ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr.x = phi_a*(npar.x*sz*sz + nper.x*(sx*sx + sy*sy)) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+    rotatedNr.y = phi_a*(npar.y*sz*sz + nper.y*(sx*sx + sy*sy)) +  ((phi_ui * nsum.y) / (Real) 9.0);
 
     pZ.x += rotatedNr.x*matVec.z;
     pZ.y += rotatedNr.y*matVec.z;
@@ -386,12 +386,12 @@ __global__ void computeNtEulerAngles(const Material  * materialConstants,
   const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
   const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
   const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
-  const Real & S             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S); //  S = fraction of voxel with aligned component
+  const Real & phi_a             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S); //  S = fraction of voxel with aligned component
 
   const Real   sx     =  cos(psiAngle)*sin(thetaAngle);
   const Real   sy     =  sin(psiAngle)*sin(thetaAngle);
   const Real   sz     =  cos(thetaAngle);
-  const Real   phi_ui =  Vfrac - S;
+  const Real   phi_ui =  Vfrac - phi_a;
 
   const Real  & phi =  Vfrac;
 
@@ -402,23 +402,23 @@ __global__ void computeNtEulerAngles(const Material  * materialConstants,
   computeComplexSquare(npar);
   computeComplexSquare(nper);
 
-  rotatedNr[0].x += S*(npar.x * sx * sx + nper.x * (sy * sy + sz * sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-  rotatedNr[0].y += S*(npar.y * sx * sx + nper.y * (sy * sy + sz * sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
+  rotatedNr[0].x += phi_a*(npar.x * sx * sx + nper.x * (sy * sy + sz * sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[0].y += phi_a*(npar.y * sx * sx + nper.y * (sy * sy + sz * sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-  rotatedNr[1].x += S*(npar.x - nper.x) * sx * sy;
-  rotatedNr[1].y += S*(npar.y - nper.y) * sx * sy;
+  rotatedNr[1].x += phi_a*(npar.x - nper.x) * sx * sy;
+  rotatedNr[1].y += phi_a*(npar.y - nper.y) * sx * sy;
 
-  rotatedNr[2].x += S*(npar.x - nper.x) * sx * sz;
-  rotatedNr[2].y += S*(npar.y - nper.y) * sx * sz;
+  rotatedNr[2].x += phi_a*(npar.x - nper.x) * sx * sz;
+  rotatedNr[2].y += phi_a*(npar.y - nper.y) * sx * sz;
 
-  rotatedNr[3].x += S*(npar.x * sy * sy + nper.x * (sx * sx + sz * sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-  rotatedNr[3].y += S*(npar.y * sy * sy + nper.y * (sx * sx + sz * sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
+  rotatedNr[3].x += phi_a*(npar.x * sy * sy + nper.x * (sx * sx + sz * sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[3].y += phi_a*(npar.y * sy * sy + nper.y * (sx * sx + sz * sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
-  rotatedNr[4].x += S*(npar.x - nper.x) * sy * sz;
-  rotatedNr[4].y += S*(npar.y - nper.y) * sy * sz;
+  rotatedNr[4].x += phi_a*(npar.x - nper.x) * sy * sz;
+  rotatedNr[4].y += phi_a*(npar.y - nper.y) * sy * sz;
 
-  rotatedNr[5].x += S*(npar.x * sz * sz + nper.x * (sx * sx + sy * sy)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-  rotatedNr[5].y += S*(npar.y * sz * sz + nper.y * (sx * sx + sy * sy)) + ((phi_ui * nsum.y) / (Real) 9.0);
+  rotatedNr[5].x += phi_a*(npar.x * sz * sz + nper.x * (sx * sx + sy * sy)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
+  rotatedNr[5].y += phi_a*(npar.y * sz * sz + nper.y * (sx * sx + sy * sy)) + ((phi_ui * nsum.y) / (Real) 9.0);
 
 
   Nt[2*(threadID+offset) + 0+  0*numVoxels].x += rotatedNr[0].x; Nt[2*(threadID+offset) + 0  +  0*numVoxels ].y += rotatedNr[0].y;
