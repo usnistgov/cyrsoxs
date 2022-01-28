@@ -121,7 +121,7 @@ public:
       py::capsule free_when_done(this->data_, [](void *f) {
       });
       const std::size_t voxel2DSize = static_cast<std::size_t>(inputData_.voxelDims[0])*static_cast<std::size_t>(inputData_.voxelDims[1]);
-      const std::size_t offset = static_cast<std::size_t>(energyID) * voxel2DSize * inputData.kVectors.size() +
+      const std::size_t offset = static_cast<std::size_t>(energyID) * voxel2DSize * inputData_.kVectors.size() +
                                  static_cast<std::size_t>(kID*voxel2DSize);
       return (py::array_t<Real>(
       {(int)inputData_.voxelDims[1],(int)inputData_.voxelDims[0]},
