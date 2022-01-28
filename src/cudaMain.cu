@@ -835,8 +835,8 @@ int cudaMain(const UINT *voxel,
         }
 #endif
 
-
-        hostDeviceExchange(&projectionGPUAveraged[(j * idata.kVectors.size()) * numVoxel2D + kstart * numVoxel2D],
+        const std::size_t disp  = static_cast<std::size_t>(numVoxel2D) * static_cast<std::size_t>(j*idata.kVectors.size()) + static_cast<std::size_t>(kstart*numVoxel2D);
+        hostDeviceExchange(&projectionGPUAveraged[disp],
                            d_projectionAverage, numVoxel2D,
                            cudaMemcpyDeviceToHost);
 #ifdef PROFILING
@@ -1453,8 +1453,8 @@ int cudaMainStreams(const UINT *voxel,
           START_TIMER(TIMERS::MEMCOPY_GPU_CPU)
         }
 #endif
-
-        hostDeviceExchange(&projectionGPUAveraged[(j * idata.kVectors.size()) * numVoxel2D + kID * numVoxel2D],
+        const std::size_t disp  = static_cast<std::size_t>(numVoxel2D) * static_cast<std::size_t>(j*idata.kVectors.size()) + static_cast<std::size_t>(kID*numVoxel2D);
+        hostDeviceExchange(&projectionGPUAveraged[disp],
                            d_projectionAverage, numVoxel2D,
                            cudaMemcpyDeviceToHost);
 

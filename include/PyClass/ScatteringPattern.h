@@ -44,7 +44,9 @@ public:
     :inputData_(InputData){
         const UINT
             numEnergyLevel = static_cast<UINT>(inputData_.energies.size());
-        data_ = new Real[numEnergyLevel * inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.kVectors.size()];
+        const std::size_t totalArraySize = static_cast<std::size_t>(numEnergyLevel) * static_cast<std::size_t>(inputData_.voxelDims[0] * inputData_.voxelDims[1]) *
+                                         inputData_.kVectors.size();
+        data_ = new Real[totalArraySize];
     }
 
     /**
@@ -118,7 +120,9 @@ public:
       }
       py::capsule free_when_done(this->data_, [](void *f) {
       });
-
+      const std::size_t voxel2DSize = static_cast<std::size_t>(inputData_.voxelDims[0])*static_cast<std::size_t>(inputData_.voxelDims[1]);
+      const std::size_t offset = static_cast<std::size_t>(energyID) * voxel2DSize * inputData.kVectors.size() +
+                                 static_cast<std::size_t>(kID*voxel2DSize);
       return (py::array_t<Real>(
       {(int)inputData_.voxelDims[1],(int)inputData_.voxelDims[0]},
       {sizeof(Real)*inputData_.voxelDims[1],sizeof(Real)},

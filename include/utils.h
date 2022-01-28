@@ -74,7 +74,8 @@ static void writeH5(const InputData & inputData, const UINT * voxelSize,const Re
         group.close();
       }
       for (UINT kID = 0; kID < inputData.kVectors.size(); kID++) {
-        const UINT offset = csize * voxel2DSize * inputData.kVectors.size() + kID*voxel2DSize;
+        const std::size_t offset = static_cast<std::size_t>(csize) * static_cast<std::size_t>(voxel2DSize) * inputData.kVectors.size() +
+          static_cast<std::size_t>(kID*voxel2DSize);
         std::memcpy(oneEnergyData, &projectionGPUAveraged[offset], sizeof(Real) * voxel2DSize);
         const std::string groupname = "K" + std::to_string(kID);
         H5::writeFile2D(file, oneEnergyData, voxelSize,groupname);

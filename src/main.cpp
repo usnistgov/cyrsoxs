@@ -127,9 +127,9 @@ int main(int argc, char **argv) {
   const UINT
     numEnergyLevel = inputData.energies.size();
 
-
-  projectionGPUAveraged = new Real[numEnergyLevel * (inputData.voxelDims[0] * inputData.voxelDims[1]) *
-                                   inputData.kVectors.size()];
+  const std::size_t totalArraySize = static_cast<std::size_t>(numEnergyLevel) * static_cast<std::size_t>(inputData.voxelDims[0] * inputData.voxelDims[1]) *
+                                     inputData.kVectors.size();
+  projectionGPUAveraged = new Real[totalArraySize];
 
   printCopyrightInfo();
   RotationMatrix rotationMatrix(&inputData);
