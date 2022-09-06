@@ -132,13 +132,14 @@ static void printCopyrightInfo(){
   std::cout << "|                                 Thanks for using Cy-RSoXS                                        |\n";
   std::cout << "|--------------------------------------------------------------------------------------------------|\n";
   std::cout << "|  Copyright          : Iowa State University                                                      |\n";
-  std::cout << "|  License            : MIT                                                                        |\n";
+  std::cout << "|  License            : NIST                                                                       |\n";
   std::cout << "|  Acknowledgement    : ONR MURI                                                                   |\n";
   std::cout << "|  Developed at Iowa State University in collaboration with NIST                                   |\n";
   std::cout << "|  Please cite the following publication :                                                         |\n";
   std::cout << "|  Comments/Questions :                                                                            |\n";
   std::cout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
   std::cout << "|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
+  std::cout << "|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
   std::cout << " -------------------------------------------------------------------------------------------------- \n";
 
   std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << " " << VERSION_TWEAK << "\n";
@@ -156,13 +157,14 @@ static void printPyBindCopyrightInfo(){
   pybind11::print("|                                 Thanks for using Cy-RSoXS                                        |");
   pybind11::print("|--------------------------------------------------------------------------------------------------|");
   pybind11::print("|  Copyright          : Iowa State University                                                      |");
-  pybind11::print("|  License            : MIT                                                                        |");
+  pybind11::print("|  License            : NIST                                                                       |");
   pybind11::print("|  Acknowledgement    : ONR MURI                                                                   |");
   pybind11::print("|  Developed at Iowa State University in collaboration with NIST                                   |");
   pybind11::print("|  Please cite the following publication :                                                         |");
   pybind11::print("|  Comments/Questions :                                                                            |");
   pybind11::print("|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |");
   pybind11::print("|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |");
+  pybind11::print("|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |");
   pybind11::print(" -------------------------------------------------------------------------------------------------- ");
 
   pybind11::print("Version   : " , VERSION_MAJOR , ".", VERSION_MINOR , ".", VERSION_PATCH, ".", VERSION_TWEAK );
@@ -179,13 +181,14 @@ static void printCopyrightInfo(std::ofstream & fout){
   fout << "|                                 Thanks for using Cy-RSoXS                                        |\n";
   fout << "|--------------------------------------------------------------------------------------------------|\n";
   fout << "|  Copyright          : Iowa State University                                                      |\n";
-  fout << "|  License            : MIT                                                                        |\n";
+  fout << "|  License            : NIST                                                                       |\n";
   fout << "|  Acknowledgement    : ONR MURI                                                                   |\n";
   fout << "|  Developed at Iowa State University in collaboration with NIST                                   |\n";
   fout << "|  Please cite the following publication :                                                         |\n";
   fout << "|  Comments/Questions :                                                                            |\n";
   fout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
   fout << "|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
+  fout << "|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
   fout << " -------------------------------------------------------------------------------------------------- \n";
 
   fout << "\n";
