@@ -134,7 +134,9 @@ static void printCopyrightInfo(){
   std::cout << "|  Copyright          : Iowa State University                                                      |\n";
   std::cout << "|  License            : NIST                                                                       |\n";
   std::cout << "|  Acknowledgement    : ONR MURI                                                                   |\n";
+  std::cout << "|                                                                                                  |\n";
   std::cout << "|  Developed at Iowa State University in collaboration with NIST                                   |\n";
+  std::cout << "|                                                                                                  |\n";
   std::cout << "|  Please cite the following publication :                                                         |\n";
   std::cout << "|  Comments/Questions :                                                                            |\n";
   std::cout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
@@ -159,7 +161,9 @@ static void printPyBindCopyrightInfo(){
   pybind11::print("|  Copyright          : Iowa State University                                                      |");
   pybind11::print("|  License            : NIST                                                                       |");
   pybind11::print("|  Acknowledgement    : ONR MURI                                                                   |");
+  pybind11::print("|                                                                                                  |");
   pybind11::print("|  Developed at Iowa State University in collaboration with NIST                                   |");
+  pybind11::print("|                                                                                                  |");
   pybind11::print("|  Please cite the following publication :                                                         |");
   pybind11::print("|  Comments/Questions :                                                                            |");
   pybind11::print("|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |");
@@ -183,7 +187,9 @@ static void printCopyrightInfo(std::ofstream & fout){
   fout << "|  Copyright          : Iowa State University                                                      |\n";
   fout << "|  License            : NIST                                                                       |\n";
   fout << "|  Acknowledgement    : ONR MURI                                                                   |\n";
+  fout << "|                                                                                                  |\n";
   fout << "|  Developed at Iowa State University in collaboration with NIST                                   |\n";
+  fout << "|                                                                                                  |\n";
   fout << "|  Please cite the following publication :                                                         |\n";
   fout << "|  Comments/Questions :                                                                            |\n";
   fout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
