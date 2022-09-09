@@ -57,6 +57,8 @@ Contributors
 * Eliot Gann
 * Dean Delongchamp
 * Michael Chabinyc
+* Peter Dudenas
+* Tyler Martin
 
 Acknowledgement
 ===============
@@ -68,4 +70,4 @@ See [docs/FAQ.md](docs/FAQ.md) for some of the known issues or Frequently asked 
 
 Contact
 =======
-Questions and comments should be sent to Dr. Baskar Ganapathysubramanian at [baskarg@iastate.edu](mailto:baskarg@iastate.edu) or Dr.  Adarsh Krishnamurthy [adarsh@iastate.edu](mailto:adarsh@iastate.edu).
+Questions and comments should be sent to Dr. Baskar Ganapathysubramanian at [baskarg@iastate.edu](mailto:baskarg@iastate.edu), Dr.  Adarsh Krishnamurthy [adarsh@iastate.edu](mailto:adarsh@iastate.edu), or Dr. Dean DeLongchamp at [dean.delongchamp@nist.gov](mailto:dean.delongchamp@nist.gov)
