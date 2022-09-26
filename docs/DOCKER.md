@@ -1,4 +1,4 @@
-GPU enabled RSoXS simulation (1.1.0.0 - Beta)
+GPU enabled RSoXS simulation (1.1.4.0)
 ====================================
 
 Installing Docker
@@ -76,4 +76,4 @@ We thank ONR MURI Center for Self-Assembled Organic Electronics for providing th
 
 Contact
 =======
-Questions and comments should be sent to Dr. Baskar Ganapathysubramanian at [baskarg@iastate.edu](mailto:baskarg@iastate.edu) or Dr.  Adarsh Krishnamurthy [adarsh@iastate.edu](mailto:adarsh@iastate.edu).
+Questions and comments should be sent to Dr. Baskar Ganapathysubramanian at [baskarg@iastate.edu](mailto:baskarg@iastate.edu) or Dr.  Adarsh Krishnamurthy at [adarsh@iastate.edu](mailto:adarsh@iastate.edu) or Dr. Dean DeLongchamp at [dean.delongchamp@nist.gov](mailto:dean.delongchamp@nist.gov)
