@@ -1,6 +1,6 @@
 Cy-RSoXS: GPU enabled RSoXS simulation
 ====================================
-* This code solves the X-ray scattering on Graphical processing units (GPU).
+* This code calculates resonant X-ray scattering in the Born Approximation on Graphical Processing Units (GPU).
 Currently it supports the operation with 32 bit / 64 bit float datatypes.
 
 * The code can be executed through the Python interface (enabled through [Pybind11](https://github.com/pybind/pybind11))
@@ -9,6 +9,7 @@ or directly through the executable.
 
 Version  : 1.1.4.0
 ================
+#### The developer version of the CyRSoXS code is available at https://bitbucket.org/baskargroup/cy-rsoxs, and all stable future releases will be merged with the current usnistgov repository.
 
 Dependencies
 =============
