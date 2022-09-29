@@ -132,6 +132,40 @@ public:
 
     }
 
+    // BEGIN code that was contributed by employees of the National Institute of Standards and Technology (NIST), 
+    // an agency of the Federal Government and is being made available as a public service.
+    // Pursuant to title 17 United States Code Section 105, works of NIST employees are not subject to copyright protection in the United States
+    /**
+     * @brief returns the all the data at once in the numpy array. Note that it is the same memory allocation
+     * with numpy wrapper.
+     * @param kID id of k Vector
+     * @return numpy array with the scattering pattern data of the energy
+     */
+    py::array_t<Real> writeAllToNumpy(const UINT kID = 0) const {
+      if(inputData_.caseType == DEFAULT){
+        if(kID > 0){
+          py::print("kID cannot be greater than 0 for Default");
+          return py::array_t<Real>{};
+        }
+      }
+      if(kID >= inputData_.kVectors.size()){
+        py::print("[ERROR] kID = ",kID, " must be smaller than kVector Size = ", inputData_.kVectors.size());
+        return py::array_t<Real>{};
+      }
+      const auto & energies = inputData_.energies;
+      py::print("[INFO] kVector = [",inputData_.kVectors[kID].x,",",inputData_.kVectors[kID].y,",",inputData_.kVectors[kID].z,"]");
+
+      py::capsule free_when_done(this->data_, [](void *f) {
+      });
+
+      return (py::array_t<Real>(
+      {(int)inputData_.energies.size(), (int)inputData_.voxelDims[1], (int)inputData_.voxelDims[0]},
+      {sizeof(Real)*inputData_.voxelDims[1]*inputData_.voxelDims[0], sizeof(Real)*inputData_.voxelDims[1], sizeof(Real)},
+      data_, free_when_done));
+
+    }
+    // END code that was contributed by employees of NIST
+
 
 };
 #endif //CY_RSOXS_PROJECTIONDATA_H

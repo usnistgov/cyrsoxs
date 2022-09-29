@@ -77,6 +77,9 @@ if (OPENMP_FOUND)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif ()
 
+# BEGIN code that was contributed by employees of the National Institute of Standards and Technology (NIST), 
+# an agency of the Federal Government and is being made available as a public service.
+# Pursuant to title 17 United States Code Section 105, works of NIST employees are not subject to copyright protection in the United States
 if (PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
@@ -94,6 +97,8 @@ else ()
         message(FATAL_ERROR "Libconfig++ could not be located.")
     endif ()
 endif ()
+# END code that was contributed by employees of NIST
+
 
 find_package(HDF5 COMPONENTS CXX HL REQUIRED)
 

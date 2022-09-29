@@ -215,18 +215,23 @@ PYBIND11_MODULE(CyRSoXS, module) {
       .def("reset", &VoxelData::reset,"Resets the voxel data")
       .def("writeToH5", &VoxelData::writeToH5,"Writes voxel data to HDF5 file");
 
+  // BEGIN code that was contributed by employees of the National Institute of Standards and Technology (NIST), 
+  // an agency of the Federal Government and is being made available as a public service.
+  // Pursuant to title 17 United States Code Section 105, works of NIST employees are not subject to copyright protection in the United States
   py::class_<ScatteringPattern>(module,"ScatteringPattern")
       .def(py::init<const InputData &>(), "Constructor",py::arg("InputData"))
       .def("clear",&ScatteringPattern::clear,"Clears the memory")
       .def("writeToHDF5",&ScatteringPattern::writeToHDF5,"Dumps data in  HDF5 file format")
       .def("writeToVTI",&ScatteringPattern::writeToVTI,"Dumps data in  VTI file format")
-      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"),py::arg("kID"));
+      .def("dataToNumpy",&ScatteringPattern::writeToNumpy,"Returns data in numpy array",py::arg("Energy"),py::arg("kID"))
+      .def("writeAllToNumpy",&ScatteringPattern::writeAllToNumpy,"Returns all data at once in numpy array",py::arg("kID"));
+  // END code that was contributed by employees of NIST
 
   py::class_<Polarization>(module,"Polarization")
       .def(py::init<const InputData &>(), "Constructor",py::arg("InputData"))
       .def("clear",&Polarization::clear,"Clears the memory")
       .def("writeToHDF5",&Polarization::writeToHDF5,"write to HDF5")
-      .def("writeToNumpy",&Polarization::writeToNumpy,"retruns numpy array",py::arg("id"));
+      .def("writeToNumpy",&Polarization::writeToNumpy,"retruns numpy array",py::arg("id"));      
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);
