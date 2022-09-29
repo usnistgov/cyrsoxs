@@ -1,7 +1,7 @@
 /////////////////////////////////////////////////////////////////////////////////
-// NIST License
+// MIT License
 //
-//Copyright (c) 2019 - 2021 Iowa State University
+//Copyright (c) 2019 - 2022 Iowa State University
 //
 //Permission is hereby granted, free of charge, to any person obtaining a copy
 //of this software and associated documentation files (the "Software"), to deal
@@ -64,7 +64,7 @@
  * support for this work.
  *
  * \copyright Copyright 2019-2020 Iowa State University. All rights reserved.
- * This project is released under the NIST License.
+ * This project is released under the MIT License.
  *
  */
 

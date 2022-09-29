@@ -63,12 +63,19 @@ make
 
 Contributors
 ============
+
+This software was developed at Iowa State University in collaboration with NIST. The Iowa State team provided expertise in high performance computing, and the NIST team provided scientific expertise on the RSoXS technique.
+
+#### Iowa State University
 * Kumar Saurabh
 * Adarsh Krishnamurthy
 * Baskar Ganapathysubramanian
+
+#### NIST
 * Eliot Gann
-* Dean Delongchamp
-* Michael Chabinyc
+* Dean M. DeLongchamp
+* Peter J. Dudenas
+* Tyler B. Martin
 
 Acknowledgement
 ===============
