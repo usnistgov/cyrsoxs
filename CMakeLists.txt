@@ -85,7 +85,7 @@ endif ()
 if (PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
-    find_package(Python COMPONENTS Interpreter Development REQUIRED)
+    find_package(Python 3 COMPONENTS Interpreter Development REQUIRED)
 
     if (USE_SUBMODULE_PYBIND)
         set(PYBIND_LOCATION "include/pybind11")
