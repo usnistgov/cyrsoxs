@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(Cy-RSoXS VERSION 1.1.4.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
+project(Cy-RSoXS VERSION 1.1.4.1 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
@@ -80,16 +80,17 @@ endif ()
 # BEGIN code that was contributed by employees of the National Institute of Standards and Technology (NIST), 
 # an agency of the Federal Government and is being made available as a public service.
 # Pursuant to title 17 United States Code Section 105, works of NIST employees are not subject to copyright protection in the United States
+
 if (PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
     find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
-    set(PYBIND_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11)
-    add_subdirectory(${PYBIND_LOCATION})
+    #set(PYBIND_LOCATION "${CONDA_PREFIX}/include/pybind11")
+    #add_subdirectory(${PYBIND_LOCATION})
     include_directories(
             ${PYTHON_INCLUDE_DIRS}
-            external/pybind11/include
+            #${CONDA_PREFIX}/include/pybind11
     )
 else ()
     find_package(Config++)
@@ -97,6 +98,8 @@ else ()
         message(FATAL_ERROR "Libconfig++ could not be located.")
     endif ()
 endif ()
+
+
 # END code that was contributed by employees of NIST
 
 
