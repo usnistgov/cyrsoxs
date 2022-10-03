@@ -12,6 +12,7 @@ option(BIAXIAL "Biaxial Computation" OFF)
 option(BUILD_DOCS "Build Documentation" OFF)
 option(PYBIND "Pybind support for Cy-RSOXS " OFF)
 option(USE_64_BIT_INDICES, "Use 64 Bit Indices" OFF)
+option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" ON)
 option(ENABLE_TEST, "Enable test" ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
@@ -86,11 +87,13 @@ if (PYBIND)
     # find_package(PythonLibs 3.6 REQUIRED)
     find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
-    #set(PYBIND_LOCATION "${CONDA_PREFIX}/include/pybind11")
-    #add_subdirectory(${PYBIND_LOCATION})
+    if (USE_SUBMODULE_PYBIND)
+        set(PYBIND_LOCATION "include/pybind11")
+        add_subdirectory(${PYBIND_LOCATION})
+        include_directories(include/pybind11)
+    endif ()
     include_directories(
             ${PYTHON_INCLUDE_DIRS}
-            #${CONDA_PREFIX}/include/pybind11
     )
 else ()
     find_package(Config++)
@@ -244,10 +247,8 @@ if (BUILD_DOCS)
     endif (DOXYGEN_FOUND)
 endif ()
 
-if (BININSTALL)
-        install(FILES build/CyRSoXS DESTINATION bin)
-endif ()
-
-if (LIBINSTALL)
+if (PYBIND)
         install(FILES build-pybind/CyRSoXS.so DESTINATION lib)
+else ()
+        install(FILES build/CyRSoXS DESTINATION bin)
 endif ()
