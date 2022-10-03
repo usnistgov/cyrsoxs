@@ -86,6 +86,8 @@ if (PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
     find_package(Python 3 COMPONENTS Interpreter Development REQUIRED)
+    
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --verbose")
 
     if (USE_SUBMODULE_PYBIND)
         set(PYBIND_LOCATION "include/pybind11")
