@@ -1,0 +1,14 @@
+name: cyrsoxs-build
+
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - gcc
+  - pybind11
+  - cmake
+  - make
+  - hdf5
+  - libconfig
+  - cudatoolkit
+  - openmp
