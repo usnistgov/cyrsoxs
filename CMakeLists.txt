@@ -243,3 +243,11 @@ if (BUILD_DOCS)
         message("Doxygen need to be installed to generate the doxygen documentation")
     endif (DOXYGEN_FOUND)
 endif ()
+
+if (BININSTALL)
+        install(FILES build/CyRSoXS DESTINATION bin)
+endif ()
+
+if (LIBINSTALL)
+        install(FILES build-pybind/CyRSoXS.so DESTINATION lib)
+endif ()
