@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(Cy-RSoXS VERSION 1.1.4.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
+project(Cy-RSoXS VERSION 1.1.5 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
@@ -12,6 +12,7 @@ option(BIAXIAL "Biaxial Computation" OFF)
 option(BUILD_DOCS "Build Documentation" OFF)
 option(PYBIND "Pybind support for Cy-RSOXS " OFF)
 option(USE_64_BIT_INDICES, "Use 64 Bit Indices" OFF)
+option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" ON)
 option(ENABLE_TEST, "Enable test" ON)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
@@ -80,16 +81,19 @@ endif ()
 # BEGIN code that was contributed by employees of the National Institute of Standards and Technology (NIST), 
 # an agency of the Federal Government and is being made available as a public service.
 # Pursuant to title 17 United States Code Section 105, works of NIST employees are not subject to copyright protection in the United States
+
 if (PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
     find_package(Python COMPONENTS Interpreter Development REQUIRED)
 
-    set(PYBIND_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11)
-    add_subdirectory(${PYBIND_LOCATION})
+    if (USE_SUBMODULE_PYBIND)
+        set(PYBIND_LOCATION "include/pybind11")
+        add_subdirectory(${PYBIND_LOCATION})
+        include_directories(include/pybind11)
+    endif ()
     include_directories(
             ${PYTHON_INCLUDE_DIRS}
-            external/pybind11/include
     )
 else ()
     find_package(Config++)
@@ -97,6 +101,8 @@ else ()
         message(FATAL_ERROR "Libconfig++ could not be located.")
     endif ()
 endif ()
+
+
 # END code that was contributed by employees of NIST
 
 
@@ -239,4 +245,10 @@ if (BUILD_DOCS)
     else (DOXYGEN_FOUND)
         message("Doxygen need to be installed to generate the doxygen documentation")
     endif (DOXYGEN_FOUND)
+endif ()
+
+if (PYBIND)
+        install(FILES build-pybind/CyRSoXS.so DESTINATION lib)
+else ()
+        install(FILES build/CyRSoXS DESTINATION bin)
 endif ()
