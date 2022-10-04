@@ -97,6 +97,7 @@ if (PYBIND)
     include_directories(
             ${PYTHON_INCLUDE_DIRS}
     )
+    find_package(pybind11 CONFIG)
 else ()
     find_package(Config++)
     if (NOT ${CONFIG++_FOUND})
