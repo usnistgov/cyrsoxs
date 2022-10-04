@@ -265,6 +265,10 @@ endif ()
 
 if (PYBIND)
         install(FILES build-pybind/$<TARGET_FILE_NAME:CyRSoXS> DESTINATION lib)
+        #execute_process(COMMAND ${Python_EXECUTABLE} -m pip install ${_pypkg})
+        #execute_process ( COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
+        # above to use ${PYTHON_SITE_PACKAGES} instead of ${Pyhon_SITEARCH}
+        install(FILES build-pybind/$<TARGET_FILE_NAME:CyRSoXS> DESTINATION ${Python_SITEARCH})
 else ()
         install(FILES build/CyRSoXS DESTINATION bin)
 endif ()
