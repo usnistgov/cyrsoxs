@@ -260,7 +260,7 @@ if (BUILD_DOCS)
 endif ()
 
 if (PYBIND)
-        install(FILES build-pybind/CyRSoXS.so DESTINATION lib)
+        install(FILES build-pybind/$<TARGET_FILE_NAME:CyRSoXS> DESTINATION lib)
 else ()
         install(FILES build/CyRSoXS DESTINATION bin)
 endif ()
