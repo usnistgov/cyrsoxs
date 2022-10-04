@@ -69,7 +69,8 @@ if (ENABLE_TEST)
     message("Test enabled")
 endif ()
 
-find_package(CUDA 9 REQUIRED)
+enable_language(CUDA)
+# x peter commenting out to use new CUDA machinery in cmake >= 3.8 find_package(CUDA 9 REQUIRED)
 find_package(OpenMP REQUIRED)
 
 if (OPENMP_FOUND)
@@ -113,7 +114,7 @@ find_package(HDF5 COMPONENTS CXX HL REQUIRED)
 
 
 
-
+set(CMAKE_CUDA_STANDARD 14) # pab added
 set(CMAKE_CXX_STANDARD 14)
 set(CyRSoXS_SRC
         src/RotationMatrix.cpp
@@ -167,7 +168,7 @@ if (PYBIND)
             )
 
 
-    cuda_add_library(CyRSoXS SHARED
+    add_library(CyRSoXS SHARED
             ${PYBIND_SRC} ${CyRSoXS_SRC} ${CyRSoXS_INC})
     target_include_directories(CyRSoXS PUBLIC ${Python_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
     target_include_directories(CyRSoXS PRIVATE ${PROJECT_BINARY_DIR}/generated)
