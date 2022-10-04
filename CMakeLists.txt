@@ -70,6 +70,7 @@ if (ENABLE_TEST)
 endif ()
 
 enable_language(CUDA)
+find_package(CUDAToolkit)
 # x peter commenting out to use new CUDA machinery in cmake >= 3.8 find_package(CUDA 9 REQUIRED)
 find_package(OpenMP REQUIRED)
 
@@ -173,7 +174,10 @@ if (PYBIND)
     target_include_directories(CyRSoXS PUBLIC ${Python_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
     target_include_directories(CyRSoXS PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(CyRSoXS
-            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
+            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cublas CUDA::cufft CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps)
+    #${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas -lcudart "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
+    
+
     if (EOC)
         target_include_directories(CyRSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(CyRSoXS ${OpenCV_LIBS})
@@ -206,7 +210,7 @@ else ()
     target_include_directories(CyRSoXS PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include)
     target_include_directories(CyRSoXS PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(CyRSoXS
-            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
+            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cufft CUDA::cublas CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps ${CONFIG++_LIBRARY})
     if (EOC)
         target_include_directories(CyRSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(CyRSoXS ${OpenCV_LIBS})
