@@ -169,7 +169,7 @@ if (PYBIND)
 
     cuda_add_library(CyRSoXS SHARED
             ${PYBIND_SRC} ${CyRSoXS_SRC} ${CyRSoXS_INC})
-    target_include_directories(CyRSoXS PUBLIC ${Python_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
+    target_include_directories(CyRSoXS PUBLIC ${PYTHON_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
     target_include_directories(CyRSoXS PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(CyRSoXS
             ${PYTHON_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
