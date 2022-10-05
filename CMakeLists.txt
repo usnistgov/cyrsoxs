@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(Cy-RSoXS VERSION 1.1.5.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
+project(Cy-RSoXS VERSION 9.1.5.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
@@ -270,5 +270,5 @@ if (PYBIND)
         # above to use ${PYTHON_SITE_PACKAGES} instead of ${Pyhon_SITEARCH}
         install(FILES build-pybind/$<TARGET_FILE_NAME:CyRSoXS> DESTINATION ${Python_SITEARCH})
 else ()
-        install(FILES build/CyRSoXS DESTINATION bin)
+        install(FILES build/CyRSoXS DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 endif ()
