@@ -3,7 +3,6 @@ name: cyrsoxs-build
 channels:
   - conda-forge
   - defaults
-  - nvidia
 dependencies:
   - cxx-compiler
   - pybind11
@@ -11,7 +10,5 @@ dependencies:
   - make
   - hdf5
   - libconfig
-  - cudatoolkit
   - openmp
-  - cuda
-  - cuda-nvcc
+  - nvidia::cuda
