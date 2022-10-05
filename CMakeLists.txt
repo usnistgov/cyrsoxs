@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(Cy-RSoXS VERSION 1.1.5 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
+project(Cy-RSoXS VERSION 1.1.5.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
@@ -69,7 +69,9 @@ if (ENABLE_TEST)
     message("Test enabled")
 endif ()
 
-find_package(CUDA 9 REQUIRED)
+enable_language(CUDA)
+find_package(CUDAToolkit)
+# x peter commenting out to use new CUDA machinery in cmake >= 3.8 find_package(CUDA 9 REQUIRED)
 find_package(OpenMP REQUIRED)
 
 if (OPENMP_FOUND)
@@ -85,16 +87,19 @@ endif ()
 if (PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
     # find_package(PythonLibs 3.6 REQUIRED)
-    find_package(Python COMPONENTS Interpreter Development REQUIRED)
+    find_package(Python 3 COMPONENTS Interpreter Development REQUIRED)
+    
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --verbose")
 
-    if (USE_SUBMODULE_PYBIND)
-        set(PYBIND_LOCATION "include/pybind11")
+        if (USE_SUBMODULE_PYBIND)
+        set(PYBIND_LOCATION external/pybind11)
         add_subdirectory(${PYBIND_LOCATION})
-        include_directories(include/pybind11)
+        include_directories(external/pybind11/include)
+    else ()
+        find_package(pybind11 CONFIG REQUIRED)
     endif ()
-    include_directories(
-            ${PYTHON_INCLUDE_DIRS}
-    )
+    include_directories(${Python_INCLUDE_DIRS})
+    find_package(pybind11 CONFIG REQUIRED)
 else ()
     find_package(Config++)
     if (NOT ${CONFIG++_FOUND})
@@ -110,7 +115,7 @@ find_package(HDF5 COMPONENTS CXX HL REQUIRED)
 
 
 
-
+set(CMAKE_CUDA_STANDARD 14) # pab added
 set(CMAKE_CXX_STANDARD 14)
 set(CyRSoXS_SRC
         src/RotationMatrix.cpp
@@ -164,12 +169,15 @@ if (PYBIND)
             )
 
 
-    cuda_add_library(CyRSoXS SHARED
+    add_library(CyRSoXS SHARED
             ${PYBIND_SRC} ${CyRSoXS_SRC} ${CyRSoXS_INC})
     target_include_directories(CyRSoXS PUBLIC ${Python_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
     target_include_directories(CyRSoXS PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(CyRSoXS
-            ${PYTHON_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
+            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cublas CUDA::cufft CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps)
+    #${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas -lcudart "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
+    
+
     if (EOC)
         target_include_directories(CyRSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(CyRSoXS ${OpenCV_LIBS})
@@ -180,6 +188,14 @@ if (PYBIND)
             PREFIX ""
             )
 
+    pybind11_extension(CyRSoXS)
+    if(NOT MSVC AND NOT ${CMAKE_BUILD_TYPE} MATCHES Debug|RelWithDebInfo)
+        # Strip unnecessary sections of the binary on Linux/macOS
+        pybind11_strip(CyRSoXS)
+    endif()
+
+    set_target_properties(CyRSoXS PROPERTIES CXX_VISIBILITY_PRESET "hidden"
+                                         CUDA_VISIBILITY_PRESET "hidden") 
 else ()
     set(EXE_SRC
             src/main.cpp
@@ -194,7 +210,7 @@ else ()
     target_include_directories(CyRSoXS PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include)
     target_include_directories(CyRSoXS PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(CyRSoXS
-            ${PYTHON_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas  "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
+            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cufft CUDA::cublas CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps ${CONFIG++_LIBRARY})
     if (EOC)
         target_include_directories(CyRSoXS PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(CyRSoXS ${OpenCV_LIBS})
@@ -248,7 +264,11 @@ if (BUILD_DOCS)
 endif ()
 
 if (PYBIND)
-        install(FILES build-pybind/CyRSoXS.so DESTINATION lib)
+        install(FILES build-pybind/$<TARGET_FILE_NAME:CyRSoXS> DESTINATION lib)
+        #execute_process(COMMAND ${Python_EXECUTABLE} -m pip install ${_pypkg})
+        #execute_process ( COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
+        # above to use ${PYTHON_SITE_PACKAGES} instead of ${Pyhon_SITEARCH}
+        install(FILES build-pybind/$<TARGET_FILE_NAME:CyRSoXS> DESTINATION ${Python_SITEARCH})
 else ()
-        install(FILES build/CyRSoXS DESTINATION bin)
+        install(FILES build/CyRSoXS DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 endif ()
