@@ -1,14 +1,12 @@
-GPU enabled RSoXS simulation (1.1.0 - Beta)
-====================================
+# GPU enabled RSoXS simulation (1.1.5.0)
 
-# With Pybind support
+## With Pybind support
 
 Refer to the [Jupyer-notebook ](../notebook/CyRSoXS.ipynb) for the instructions
 
-Without Pybind support
-=======================
+## Without Pybind support
 
-## Generating config and constant files
+### Generating config and constant files
 
 In order to run CyRSoXS, first we need to generate the confiig file.
 To generate the config file, you need to run the python script `generateConstants.py`
@@ -76,11 +74,11 @@ Once the script has successfully completed, it will generate the files `config.t
  `Material2.txt` and so on for each individual material.
 
 
-## Running Cy-RSoXS
+## Running CyRSoXS
 
 Copy all the generated files to run directory.
 
- In order to run Cy-RSOXS you need to execute the following command
+ In order to run CyRSoXS you need to execute the following command
 from the run directory.
 
 ```

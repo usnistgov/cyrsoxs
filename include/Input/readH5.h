@@ -155,7 +155,7 @@ namespace H5 {
   }
 
   /**
-   * @brief Converts XYZ format data to ZYX format. Cy-RSoXS assumes the data is always in ZYX format
+   * @brief Converts XYZ format data to ZYX format. CyRSoXS assumes the data is always in ZYX format
    * @tparam T
    * @param data data for single material
    * @param numComponents number of components (1/3 for scalar / vector)

@@ -1,14 +1,18 @@
-GPU enabled RSoXS simulation (1.1.0 - Beta)
-====================================
+# GPU enabled RSoXS simulation (1.1.5.0)
+
 ## Compiling libconfig
 
-Libconfig's build system is [Autotools](https://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html), which means you'll need to run `./configure` and then `make` to build.
+Libconfig's build system is [Autotools](https://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html), which means you'll need to run `./configure` and then `make` to build. Hyperrealm is the maintainer of Libconfig
 
 This guide recommends passing ```--prefix=`pwd`/install``` to `./configure`, which will cause `make install` to copy the output files to `[your_libconfig_dir]/install` instead of `/usr`. This way your libconfig install lives completely inside your libconfig folder. This is necessary if you are working on a system where you don't have admin privileges (i.e. an HPC cluster).
 
 ```bash
-# Download and extract
-wget http://hyperrealm.github.io/libconfig/dist/libconfig-1.7.2.tar.gz
+# Download and verify checksum
+wget https://hyperrealm.github.io/libconfig/dist/libconfig-1.7.2.tar.gz
+sha256sum libconfig-1.7.2.tar.gz
+# 7c3c7a9c73ff3302084386e96f903eb62ce06953bb1666235fac74363a16fad9
+
+# Extract
 tar xvf libconfig-1.7.2.tar.gz
 rm libconfig-1.7.2.tar.gz
 
@@ -18,8 +22,7 @@ cd libconfig-1.7.2
 make -j8  # compile with 8 threads
 make install
 
-# Permanently set $LIBCONFIG_DIR environment variable, which is what TalyFEM uses
-# to find your libconfig install. Also set LD_LIBRARY_PATH to include the
+# Permanently set $LIBCONFIG_DIR environment variable, and set LD_LIBRARY_PATH to include the
 # libconfig lib directory to prevent dynamic linking errors with libconfig++.so.
 echo "export LIBCONFIG_DIR=`pwd`/install" >> ~/.bashrc
 echo "export LD_LIBRARY_PATH=\$LD_LIBRARY_PATH:\$LIBCONFIG_DIR/lib" >> ~/.bashrc
@@ -30,11 +33,14 @@ source ~/.bashrc
 
 ## Installing HDF5
 
-Cy-RSoXS needs [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format)-based binary input format.
+CyRSoXS needs [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format)-based binary input format.
 
 ```bash
 cd $HDF5_INSTALL_DIRECTORY
 wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.5/src/CMake-hdf5-1.10.5.tar.gz
+sha256sum CMake-hdf5-1.10.5.tar.gz
+# 339bbc4594b6d71ed0794b0861af231bdd06bcc71c8a81563763f72455c1c5c2
+
 tar -xzvf CMake-hdf5-1.10.5.tar.gz
 rm CMake-hdf5-1.10.5.tar.gz
 cd CMake-hdf5-1.10.5
@@ -51,83 +57,78 @@ source ~/.bashrc
 ```
 
 
-Downloading Cy-RSoXS
-==================
+## Downloading CyRSoXS
 
-You can download Cy-RSoXS by cloning into the repository
+Clone the CyRSoXS Github repo
 
 ```bash
-git clone https://bitbucket.org/baskargroup/cy-rsoxs.git
+git clone https://github.com/usnistgov/cyrsoxs.git
 ```
-
-It will ask for your username and password.
 
 **With Pybind**
 
-If you want to use the Python support for Cy-RSoXS, add the submodule by
+If you want to use the Python support for CyRSoXS, add the submodule by
 
 ```bash
 git submodule update --init
 ```
 
-Building Cy-RSoXS
-==================
-
-**Cmake options**
+## Building CyRSoXS
 
 One should have a valid C/C++ compiler and CUDA-toolkit in addition to above modules installed, in order to
-compile Cy-RSoXS.
+compile CyRSoXS.
+
+To compile CyRSoXS as an executable that can be called from the command line or from a bash script, run the following commands:
 
 ```bash
-cd $Cy-RSoXS_DIR
+cd $CyRSoXS_DIR
 mkdir build;
 cd build;
 cmake .. -DCMAKE_BUILD_TYPE=Release
 ```
 
+This will generate a `CyRSoXS` executable.
+
 **Building with Pybind**
+
+CyRSoXS can also be compiled with Pybind so that it can be imported as a Python library. To compile for this functionality, run the following commands:
+
 ```bash
--DPYBIND = Yes
+cd $CyRSoXS_DIR
+mkdir build-pybind
+cd build-pybind
+cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND=Yes -USE_SUBMODULE_PYBIND=Yes
 ```
 
-For Pybind maximum number of material is set to 32. To change the maximum number of material:
-```bash
--DMAX_NUM_MATERIAL=64
-```
-The above flag will set the maximum number of material to 64.
+This will generate a `CyRSoXS.so` Shared Library file, which can be imported into Python. Note that this does not create an executable.
 
-**Compiling with intel compiler**
+*Optional CMake Flags*
 
-If you are compiling with intel compiler (Does not work with Pybind):
-```bash
- -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc
-```
-
-Optional Cmake Flags can be added:
-
-**For compiling in double precision mode:**
-```bash
--DDOUBLE_PRECISION=Yes
+```console
+    
+    -DPYBIND=Yes            # Compiling with Pybind
+    -DUSE_PYBIND_SUBMODULE  # Choose to compile with the Pybind submodule, or Conda-installed Pybind 
+    -DMAX_NUM_MATERIAL=64   # To change the maximum number of materials (default is 32) 
+    -DDOUBLE_PRECISION=Yes  # Calculations will performed with double precision numbers
+    -DPROFILING=Yes         # Enables profiling of the code
+    -DBUILD_DOCS=Yes        # To build documentation
+    -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc # Compiling with the Intel compiler (does not work with Pybind)
 ```
 
-**For profiling**
-```bash
--DPROFILING=Yes
-```
+## Making CyRSoXS
 
-**Build Documentation**
-```bash
--DBUILD_DOCS=Yes
-```
-
-Making Cy-RSoxs
-===============
-Once the cmake files has been generated run the following command:
+Once the CMake files has been generated run the following command:
 ```bash
 make
 ```
 
-In order to generate the documentation, run
+In order to generate the latex documentation, run
 ```bash
 make doc_doxygen
+```
+
+To build the PDF version of the documentation, run
+```bash
+cd latex
+make
 ```

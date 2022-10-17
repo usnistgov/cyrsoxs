@@ -1,17 +1,17 @@
-GPU enabled RSoXS simulation (1.0.0 - Beta)
-====================================
+# GPU enabled RSoXS simulation (1.1.5.0)
 
-Cy-RSoXS prints output in `.h5` and  `.vti` format. Both these file format can 
+
+CyRSoXS prints output in `.h5` and  `.vti` format. Both these file format can 
 be easily visualized in Paraview. The output in `.h5` is stored in the directory 
 `H5` and the `.vti` files are stored in the directory name `VTI`.
 
-Installing Paraview
-===================
+## Installing Paraview
+
 The Paraview can be downloaded from [here](https://www.paraview.org/).
 
 
-Generating movie
-================
+## Generating a movie
+
 1. We provide a python script `createMovie.py` located in scripts folder.
  Run `python createMovie.py` outside of VTI folder. It will generate a file `movie.pvd`.
   

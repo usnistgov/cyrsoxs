@@ -104,7 +104,7 @@ def dump_dataVacuum(index, energy, f):
 
 
 def dump_data(valArray, index, labelEnergy, f):
-    Header = "EnergyData" + str(index) + ":\n{\n";
+    Header = "EnergyData" + str(index) + ":\n{\n"
     f.write(Header)
     Energy = "Energy = " + str(valArray[labelEnergy["Energy"]]) + ";\n"
     f.write(Energy)

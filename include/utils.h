@@ -129,7 +129,7 @@ static void writeVTI(const InputData & inputData, const UINT * voxelSize,const R
 static void printCopyrightInfo(){
 
   std::cout << " __________________________________________________________________________________________________\n";
-  std::cout << "|                                 Thanks for using Cy-RSoXS                                        |\n";
+  std::cout << "|                                 Thanks for using CyRSoXS                                        |\n";
   std::cout << "|--------------------------------------------------------------------------------------------------|\n";
   std::cout << "|  Copyright          : Iowa State University                                                      |\n";
   std::cout << "|  License            : NIST                                                                       |\n";
@@ -140,7 +140,7 @@ static void printCopyrightInfo(){
   std::cout << "|  Please cite the following publication :                                                         |\n";
   std::cout << "|  Comments/Questions :                                                                            |\n";
   std::cout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
-  std::cout << "|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
+  std::cout << "|          2. Dr. Adarsh Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
   std::cout << "|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
   std::cout << " -------------------------------------------------------------------------------------------------- \n";
 
@@ -156,7 +156,7 @@ static void printCopyrightInfo(){
 static void printPyBindCopyrightInfo(){
 
   pybind11::print(" __________________________________________________________________________________________________");
-  pybind11::print("|                                 Thanks for using Cy-RSoXS                                        |");
+  pybind11::print("|                                 Thanks for using CyRSoXS                                        |");
   pybind11::print("|--------------------------------------------------------------------------------------------------|");
   pybind11::print("|  Copyright          : Iowa State University                                                      |");
   pybind11::print("|  License            : NIST                                                                       |");
@@ -167,7 +167,7 @@ static void printPyBindCopyrightInfo(){
   pybind11::print("|  Please cite the following publication :                                                         |");
   pybind11::print("|  Comments/Questions :                                                                            |");
   pybind11::print("|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |");
-  pybind11::print("|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |");
+  pybind11::print("|          2. Dr. Adarsh Krishnamurthy        (adarsh@iastate.edu)                                 |");
   pybind11::print("|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |");
   pybind11::print(" -------------------------------------------------------------------------------------------------- ");
 
@@ -182,7 +182,7 @@ static void printPyBindCopyrightInfo(){
 static void printCopyrightInfo(std::ofstream & fout){
 
   fout << " __________________________________________________________________________________________________\n";
-  fout << "|                                 Thanks for using Cy-RSoXS                                        |\n";
+  fout << "|                                 Thanks for using CyRSoXS                                        |\n";
   fout << "|--------------------------------------------------------------------------------------------------|\n";
   fout << "|  Copyright          : Iowa State University                                                      |\n";
   fout << "|  License            : NIST                                                                       |\n";
@@ -193,7 +193,7 @@ static void printCopyrightInfo(std::ofstream & fout){
   fout << "|  Please cite the following publication :                                                         |\n";
   fout << "|  Comments/Questions :                                                                            |\n";
   fout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
-  fout << "|          2. Dr. Adrash Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
+  fout << "|          2. Dr. Adarsh Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
   fout << "|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
   fout << " -------------------------------------------------------------------------------------------------- \n";
 

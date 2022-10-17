@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(Cy-RSoXS VERSION 1.1.5.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
+project(CyRSoXS VERSION 1.1.5.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
@@ -10,7 +10,7 @@ option(Profiling "Enable Profiling " OFF)
 option(EOC "Ewald projection on CPU" OFF)
 option(BIAXIAL "Biaxial Computation" OFF)
 option(BUILD_DOCS "Build Documentation" OFF)
-option(PYBIND "Pybind support for Cy-RSOXS " OFF)
+option(PYBIND "Pybind support for CyRSoXS " OFF)
 option(USE_64_BIT_INDICES, "Use 64 Bit Indices" OFF)
 option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" ON)
 option(ENABLE_TEST, "Enable test" ON)

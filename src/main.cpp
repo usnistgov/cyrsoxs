@@ -22,7 +22,7 @@
 //SOFTWARE.
 //////////////////////////////////////////////////////////////////////////////////
 
-/*! \mainpage Welcome to Cy-RSoXS.
+/*! \mainpage Welcome to CyRSoXS.
  *
  * \section Introduction
  * This is the GPU accelerated version of current RSoXS. Currently,
@@ -55,15 +55,17 @@
  * <li> Adarsh Krishnamurthy
  * <li> Baskar Ganapathysubramanian
  * <li> Eliot Gann
- * <li> Dean Delongchamp
- * <li> Michael Chabinyc
+ * <li> Dean M. Delongchamp
+ * <li> Peter J. Dudenas
+ * <li> Tyler B. Martin
+ * <li> Peter Beaucage
  * </ul>
  *
  * \section Acknowledgement
  * We thank ONR MURI Center for Self-Assembled Organic Electronics for providing the
  * support for this work.
  *
- * \copyright Copyright 2019-2020 Iowa State University. All rights reserved.
+ * \copyright Copyright 2019-2022 Iowa State University. All rights reserved.
  * This project is released under the MIT License.
  *
  */
