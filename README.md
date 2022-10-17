@@ -1,9 +1,9 @@
 # CyRSoXS: GPU enabled RSoXS simulation
 
-* This code calculates resonant X-ray scattering in the Born Approximation on Graphics Processing Units (GPU).
-Currently it supports the operation with 32 bit / 64 bit float datatypes.
+* CyRSoXS is a GPU-accelerated codebase that calculates resonant X-ray scattering in the Born Approximation. It takes a voxel-based model and optical constants as input, and returns simulated X-ray scattering patterns. These models can be derived from real space measurements (AFM, TEM, 4DSTEM), or synthetically generated using procedural morphology generators.
+Currently, it supports both 32 bit and 64 bit float data types.
 
-* The code can be executed through the Python interface (enabled through [Pybind11](https://github.com/pybind/pybind11))
+* The code can be executed through Python (enabled through [Pybind11](https://github.com/pybind/pybind11))
 or directly through the executable.
 
 
