@@ -23,7 +23,7 @@ f.write("<?xml version=\"1.0\"?>\n")
 f.write("<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\">\n")
 f.write("<Collection>\n")
 
-for i in range (0,len(X)):
+for i in range (0, len(X)):
     f.write("<DataSet timestep=\"" + str(i) + "\" group=\"\" part=\"0\" file=\"" + X[i] + "\"/>\n")
 
 f.write("</Collection>\n")

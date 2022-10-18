@@ -151,7 +151,7 @@ def main(energies, dict, labelEnergy, numMaterial):
 
 
 if __name__ == "__main__":
-    ## This is minimal version. Refer Manual for more details
+    # This is minimal version. Refer Manual for more details
     caseType = 0
     energies: list = [280.0, 285.0, 281.0]
     eAngleRotation: list = [0.0, 2.0, 180.0]  # [start : increment: end]
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 
     # Files corresponding to Each material. For vacuum pass vacuum
     dict = {'Material0': '../OpticalConstants/PEOlig2018.txt',
-    'Material1': '../OpticalConstants/PEOlig2018.txt'}
+            'Material1': '../OpticalConstants/PEOlig2018.txt'}
 
     # Label of energy to look for
     labelEnergy = {"BetaPara": 0,
@@ -176,7 +176,7 @@ if __name__ == "__main__":
                    "DeltaPerp": 3,
                    "Energy": 6}
 
-    #### Do not change below this
+    # Do not change below this
     f = open("config.txt", "w")
     writeList("Energies=", value=energies, file=f)
     writeList("EAngleRotation=", value=eAngleRotation, file=f)
@@ -189,7 +189,6 @@ if __name__ == "__main__":
     f.write("Algorithm = " + str(algorithm) + ";\n")
     f.write("MaxStreams = " + str(maxStreams) + ";\n")
     f.write("DumpMorphology = " + str(dumpMorphology) + ";\n")
-
 
     f.close()
 
