@@ -1,4 +1,27 @@
-# GPU enabled RSoXS simulation (1.1.5.0)
+# CyRSoXS Installation Instructions (1.1.5.0)
+
+## Conda
+
+CyRSoXS is available as a pre-built binary on the `conda-forge` channel. To install:
+```bash
+conda install cyrsoxs -c conda-forge
+```
+
+## Building from source
+
+To build CyRSoXS from source, the following dependencies need to be installed:
+
+* A C++ compiler with C++14 support is required.
+* gcc >= 7 (CUDA specific versions might have GCC requirements )
+* Cuda Toolkit (>=9)
+* HDF5
+* OpenMP
+
+#### Additional dependencies for building with Pybind
+* Python >= 3.6
+
+#### Additional dependencies for building without Pybind
+* libconfig
 
 ## Compiling libconfig
 
