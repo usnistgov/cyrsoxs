@@ -16,6 +16,10 @@ option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" ON)
 option(ENABLE_TEST, "Enable test" ON)
 option(OUTPUT_BASE_NAME, "Output base name" "CyRSoXS")
 
+if(NOT OUTPUT_BASE_NAME)
+        set(OUTPUT_BASE_NAME "CyRSoXS")
+endif()
+
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 if (DOUBLE_PRECISION)
     add_definitions(-DDOUBLE_PRECISION)
@@ -270,3 +274,5 @@ if (PYBIND)
 else ()
         install(FILES build/${OUTPUT_BASE_NAME} DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)# RENAME ${OUTPUT_BASE_NAME})
 endif ()
+
+unset(OUTPUT_BASE_NAME CACHE)
