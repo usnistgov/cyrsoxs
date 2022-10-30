@@ -1,6 +1,6 @@
 # trace generated using paraview version 5.5.2
-import sys                
-#### import the simple module from the paraview
+import sys
+# import the simple module from the paraview
 from paraview.simple import *
 
 

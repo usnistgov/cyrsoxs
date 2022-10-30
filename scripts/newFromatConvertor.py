@@ -4,55 +4,55 @@ import numpy as np
 
 argc: int = len(sys.argv)
 if(argc < 5):
-    print("Usage : ",sys.argv[0], "oldFileName newFileName numMaterial PhysSize")
+    print("Usage : ", sys.argv[0], "oldFileName newFileName numMaterial PhysSize")
     exit()
 
 oldFileName = sys.argv[1]
 newFileName = sys.argv[2]
 numMaterial = int(sys.argv[3])
-PhysSize:float = float(sys.argv[4])
+PhysSize = float(sys.argv[4])
 
-fOld = h5.File(oldFileName,'r')
-fnewZYX = h5.File(newFileName+'ZYX.h5','w')
-fnewXYZ = h5.File(newFileName+'XYZ.h5','w')
+fOld = h5.File(oldFileName, 'r')
+fnewZYX = h5.File(newFileName+'ZYX.h5', 'w')
+fnewXYZ = h5.File(newFileName+'XYZ.h5', 'w')
 
 fnewZYX.create_group('morphology_parameter')
 fnewXYZ.create_group('morphology_parameter')
-fnewZYX['morphology_parameter'].create_dataset("PhysSize",data = PhysSize)
-fnewXYZ['morphology_parameter'].create_dataset("PhysSize",data = PhysSize)
+fnewZYX['morphology_parameter'].create_dataset("PhysSize", data=PhysSize)
+fnewXYZ['morphology_parameter'].create_dataset("PhysSize", data=PhysSize)
 
 fnewZYX.create_group('vector_morphology')
 fnewXYZ.create_group('vector_morphology')
 
 #
-for i in range(1,numMaterial+1):
+for i in range(1, numMaterial+1):
 
     datasetName = 'Mat_'+str(i)+'_unaligned'
     valOld = fOld['vector_morphology'][datasetName][()]
-    fnewZYX['vector_morphology'].create_dataset(datasetName,data = valOld)
+    fnewZYX['vector_morphology'].create_dataset(datasetName, data=valOld)
     fnewZYX['vector_morphology'][datasetName].dims[0].label = 'Z'
     fnewZYX['vector_morphology'][datasetName].dims[1].label = 'Y'
     fnewZYX['vector_morphology'][datasetName].dims[2].label = 'X'
 
-    valXYZ = np.swapaxes(valOld,0,2)
-    fnewXYZ['vector_morphology'].create_dataset(datasetName,data = valXYZ)
+    valXYZ = np.swapaxes(valOld, 0, 2)
+    fnewXYZ['vector_morphology'].create_dataset(datasetName, data=valXYZ)
 
     fnewXYZ['vector_morphology'][datasetName].dims[0].label = 'X'
     fnewXYZ['vector_morphology'][datasetName].dims[1].label = 'Y'
     fnewXYZ['vector_morphology'][datasetName].dims[2].label = 'Z'
 
-for i in range(1,numMaterial+1):
+for i in range(1, numMaterial+1):
     datasetName = 'Mat_'+str(i)+'_alignment'
     valOld = fOld['vector_morphology'][datasetName][()]
-    valOld[:,:,:,[0,2]] = valOld[:,:,:,[2,0]]
+    valOld[:, :, :, [0, 2]] = valOld[:, :, :, [2, 0]]
 
-    fnewZYX['vector_morphology'].create_dataset(datasetName,data = valOld)
+    fnewZYX['vector_morphology'].create_dataset(datasetName, data=valOld)
     fnewZYX['vector_morphology'][datasetName].dims[0].label = 'Z'
     fnewZYX['vector_morphology'][datasetName].dims[1].label = 'Y'
     fnewZYX['vector_morphology'][datasetName].dims[2].label = 'X'
 
-    valXYZ = np.swapaxes(valOld,0,2)
-    fnewXYZ['vector_morphology'].create_dataset(datasetName,data = valXYZ)
+    valXYZ = np.swapaxes(valOld, (0, 2))
+    fnewXYZ['vector_morphology'].create_dataset(datasetName, data=valXYZ)
     fnewXYZ['vector_morphology'][datasetName].dims[0].label = 'X'
     fnewXYZ['vector_morphology'][datasetName].dims[1].label = 'Y'
     fnewXYZ['vector_morphology'][datasetName].dims[2].label = 'Z'
@@ -61,4 +61,4 @@ fnewXYZ.close()
 fnewZYX.close()
 fOld.close()
 
-print("New format File Generated :",newFileName+"ZYX/XYZ.h5")
+print("New format File Generated :", newFileName+"ZYX/XYZ.h5")

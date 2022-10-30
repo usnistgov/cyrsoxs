@@ -22,21 +22,29 @@
 //SOFTWARE.
 //////////////////////////////////////////////////////////////////////////////////
 
-/*! \mainpage Welcome to Cy-RSoXS.
+/*! \mainpage Welcome to CyRSoXS
  *
  * \section Introduction
- * This is the GPU accelerated version of current RSoXS. Currently,
- * the code is tested on NVIDIA V100 GPU. This code can run on multiple GPU on
- * a single node and operates on single - precision floating point (FP32) operation.
- * In the current version of the code, speedup of up to two orders of magnitude is observed
- * as compared to the community accepted Igor based <a href="https://onlinelibrary.wiley.com/iucr/doi/10.1107/S1600577515019074">RSoXS</a> simulator.
+ * CyRSoXS is a GPU-accelerated codebase that calculates resonant X-ray scattering 
+ * in the Born Approximation. It takes a voxel-based model and optical constants as 
+ * input, and returns simulated X-ray scattering patterns. These models can be derived 
+ * from real space measurements (AFM, TEM, 4DSTEM), or synthetically generated using 
+ * procedural morphology generators. Currently, the code can run on multiple GPUs on a 
+ * single node and it supports both single- and double-precision floating point operations.
+ * A speedup of up to two orders of magnitude is observed as compared to the previous 
+ * state-of-the-art Igor-based <a href="https://onlinelibrary.wiley.com/iucr/doi/10.1107/S1600577515019074">RSoXS simulator.</a>
  *
+ * This core C++/CUDA simulation engine is used in the NIST RSoXS Simulation Suite (NRSS), which 
+ * includes additional Python code for creating, simulating, and analyzing RSoXS. For more
+ * information on NRSS, please see the <a href="https://nrss.readthedocs.io">documentation.</a>
+ * For more information on what RSoXS is and how you can possible apply it in your own 
+ * research, check out the <a href="https://www.nist.gov/programs-projects/resonant-soft-x-ray-scattering-rsoxs">NIST RSOXS project page.</a>
  *
  * \section Dependencies
  * The code has following dependencies:
  * <ul>
- *  <li> A GCC / intel compiler with c++ 14 standard
- *  <li> NVIDIA Graphics processing unit
+ *  <li> A GCC / Intel compiler with C++ 14 standard
+ *  <li> NVIDIA GPU
  *  <li> cuda-toolkit 9  and above
  *  <li> HDF5 library
  *  <li> Libconfig
@@ -45,26 +53,37 @@
  *  </ul>
  *
  *
- * \section Limitation
+ * \section Limitations
  * The current version of the code assumes that the complete data fits in
  * GPU memory.
  *
  * \section Contributors
+ * This software was developed at Iowa State University in collaboration with NIST.
+ * The Iowa State team provided expertise in high performance computing, and the
+ * NIST team provided scientific expertise on the RSoXS technique.
+ *
+ * <b>Iowa State University</b>
  * <ul>
  * <li> Kumar Saurabh
  * <li> Adarsh Krishnamurthy
  * <li> Baskar Ganapathysubramanian
+ * </ul>
+ * <b>NIST</b>
+ * <ul>
  * <li> Eliot Gann
- * <li> Dean Delongchamp
- * <li> Michael Chabinyc
+ * <li> Dean M. Delongchamp
+ * <li> Peter J. Dudenas
+ * <li> Tyler B. Martin
+ * <li> Peter Beaucage
  * </ul>
  *
  * \section Acknowledgement
- * We thank ONR MURI Center for Self-Assembled Organic Electronics for providing the
+ * We thank ONR MURI Center for Self-Assembled Organic Electronics for providing 
  * support for this work.
  *
- * \copyright Copyright 2019-2020 Iowa State University. All rights reserved.
- * This project is released under the MIT License.
+ * \copyright 
+ * Copyright 2019-2022 Iowa State University. All rights reserved.
+ * This project is released under the MIT and NIST Licenses.
  *
  */
 

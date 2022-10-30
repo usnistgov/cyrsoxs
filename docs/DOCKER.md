@@ -1,8 +1,7 @@
-GPU enabled RSoXS simulation (1.1.4.0)
-====================================
+# GPU enabled RSoXS simulation (1.1.5.0)
+* **NOTE:** The current Docker image was created from the developer version of CyRSoXS at https://bitbucket.org/baskargroup/CyRSoXS, and the following installation instructions reflect this.
 
-Installing Docker
-=================
+## Installing Docker
 
 On Ubuntu you can use the command to install docker:
 
@@ -11,9 +10,9 @@ sudo apt-get install docker
 sudo apt-get install docker.io
 ```
 
-Launching Docker
-================
-`sudo docker pull maksbh/cy-rsoxs:tagname`
+## Launching Docker
+
+`sudo docker pull maksbh/CyRSoXS:tagname`
 
 To get the imageID run:
 
@@ -23,11 +22,10 @@ It will show the output as:
 
 ```
 REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-maksbh/cy-rsoxs     latest              655455b309d5        17 minutes ago      4.77GB
+maksbh/CyRSoXS     latest              655455b309d5        17 minutes ago      4.77GB
 ```
 
-Installing Cy-RSoXS
-====================
+## Installing CyRSoXS
 
 First you need to run the docker interactively:
 
@@ -41,14 +39,14 @@ cd; ./configure;
 
 It will ask for your bitbucket username and password. The code will automatically compile and you can run.
 
-Note that you might need to change the configure file. Here are the contents of configuration file:
+Note that you might need to change the configuration file. The contents are:
 
 ```
 #clone the git repository
-git clone https://bitbucket.org/baskargroup/cy-rsoxs.git
+git clone https://bitbucket.org/baskargroup/CyRSoXS.git
 
 # Go into the directory
-cd cy-rsoxs;
+cd CyRSoXS;
 
 mkdir build; cd build;
 
@@ -61,8 +59,7 @@ make
 
 
 
-Contributors
-============
+## Contributors
 
 This software was developed at Iowa State University in collaboration with NIST. The Iowa State team provided expertise in high performance computing, and the NIST team provided scientific expertise on the RSoXS technique.
 
@@ -76,11 +73,10 @@ This software was developed at Iowa State University in collaboration with NIST.
 * Dean M. DeLongchamp
 * Peter J. Dudenas
 * Tyler B. Martin
+* Peter Beaucage
 
-Acknowledgement
-===============
-We thank ONR MURI Center for Self-Assembled Organic Electronics for providing the support for this work.
+## Acknowledgement
+We thank the Office of Naval Research Multidisciplinary University Research Initiative (ONR MURI) Center for [Self-Assembled Organic Electronics](http://www.mri.psu.edu/mri/facilities-and-centers/soe) for providing support for this work.
 
-Contact
-=======
+## Contact
 Questions and comments should be sent to Dr. Baskar Ganapathysubramanian at [baskarg@iastate.edu](mailto:baskarg@iastate.edu) or Dr.  Adarsh Krishnamurthy at [adarsh@iastate.edu](mailto:adarsh@iastate.edu) or Dr. Dean DeLongchamp at [dean.delongchamp@nist.gov](mailto:dean.delongchamp@nist.gov)
