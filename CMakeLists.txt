@@ -265,7 +265,7 @@ if (BUILD_DOCS)
 endif ()
 
 if (PYBIND)
-        string(REPLACE CyRSoXS ${OUTPUT_BASE_NAME} ${OUTPUT_PYTHON_NAME} $<TARGET_FILE_NAME:CyRSoXS>)
+        string(REPLACE "CyRSoXS" ${OUTPUT_BASE_NAME} ${OUTPUT_PYTHON_NAME} $<TARGET_FILE_NAME:CyRSoXS>)
         install(FILES build-pybind/$<TARGET_FILE_NAME:CyRSoXS> DESTINATION lib RENAME ${OUTPUT_PYTHON_NAME})
         #execute_process(COMMAND ${Python_EXECUTABLE} -m pip install ${_pypkg})
         #execute_process ( COMMAND python -c "from distutils.sysconfig import get_python_lib; print get_python_lib()" OUTPUT_VARIABLE PYTHON_SITE_PACKAGES OUTPUT_STRIP_TRAILING_WHITESPACE)
