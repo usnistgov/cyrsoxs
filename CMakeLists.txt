@@ -92,14 +92,14 @@ if (PYBIND)
     
     set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --verbose")
 
-    if (USE_SUBMODULE_PYBIND)
-        set(PYBIND_LOCATION "include/pybind11")
+        if (USE_SUBMODULE_PYBIND)
+        set(PYBIND_LOCATION external/pybind11)
         add_subdirectory(${PYBIND_LOCATION})
-        include_directories(include/pybind11)
+        include_directories(external/pybind11/include)
+    else ()
+        find_package(pybind11 CONFIG REQUIRED)
     endif ()
-    include_directories(
-            ${Python_INCLUDE_DIRS}
-    )
+    include_directories(${Python_INCLUDE_DIRS})
     find_package(pybind11 CONFIG REQUIRED)
 else ()
     find_package(Config++)
