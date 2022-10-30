@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(${OUTPUT_BASE_NAME} VERSION 1.1.5.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
+project(CyRSoXS VERSION 1.1.5.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
@@ -118,11 +118,11 @@ find_package(HDF5 COMPONENTS CXX HL REQUIRED)
 
 set(CMAKE_CUDA_STANDARD 14) # pab added
 set(CMAKE_CXX_STANDARD 14)
-set(${OUTPUT_BASE_NAME}_SRC
+set(CYRSOXS_SRC
         src/RotationMatrix.cpp
         src/cudaMain.cu)
 
-set(${OUTPUT_BASE_NAME}_INC
+set(CYRSOXS_INC
         include/cudaUtils.h
         include/cudaMain.h
         include/cudaHeaders.h
@@ -171,7 +171,7 @@ if (PYBIND)
 
 
     add_library(${OUTPUT_BASE_NAME} SHARED
-            ${PYBIND_SRC} ${${OUTPUT_BASE_NAME}_SRC} ${${OUTPUT_BASE_NAME}_INC})
+            ${PYBIND_SRC} ${CYRSOXS_SRC} ${CYRSOXS_INC})
     target_include_directories(${OUTPUT_BASE_NAME} PUBLIC ${Python_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(${OUTPUT_BASE_NAME}
@@ -201,7 +201,7 @@ else ()
     set(EXE_SRC
             src/main.cpp
             )
-    add_executable(${OUTPUT_BASE_NAME} ${${OUTPUT_BASE_NAME}_INC} ${${OUTPUT_BASE_NAME}_SRC} ${EXE_SRC})
+    add_executable(${OUTPUT_BASE_NAME} ${CYRSOXS_INC} ${CYRSOXS_SRC} ${EXE_SRC})
 
     set_target_properties(
             ${OUTPUT_BASE_NAME}
@@ -234,7 +234,7 @@ if (ENABLE_TEST)
                 tests/include/unitTest.h
                 tests/include/fullFramework.h
                 )
-        add_executable(test ${${OUTPUT_BASE_NAME}_INC} ${${OUTPUT_BASE_NAME}_SRC} ${TEST_SRC} ${TEST_INC})
+        add_executable(test ${CYRSOXS_INC} ${CYRSOXS_SRC} ${TEST_SRC} ${TEST_INC})
         target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include tests/include ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
         target_include_directories(test PRIVATE ${PROJECT_BINARY_DIR}/generated)
         target_link_libraries(test gtest gtest_main
@@ -268,5 +268,5 @@ if (PYBIND)
         install(FILES build-pybind/$<TARGET_FILE_NAME:${OUTPUT_BASE_NAME}> DESTINATION lib )#RENAME ${OUTPUT_PYTHON_NAME})
         install(FILES build-pybind/$<TARGET_FILE_NAME:${OUTPUT_BASE_NAME}> DESTINATION ${Python_SITEARCH}) #RENAME ${OUTPUT_PYTHON_NAME})
 else ()
-        install(FILES build/${OUTPUT_BASE_NAME} DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE RENAME ${OUTPUT_BASE_NAME})
+        install(FILES build/${OUTPUT_BASE_NAME} DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)# RENAME ${OUTPUT_BASE_NAME})
 endif ()
