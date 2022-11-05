@@ -163,6 +163,7 @@ if (PYBIND)
     else ()
         add_definitions(-DMAX_NUM_MATERIAL=32)
     endif()
+    configure_file(src/pymain.cpp src/pymain-tmp.cpp)
     set(PYBIND_INC
             include/PyClass/RefractiveIndex.h
             include/PyClass/VoxelData.h
@@ -170,7 +171,7 @@ if (PYBIND)
             include/PyClass/Polarization.h
             )
     set(PYBIND_SRC
-            src/pymain.cpp
+            src/pymain-tmp.cpp
             )
 
 
