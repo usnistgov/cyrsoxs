@@ -9,7 +9,7 @@ or directly through the executable.
 
 ## Version  : 1.1.5.0
 
-#### The developer version of the CyRSoXS code is available at https://bitbucket.org/baskargroup/CyRSoXS, and all stable future releases will be merged with the current usnistgov repository.
+#### The developer version of the CyRSoXS code is available at https://bitbucket.org/baskargroup/cy-rsoxs, and all stable future releases will be merged with the current usnistgov repository.
 
 ## Dependencies
 
