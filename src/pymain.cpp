@@ -125,7 +125,7 @@ void cleanup(RefractiveIndexData &energyData, VoxelData &voxelData, ScatteringPa
 
 }
 
-PYBIND11_MODULE(CyRSoXS, module) {
+PYBIND11_MODULE(@OUTPUT_BASE_NAME@, module) {
   module.doc() = "pybind11  plugin for CyRSoXS";
 
   py::print("CyRSoXS");
