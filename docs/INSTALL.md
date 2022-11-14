@@ -136,6 +136,7 @@ This will generate a `CyRSoXS.so` Shared Library file, which can be imported int
     -DPROFILING=Yes         # Enables profiling of the code
     -DBUILD_DOCS=Yes        # To build documentation
     -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc # Compiling with the Intel compiler (does not work with Pybind)
+    -DOUTPUT_BASE_NAME=CyRSoXS # Changes the name of the built output binary or Python module (if using Pybind)
 ```
 
 ## Making CyRSoXS
