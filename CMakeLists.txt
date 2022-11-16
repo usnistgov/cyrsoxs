@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
-project(CyRSoXS VERSION 1.1.5.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
+project(CyRSoXS VERSION 1.1.5.2 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
 
 option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
