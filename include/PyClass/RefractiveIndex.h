@@ -95,7 +95,7 @@ public:
         }
         UINT counter = (std::lower_bound(energies.begin(), energies.end(), Energy) - energies.begin());
         if (not(FEQUALS(energies[counter], Energy))) {
-            py::print("Bad Energy. Trying to add parameters for non-existant energy.");
+            py::print("Bad Energy. Trying to add parameters for non-existent energy.");
             return;
         }
         for (UINT i = 0; i < NUM_MATERIAL; i++) {

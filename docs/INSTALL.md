@@ -1,8 +1,9 @@
-# CyRSoXS Installation Instructions (1.1.5.0)
+# CyRSoXS Installation Instructions (1.1.5.2)
 
 ## Conda
 
 CyRSoXS is available as a pre-built binary on the `conda-forge` channel. To install:
+
 ```bash
 conda install cyrsoxs -c conda-forge
 ```
@@ -17,10 +18,12 @@ To build CyRSoXS from source, the following dependencies need to be installed:
 * HDF5
 * OpenMP
 
-#### Additional dependencies for building with Pybind
+### Additional dependencies for building with Pybind
+
 * Python >= 3.6
 
-#### Additional dependencies for building without Pybind
+### Additional dependencies for building without Pybind
+
 * libconfig
 
 ## Compiling libconfig
@@ -69,16 +72,17 @@ rm CMake-hdf5-1.10.5.tar.gz
 cd CMake-hdf5-1.10.5
 ./build-unix.sh
 ```
+
 This step might take some time. Do not cancel until all the tests have passed.
 This step will create a cmake files in location `$HFD5_DIR/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5`
 
 Export the path for HDF5:
+
 ```bash
 cd build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5;
 echo "export HDF5_DIR=`pwd`" >> ~/.bashrc
 source ~/.bashrc
 ```
-
 
 ## Downloading CyRSoXS
 
@@ -88,7 +92,7 @@ Clone the CyRSoXS Github repo
 git clone https://github.com/usnistgov/cyrsoxs.git
 ```
 
-**With Pybind**
+### With Pybind
 
 If you want to use the Python support for CyRSoXS, add the submodule by
 
@@ -112,7 +116,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release
 
 This will generate a `CyRSoXS` executable.
 
-**Building with Pybind**
+### Building with Pybind
 
 CyRSoXS can also be compiled with Pybind so that it can be imported as a Python library. To compile for this functionality, run the following commands:
 
@@ -125,7 +129,7 @@ cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND=Yes -USE_SUBMODULE_PYBIND=Yes
 
 This will generate a `CyRSoXS.so` Shared Library file, which can be imported into Python. Note that this does not create an executable.
 
-*Optional CMake Flags*
+#### Optional CMake Flags
 
 ```console
     
@@ -142,16 +146,19 @@ This will generate a `CyRSoXS.so` Shared Library file, which can be imported int
 ## Making CyRSoXS
 
 Once the CMake files has been generated run the following command:
+
 ```bash
 make
 ```
 
 In order to generate the latex documentation, run
+
 ```bash
 make doc_doxygen
 ```
 
 To build the PDF version of the documentation, run
+
 ```bash
 cd latex
 make

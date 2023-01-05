@@ -67,7 +67,7 @@ public:
   }
 
   /**
-   * @brief add Material Allignment and unalligned data to the input for a given material. \n
+   * @brief add Material Alignment and unaligned data to the input for a given material. \n
    * Once you add the material the bits corresponding to that bit is turned on.
    * @param matAlignementData Alignment data for the material. Must be in the order of Sx,Sy,Sz.
    * @param matUnalignedData The unalignment component for the material

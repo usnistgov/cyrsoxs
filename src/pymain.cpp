@@ -203,7 +203,7 @@ PYBIND11_MODULE(@OUTPUT_BASE_NAME@, module) {
   py::class_<VoxelData>(module, "VoxelData")
       .def(py::init<const InputData &>(), "Constructor",py::arg("InputData"))
       .def("addVoxelData", &VoxelData::addMaterialDataVectorMorphology,
-           "Adds the Allignment and unaligned component to the given material", py::arg("AlignedData"),
+           "Adds the Alignment and unaligned component to the given material", py::arg("AlignedData"),
            py::arg("UnalignedData"), py::arg("MaterialID"))
       .def("addVoxelData", &VoxelData::addMaterialDataEulerAngles,
          "Adds the EulerAngle components to the given material", py::arg("S"),py::arg("Theta"),py::arg("Psi"), py::arg("Vfrac"),py::arg("MaterialID"))
@@ -231,7 +231,7 @@ PYBIND11_MODULE(@OUTPUT_BASE_NAME@, module) {
       .def(py::init<const InputData &>(), "Constructor",py::arg("InputData"))
       .def("clear",&Polarization::clear,"Clears the memory")
       .def("writeToHDF5",&Polarization::writeToHDF5,"write to HDF5")
-      .def("writeToNumpy",&Polarization::writeToNumpy,"retruns numpy array",py::arg("id"));      
+      .def("writeToNumpy",&Polarization::writeToNumpy,"returns numpy array",py::arg("id"));      
 
   module.def("launch", &launch, "GPU computation", py::arg("InputData"), py::arg("RefractiveIndexData"),
              py::arg("VoxelData"),py::arg("ScatteringPattern"),py::arg("WriteMetaData")=true);

@@ -124,7 +124,7 @@ private:
    * exit with failure.
    *
    * @param config libconfig object for file
-   * @param key the name of the configuation value to retrieve
+   * @param key the name of the configuration value to retrieve
    * @param[out] arr vector to store the data (will be allocated here)
    */
     template <typename T>

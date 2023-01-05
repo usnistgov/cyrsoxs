@@ -668,7 +668,7 @@ inline __device__ Real computeScatter3D(const Complex * polarizationX,
 * @param [out] Scatter3D     Scatter 3D result
 * @param [in] k              magntude of k vector
 * @param [in] voxelNum       Number of total voxel
-* @param [in] voxel          Number of voxel in each direciton.
+* @param [in] voxel          Number of voxel in each direction.
 * @param [in] physSize       Physical Size
 * @param [in] enable2D       2D morphology or not
 * @param [in] kVector        3D k Vector

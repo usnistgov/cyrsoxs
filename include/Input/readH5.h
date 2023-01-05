@@ -188,12 +188,12 @@ namespace H5 {
  * @param [in] file HDF5 file pointer
  * @param [in] numMaterial  number of material
  * @param [in] voxelSize voxel size in 3D
- * @param [out] inputData inputData for Mat_alligned
- * Note : This is read after unaligned data. So, the morphology order and voxelSize is set according to alligned data.
+ * @param [out] inputData inputData for Mat_aligned
+ * Note : This is read after unaligned data. So, the morphology order and voxelSize is set according to aligned data.
  * Any mismatch will throw an error.
  */
 
-  static inline void getMatAllignment(const H5::H5File &file,
+  static inline void getMatAlignment(const H5::H5File &file,
                                       const UINT *voxelSize,
                                       std::vector<Real> &inputData,
                                       const MorphologyOrder &morphologyOrder,
@@ -472,7 +472,7 @@ namespace H5 {
       {
         std::vector<Real> alignmentData(numVoxel * 3);
         for (UINT numMat = 1; numMat < NUM_MATERIAL + 1; numMat++) {
-          getMatAllignment(file, voxelSize, alignmentData, static_cast<const MorphologyOrder>(morphologyOrder), numMat);
+          getMatAlignment(file, voxelSize, alignmentData, static_cast<const MorphologyOrder>(morphologyOrder), numMat);
           for (BigUINT i = 0; i < numVoxel; i++) {
             voxelData[(numMat - 1) * numVoxel + i].s1.x = alignmentData[3 * i + 0];
             voxelData[(numMat - 1) * numVoxel + i].s1.y = alignmentData[3 * i + 1];

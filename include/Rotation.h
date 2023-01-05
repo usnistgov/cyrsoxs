@@ -265,7 +265,7 @@ __host__ static void inline performMatrixMultiplication(const Matrix &  matA, co
 /**
  * @brief computes Matrix that will transform originalVec into transformed Vec
  *        [RotationMatrix X orignalVec = transformedVec]
- * @param [in/out] originalVec : the orginal 3D vector
+ * @param [in/out] originalVec : the original 3D vector
  * @param [in] transformedVec  : 3D vector that the original Vec is transformed to.
  * @param [out] RotationMatrix : The resultant 3 X 3 rotation matrix
  */
@@ -412,7 +412,7 @@ __host__ bool static computeRotationMatrixK(const Real3 & k, Matrix & rotationMa
   return true;
 }
 /**
- * @brief finds the base configuration that corresponds to 0 degree of E rotataion
+ * @brief finds the base configuration that corresponds to 0 degree of E rotation
  * @param k k vector
  * @param [in] rotationMatrixK rotation matrix
  * @param [out] rotationMatrix rotation matrix  for E

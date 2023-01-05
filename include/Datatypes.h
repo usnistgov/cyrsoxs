@@ -168,9 +168,9 @@ static_assert(sizeof(morphologyTypeName)/sizeof(char*) == MorphologyType::MAX_MO
 
 /// Morphology order
 enum MorphologyOrder:int{
-  /// First axis cooresponds to Z and second to Y and third to
+  /// First axis corresponds to Z and second to Y and third to
   ZYX = 0,
-  /// First axis cooresponds to X and second to Y and third to Z
+  /// First axis corresponds to X and second to Y and third to Z
   XYZ = 1,
   /// Invalid
   INVALID = -1,

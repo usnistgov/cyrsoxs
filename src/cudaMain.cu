@@ -148,7 +148,7 @@ __global__ void computePolarization(const Material * d_materialConstants,
                                    polarizationZ,numVoxels,rotationMatrix,DEVICE_NUM_MATERIAL);
   }
 #else
-  printf("Kernel not spported\n");
+  printf("Kernel not supported\n");
 #endif
 
 

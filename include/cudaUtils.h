@@ -34,7 +34,7 @@
  */
 __device__ void compute3X3ComplexMultiplication(const Complex Matrix[][3], Complex MatrixTimesMatrix[][3]) {
 
-/** Completely unrolled matrix X matrix with complex enteries of the form:
+/** Completely unrolled matrix X matrix with complex entries of the form:
      [ a00, a01, a02]         [ b00, b01, b02]
      [ a10, a11, a12]   + i   [ b10, b11, b12]
      [ a20, a21, a22]         [ b20, b21, b22]
