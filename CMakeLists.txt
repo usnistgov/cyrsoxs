@@ -276,4 +276,22 @@ else ()
         install(FILES build/${OUTPUT_BASE_NAME} DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)# RENAME ${OUTPUT_BASE_NAME})
 endif ()
 
+
+if (BUILD_DOCS)
+	add_custom_command(
+		TARGET doc_doxygen 
+		POST_BUILD
+	        WORKING_DIRECTORY "./latex"	
+		COMMAND make pdf
+		VERBATIM)
+	add_custom_command(
+		TARGET doc_doxygen 
+		POST_BUILD 
+		COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/latex/refman.pdf ${CMAKE_CURRENT_BINARY_DIR}/latex/CyRSoXS_Manual.pdf
+		VERBATIM)
+endif ()
+
 unset(OUTPUT_BASE_NAME CACHE)
+
+
+
