@@ -38,9 +38,15 @@ The developer version of the CyRSoXS code is available at <https://bitbucket.org
 
 ## [Installation Instructions](docs/INSTALL.md)
 
+## [Simulation Componenets](docs/DATA.md)
+
 ## [Running CyRSoXS](docs/RUN.md)
 
 ## [Visualization](docs/Visualization.md)
+
+## Documentation
+
+CyRSoXS documentation is available at <https://cyrsoxs.readthedocs.io>, and instructions to build the documentation are in the [Installation Instructions](docs/INSTALL.md).
 
 ## Running CyRSoXS with Docker
 
