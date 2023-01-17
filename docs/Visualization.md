@@ -11,9 +11,9 @@ Paraview can be downloaded from [here](https://www.paraview.org/).
 ## Generating a movie
 
 1. We provide a python script `createMovie.py` located in scripts folder.
- Run `python createMovie.py` outside of VTI folder. It will generate a file `movie.pvd`.
+ Run `python createMovie.py` outside of VTI folder. It will generate a Paraview Data file `movie.pvd`.
   
-2. Once, `movie.pvd` is created. Open Paraview and click on `File->LoadState`. Load `movie.pvsm`
-located under scripts. This will ask to give the location of `movie.pvd`.
+2. Once `movie.pvd` is created, open Paraview and click on `File->LoadState`. Load the State file `movie.pvsm`
+located under scripts. This will prompt you to provide the location of `movie.pvd` to load.
 
-3. Then you can play the movie by clicking on the play icon.
+3. Once you have loaded `movie.pvd` into Paraview, you can play the movie by clicking on the play icon.

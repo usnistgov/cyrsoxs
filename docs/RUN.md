@@ -1,4 +1,6 @@
-# GPU enabled RSoXS simulation (1.1.5.2)
+# Running CyRSoXS (1.1.5.2)
+
+For more information on the structure of each input file, please refer to [docs/DATA.md](docs/Data.md).
 
 ## With Pybind support
 
@@ -64,7 +66,7 @@ labelEnergy={"BetaPara":0,
              "Energy":6}
 ```  
 
-This basically  says that the `0` column of the opticalConstants file corresponds to `BetaPara` , 1
+This  says that the `0` column of the opticalConstants file corresponds to `BetaPara` , 1
 corresponds to `BetaPerp` and so on.
 
 The python script can be ran directly by:

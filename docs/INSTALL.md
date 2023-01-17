@@ -26,6 +26,12 @@ To build CyRSoXS from source, the following dependencies need to be installed:
 
 * libconfig
 
+### Dependencies for building the documentation
+
+* Doxygen
+* Graphviz
+* latex
+
 ## Compiling libconfig
 
 Libconfig's build system is [Autotools](https://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html), which means you'll need to run `./configure` and then `make` to build. Hyperrealm is the maintainer of Libconfig
@@ -151,15 +157,4 @@ Once the CMake files has been generated run the following command:
 make
 ```
 
-In order to generate the latex documentation, run
-
-```bash
-make doc_doxygen
-```
-
-To build the PDF version of the documentation, run
-
-```bash
-cd latex
-make
-```
+If `-DBUILD_DOCS=Yes`, the make command will build the documentation in html and latex located in `$CyRSoXS_DIR/build/html` and `$CyRSoXS_DIR/build/latex`, respectively. A PDF of the documentation is also built as `$CyRSoXS_DIR/build/latex/CyRSoXS_Manual.pdf`.
