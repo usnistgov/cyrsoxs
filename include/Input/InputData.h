@@ -298,7 +298,7 @@ private:
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     if(ReadValue(cfg,"DumpMorphology",dumpMorphology)){}
     if(ReadValue(cfg,"MaxStreams",numMaxStreams)){}
-    if(ReadValue(cfg,"ReferenceFrame",referenceFrame)){}
+    if(ReadValue(cfg,"ReferenceFrameLab",referenceFrame)){}
 
     if(caseType == CaseTypes::DEFAULT) {
       kVectors.resize(1,{0,0,1});
