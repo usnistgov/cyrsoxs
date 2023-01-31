@@ -218,7 +218,7 @@ private:
 
   UINT caseType;
   UINT morphologyType;
-  bool referenceFrame = ReferenceFrame::MATERIAL;
+  bool referenceFrame = ReferenceFrame::LAB;
 
   Real3 detectorCoordinates{0,0,1};
   int algorithmType = Algorithm::CommunicationMinimizing;
@@ -298,6 +298,7 @@ private:
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     if(ReadValue(cfg,"DumpMorphology",dumpMorphology)){}
     if(ReadValue(cfg,"MaxStreams",numMaxStreams)){}
+    if(ReadValue(cfg,"ReferenceFrame",referenceFrame)){}
 
     if(caseType == CaseTypes::DEFAULT) {
       kVectors.resize(1,{0,0,1});
@@ -407,6 +408,7 @@ private:
         std::cout << "HDF Output Directory : " << HDF5DirName << "\n";
         std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
         std::cout << "Algorithm            : " << algorithmName[algorithmType] << "\n";
+        std::cout << "ReferenceFrame       : " << referenceFrameName[referenceFrame] << "\n";
          if(algorithmType==Algorithm::MemoryMinizing) {
           std::cout  << "MaxStreams           : " << numMaxStreams << "\n";
         }
