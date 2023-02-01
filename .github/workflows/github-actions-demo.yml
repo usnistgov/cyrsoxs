@@ -8,10 +8,6 @@ jobs:
       - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
       - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
       - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Setup Python and conda
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.9
       - name: Check out cyrsoxs code
         uses: actions/checkout@v3
       - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
@@ -20,6 +16,12 @@ jobs:
         with:
           name: usnistgov/NRSS    
           ref: main
+      - name: Setup Python and Conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: cyrsoxs-build
+          environment-file: cyrsoxs/environment-build.yml
+          python-version: 3.9    
       - name: Install dependencies
         run: |
             # $CONDA is an environment variable pointing to the root of the miniconda directory
