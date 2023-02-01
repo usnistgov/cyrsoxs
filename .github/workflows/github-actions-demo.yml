@@ -85,4 +85,4 @@ jobs:
       - name: Test that PyBind-built CyRSoXS actually can be imported.
         run: |
           conda activate nrss
-          python -c "import sys; sys.path.insert(0,'${{ github.workspace }}/build-pybind/');import CyRSoXS;"
+          python -c "import sys; sys.path.insert(0,'build-pybind/');import CyRSoXS;"
