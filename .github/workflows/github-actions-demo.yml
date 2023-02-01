@@ -1,8 +1,8 @@
 name: CyRSoXS Build and Test
-run-name: CyRSoXS Build-n-Test by ${{ github.actor }}
+run-name: CyRSoXS Build-n-Test initiated by ${{ github.actor }}
 on: [push]
 jobs:
-  Explore-GitHub-Actions:
+  CyRSoXS-Build-and-Test:
     runs-on: self-hosted
     defaults:
       run:
@@ -42,6 +42,7 @@ jobs:
         run: |
             # $CONDA is an environment variable pointing to the root of the miniconda directory
             $CONDA/bin/conda env update --file NRSS/environment.yml
+            $CONDA/bin/conda remove -n nrss -y cyrsoxs
       - name: Checkout PyBind
         run: |
           git submodule update --init
@@ -65,5 +66,22 @@ jobs:
         run: |
           ls ${{ github.workspace }}
           ls ${{ github.workspace }}/NRSS
-      
-      - run: echo "🍏 This job's status is ${{ job.status }}."
+      - name: Test that CyRSoXS actually starts
+        run: |
+          conda activate nrss
+          build/CyRSoXS
+      - name: Test that PyBind-built CyRSoXS actually can be imported.
+        run: |
+          conda activate nrss
+          python -c "import ../build-pybind/CyRSoXS"
+      - name: Upload the built CyRSoXS binary as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CyRSoXS
+          path: build/CyRSoXS
+
+      - name: Upload the built CyRSoXS Python library as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CyRSoXS.so
+          path: build-pybind/CyRSoXS.so
