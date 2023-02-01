@@ -1,10 +1,10 @@
 name: CyRSoXS Build and Test
 run-name: CyRSoXS Build-n-Test initiated by ${{ github.actor }}
 on: 
-  - pull_request:
-    branches:
-      - main
-  - push:
+  pull_request:
+    branches: [ main ]
+  push:
+
       
 jobs:
   CyRSoXS-Build-and-Test:
@@ -90,7 +90,7 @@ jobs:
       - name: Test that PyBind-built CyRSoXS actually can be imported.
         run: |
           conda activate nrss
-          python -c "import sys; sys.path.insert(0,'build-pybind/');import CyRSoXS;"
+          python -c "import sys; sys.path.insert(0,'build-pybind');import CyRSoXS;"
       - name: Post report on issue
         uses: actions/github-script@v5
         with:
