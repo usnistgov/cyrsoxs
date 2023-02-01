@@ -5,12 +5,10 @@ jobs:
   Explore-GitHub-Actions:
     runs-on: self-hosted
     steps:
-      - run: echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
-      - run: echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
-      - run: echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Check out cyrsoxs code
+      - name: Provide diagnostic data
+        run: echo "Trigger ${{ github.event_name }}, running on ${{ runner.os }}, working on ${{ github.repository }} @ ${{ github.ref }}."
+      - name: Clone cyrsoxs code
         uses: actions/checkout@v3
-      - run: echo "💡 The ${{ github.repository }} repository has been cloned to the runner."
       - name: Cache conda
         uses: actions/cache@v2
         env:
@@ -32,15 +30,16 @@ jobs:
           miniforge-version: "latest"
           activate-environment: cyrsoxs-build
           environment-file: environment-build.yml
-          python-version: 3.9    
-      - name: Install dependencies
-        if: False
-        run: |
-            # $CONDA is an environment variable pointing to the root of the miniconda directory
-            $CONDA/bin/conda env update --file NRSS/environment.yml
-      - name: Install miniconda
-        run: echo "🖥️ The workflow is now ready to test your code on the runner."
+          python-version: 3.9          
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
+      - name: Install NRSS/run dependencies
+        run: |
+            # $CONDA is an environment variable pointing to the root of the miniconda directory
+            $CONDA/bin/conda env update --file ../NRSS/environment.yml
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+          ls ${{ github.workspace }}/..
       - run: echo "🍏 This job's status is ${{ job.status }}."
