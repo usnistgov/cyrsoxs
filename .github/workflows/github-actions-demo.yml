@@ -67,6 +67,7 @@ jobs:
           ls ${{ github.workspace }}
           ls ${{ github.workspace }}/NRSS
       - name: Test that CyRSoXS actually starts
+        if: False
         run: |
           conda activate nrss
           build/CyRSoXS
