@@ -57,8 +57,8 @@ jobs:
         run: |
           conda activate cyrsoxs-build
           cd ${{ github.workspace }}
-          mkdir build;
-          cd build;
+          mkdir build-pybind;
+          cd build-pybind;
           cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND=Yes -USE_SUBMODULE_PYBIND=Yes;
           make
       - name: List files in the repository
