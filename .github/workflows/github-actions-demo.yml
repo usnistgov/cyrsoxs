@@ -75,7 +75,7 @@ jobs:
       - name: Upload the built CyRSoXS Python library as an artifact
         uses: actions/upload-artifact@v3
         with:
-          name: CyRSoXS.so
+          name: CyRSoXS.*.so
           path: build-pybind/CyRSoXS.so      
       - name: Test that CyRSoXS actually starts
         if: False
@@ -85,4 +85,4 @@ jobs:
       - name: Test that PyBind-built CyRSoXS actually can be imported.
         run: |
           conda activate nrss
-          python -c "import sys; sys.path.insert(0,'../build-pybind/CyRSoXS');import CyRSoXS;"
+          python -c "import sys; sys.path.insert(0,'${{ github.workspace }}/build-pybind/');import CyRSoXS;"
