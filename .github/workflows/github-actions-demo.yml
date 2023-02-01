@@ -46,6 +46,7 @@ jobs:
       - name: Install NRSS/run dependencies
         run: |
             # $CONDA is an environment variable pointing to the root of the miniconda directory
+            $CONDA/bin/conda install -n base mamba
             $CONDA/bin/mamba env update --file NRSS/environment.yml
             $CONDA/bin/mamba remove -n nrss -y cyrsoxs
       - name: Checkout PyBind
