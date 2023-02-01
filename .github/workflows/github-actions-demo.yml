@@ -1,7 +1,7 @@
 name: CyRSoXS Build and Test
 run-name: CyRSoXS Build-n-Test initiated by ${{ github.actor }}
 on: 
-  - push
+  - push:
   - pull_request:
     branches:
       - main
