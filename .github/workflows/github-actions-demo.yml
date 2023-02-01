@@ -66,15 +66,6 @@ jobs:
         run: |
           ls ${{ github.workspace }}
           ls ${{ github.workspace }}/NRSS
-      - name: Test that CyRSoXS actually starts
-        if: False
-        run: |
-          conda activate nrss
-          build/CyRSoXS
-      - name: Test that PyBind-built CyRSoXS actually can be imported.
-        run: |
-          conda activate nrss
-          python -c "import ../build-pybind/CyRSoXS"
       - name: Upload the built CyRSoXS binary as an artifact
         uses: actions/upload-artifact@v3
         with:
@@ -85,4 +76,13 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: CyRSoXS.so
-          path: build-pybind/CyRSoXS.so
+          path: build-pybind/CyRSoXS.so      
+      - name: Test that CyRSoXS actually starts
+        if: False
+        run: |
+          conda activate nrss
+          build/CyRSoXS
+      - name: Test that PyBind-built CyRSoXS actually can be imported.
+        run: |
+          conda activate nrss
+          python -c "import sys; sys.path.insert(0,'../build-pybind/CyRSoXS');import CyRSoXS;"
