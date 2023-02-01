@@ -141,7 +141,7 @@ static void printCopyrightInfo(){
   std::cout << "|  Comments/Questions :                                                                            |\n";
   std::cout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
   std::cout << "|          2. Dr. Adarsh Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
-  std::cout << "|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
+  std::cout << "|          3. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
   std::cout << " -------------------------------------------------------------------------------------------------- \n";
 
   std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << " " << VERSION_TWEAK << "\n";

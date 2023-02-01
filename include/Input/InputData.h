@@ -298,7 +298,10 @@ private:
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     if(ReadValue(cfg,"DumpMorphology",dumpMorphology)){}
     if(ReadValue(cfg,"MaxStreams",numMaxStreams)){}
-    if(ReadValue(cfg,"ReferenceFrameLab",referenceFrame)){}
+    int _temp1;
+    if(ReadValue(cfg,"ReferenceFrame",_temp1)){
+       referenceFrame = static_cast<bool>(_temp1);
+    }
 
     if(caseType == CaseTypes::DEFAULT) {
       kVectors.resize(1,{0,0,1});
@@ -408,7 +411,7 @@ private:
         std::cout << "HDF Output Directory : " << HDF5DirName << "\n";
         std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
         std::cout << "Algorithm            : " << algorithmName[algorithmType] << "\n";
-        std::cout << "ReferenceFrame       : " << referenceFrameName[referenceFrame] << "\n";
+	std::cout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "(" << referenceFrame << ")\n";
          if(algorithmType==Algorithm::MemoryMinizing) {
           std::cout  << "MaxStreams           : " << numMaxStreams << "\n";
         }
@@ -611,7 +614,7 @@ private:
         fout << "CaseType             : " << caseTypenames[caseType] << "\n";
         fout << "Morphology Type      : " << morphologyTypeName[morphologyType] << "\n";
         fout << "Morphology Order     : " << morphologyOrderName[morphologyOrder] << "\n";
-        fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "\n";
+        fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "(" << referenceFrame << ")\n";
         if(morphologyOrder == MorphologyOrder::XYZ){
           fout << "Dimensions [X Y Z]   : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         }
