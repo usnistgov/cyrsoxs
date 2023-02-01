@@ -22,8 +22,9 @@ jobs:
       - name: Check out NRSS code
         uses: actions/checkout@v3
         with:
-          name: usnistgov/NRSS    
+          repository: usnistgov/NRSS    
           ref: main
+          path: ${{ github.workspace }}/NRSS/
       - name: Setup Python and Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
@@ -41,5 +42,5 @@ jobs:
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
-          ls ${{ github.workspace }}/..
+          ls ${{ github.workspace }}/NRSS
       - run: echo "🍏 This job's status is ${{ job.status }}."
