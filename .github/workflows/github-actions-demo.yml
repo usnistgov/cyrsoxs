@@ -1,9 +1,12 @@
-name: GitHub Actions Demo
-run-name: ${{ github.actor }} is testing out GitHub Actions 🚀
+name: CyRSoXS Build and Test
+run-name: CyRSoXS Build-n-Test by ${{ github.actor }}
 on: [push]
 jobs:
   Explore-GitHub-Actions:
     runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash -el {0}
     steps:
       - name: Provide diagnostic data
         run: echo "Trigger ${{ github.event_name }}, running on ${{ runner.os }}, working on ${{ github.repository }} @ ${{ github.ref }}."
@@ -44,7 +47,7 @@ jobs:
           git submodule update --init
       - name: Build standalone binaries
         run: |
-          $CONDA/bin/conda activate cyrsoxs-build
+          conda activate cyrsoxs-build
           cd ${{ github.workspace }}
           mkdir build;
           cd build;
@@ -52,7 +55,7 @@ jobs:
           make
       - name: Build with Pybind
         run: |
-          $CONDA/bin/conda activate cyrsoxs-build
+          conda activate cyrsoxs-build
           cd ${{ github.workspace }}
           mkdir build;
           cd build;
