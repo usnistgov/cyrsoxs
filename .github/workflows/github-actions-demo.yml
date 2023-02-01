@@ -38,7 +38,7 @@ jobs:
       - name: Install NRSS/run dependencies
         run: |
             # $CONDA is an environment variable pointing to the root of the miniconda directory
-            $CONDA/bin/conda env update --file ../NRSS/environment.yml
+            $CONDA/bin/conda env update --file NRSS/environment.yml
       - name: List files in the repository
         run: |
           ls ${{ github.workspace }}
