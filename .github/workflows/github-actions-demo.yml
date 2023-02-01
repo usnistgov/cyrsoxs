@@ -44,6 +44,7 @@ jobs:
           git submodule update --init
       - name: Build standalone binaries
         run: |
+          $CONDA/bin/conda activate cyrsoxs-build
           cd ${{ github.workspace }}
           mkdir build;
           cd build;
@@ -51,6 +52,7 @@ jobs:
           make
       - name: Build with Pybind
         run: |
+          $CONDA/bin/conda activate cyrsoxs-build
           cd ${{ github.workspace }}
           mkdir build;
           cd build;
