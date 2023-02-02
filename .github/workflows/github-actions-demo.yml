@@ -47,8 +47,8 @@ jobs:
         run: |
             # $CONDA is an environment variable pointing to the root of the miniconda directory
             $CONDA/bin/conda install -n base mamba
-            $CONDA/bin/mamba env update --file NRSS/environment.yml
-            $CONDA/bin/mamba remove -n nrss -y cyrsoxs
+            sed '/cyrsoxs/d' NRSS/environment.yml > NRSS/environment-patched.yml
+            $CONDA/bin/mamba env update --file NRSS/environment-patched.yml
       - name: Checkout PyBind
         run: |
           git submodule update --init
