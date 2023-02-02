@@ -83,16 +83,21 @@ jobs:
         with:
           name: CyRSoXS-binaries
           path: build-pybind/CyRSoXS.*.so      
-      - name: Test that CyRSoXS actually starts
-        if: False
-        run: |
-          conda activate nrss
-          build/CyRSoXS
-      - name: Test that PyBind-built CyRSoXS actually can be imported.
+      - name: Test that PyBind-built CyRSoXS can be imported.
         run: |
           conda activate nrss
           cd ${{ github.workspace }}
           python -c "import sys; sys.path.insert(0,'build-pybind');import CyRSoXS;"
+      - name: Test that CyRSoXS can simulate the NRSS core-shell model
+        run: |
+          conda activate nrss
+          cd NRSS/tutorials/coreshell_disk
+          ../../../build/CyRSoXS *.hdf5
+      - name: Upload the built CyRSoXS Python library as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CoreShell-results
+          path: ${{ github.workspace }}/NRSS/tutorials/coreshell_disk/h5/*         
       - name: Post report on issue
         uses: actions/github-script@v5
         if: contains(github.event_name,'pull_request')
