@@ -81,7 +81,7 @@ jobs:
       - name: Upload the built CyRSoXS Python library as an artifact
         uses: actions/upload-artifact@v3
         with:
-          name: CyRSoXS.so
+          # name: CyRSoXS.so
           path: build-pybind/CyRSoXS.*.so      
       - name: Test that CyRSoXS actually starts
         if: False
