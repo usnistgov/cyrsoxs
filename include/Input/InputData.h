@@ -411,7 +411,7 @@ private:
         std::cout << "HDF Output Directory : " << HDF5DirName << "\n";
         std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
         std::cout << "Algorithm            : " << algorithmName[algorithmType] << "\n";
-	      std::cout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "(" << referenceFrame << ")\n";
+	std::cout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "(" << referenceFrame << ")\n";
          if(algorithmType==Algorithm::MemoryMinizing) {
           std::cout  << "MaxStreams           : " << numMaxStreams << "\n";
         }
