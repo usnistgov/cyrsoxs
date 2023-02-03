@@ -1,4 +1,5 @@
 build/
+build-pybind/
 cmake-build-*/
 .idea/
 .vscode/
