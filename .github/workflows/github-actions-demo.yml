@@ -37,7 +37,8 @@ jobs:
       - name: Patch environment to not use cuda 12. series
         shell: bash
         run: |
-          sed -i 's/nvidia::cuda/nvidia::cuda<12\r\n   - cuda-toolkit<12\r\n/g' environment-build.yml 
+          sed -i 's/nvidia::cuda/nvidia::cuda<12/g' environment-build.yml 
+          echo "\r\n  - cuda-toolkit<12 \r\n" >> environment-build.yml
       - name: Setup Python and Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
