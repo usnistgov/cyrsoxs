@@ -1,5 +1,5 @@
 name: CyRSoXS Build and Test
-run-name: CyRSoXS Build-n-Test initiated by ${{ github.actor }}
+run-name: CyRSoXS Build and Test
 on: 
   pull_request:
     branches: [ main ]
@@ -14,7 +14,7 @@ jobs:
         shell: bash -el {0}
     steps:
       - name: Provide diagnostic data
-        run: echo "Trigger ${{ github.event_name }}, running on ${{ runner.os }}, working on ${{ github.repository }} @ ${{ github.ref }}."
+        run: echo "Trigger ${{ github.event_name }}, initiated by ${{ github.actor }} running on ${{ runner.os }}, working on ${{ github.repository }} @ ${{ github.ref }}."
       - name: Clone cyrsoxs code
         uses: actions/checkout@v3
       - name: Cache conda
@@ -33,6 +33,9 @@ jobs:
           repository: usnistgov/NRSS    
           ref: main
           path: ${{ github.workspace }}/NRSS/
+      - name: Patch environment to not use cuda 12. series
+        run: |
+          sed -i 's/nvidia::cuda/nvidia::cuda<12/g' environment-build.yml 
       - name: Setup Python and Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
