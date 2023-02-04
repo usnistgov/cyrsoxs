@@ -98,14 +98,15 @@ jobs:
       - name: Test that CyRSoXS can simulate the NRSS core-shell model
         run: |
           conda activate nrss
+          export CUDA_VISIBLE_DEVICES=2
           cd NRSS/tutorials/coreshell_disk
           ../../../build/CyRSoXS *.hdf5
-      - name: Upload the built CyRSoXS Python library as an artifact
+      - name: Upload coreshell-disk results artifact
         uses: actions/upload-artifact@v3
         with:
           name: CoreShell-results
-          path: ${{ github.workspace }}/NRSS/tutorials/coreshell_disk/h5/*         
-      - name: Post report on issue
+          path: ${{ github.workspace }}/NRSS/tutorials/coreshell_disk/HDF5        
+      - name: Comment on PR with report
         uses: actions/github-script@v5
         if: contains(github.event_name,'pull_request')
         with:
