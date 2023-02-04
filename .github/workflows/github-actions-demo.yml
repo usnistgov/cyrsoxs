@@ -38,7 +38,7 @@ jobs:
         shell: bash
         run: |
           sed -i 's/nvidia::cuda/nvidia::cuda<12/g' environment-build.yml 
-          echo "  - cuda-toolkit<12" >> environment-build.yml
+          echo -e -n "\n  - cuda-toolkit<12\n" >> environment-build.yml
       - name: Setup Python and Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
