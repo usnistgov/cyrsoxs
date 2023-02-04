@@ -35,6 +35,7 @@ jobs:
           ref: main
           path: ${{ github.workspace }}/NRSS/
       - name: Patch environment to not use cuda 12. series
+        if: false
         shell: bash
         run: |
           sed -i 's/nvidia::cuda/nvidia::cuda<12/g' environment-build.yml 
