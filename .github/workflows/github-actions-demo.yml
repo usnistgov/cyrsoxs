@@ -38,9 +38,8 @@ jobs:
         shell: bash
         run: |
           sed -i 's/nvidia::cuda/nvidia::cuda<12/g' environment-build.yml 
-          echo -e -n "\n  - nvidia::cuda-toolkit<12\n" >> environment-build.yml
-          echo -e -n "\n  - nvidia::cuda-runtime<12\n" >> environment-build.yml
-          echo -e -n "\n  - nvidia::cuda-demo-suite<12\n" >> environment-build.yml
+          echo -e -n "\n  - nvidia::cuda-toolkit<12\n  - cuda-cccl<12\n  - cuda-command-line-tools<12\n  - cuda-compiler<12\n  - cuda-cudart<12\n  - cuda-cudart-dev<12\n  - cuda-cudart-static<12\n  - cuda-cuobjdump<12\n  - cuda-cupti<12\n  - cuda-cupti-static<12\n  - cuda-cuxxfilt<12\n  - cuda-demo-suite<12\n  - cuda-documentation<12\n  - cuda-driver-dev<12\n  - cuda-gdb<12\n  - cuda-libraries<12\n  - cuda-libraries-dev<12\n  - cuda-libraries-static<12\n  - cuda-nsight<12\n  - cuda-nsight-compute<12\n  - cuda-nvcc<12\n  - cuda-nvdisasm<12\n  - cuda-nvml-dev<12\n  - cuda-nvprof<12\n  - cuda-nvprune<12\n  - cuda-nvrtc<12\n  - cuda-nvrtc-dev<12\n  - cuda-nvrtc-static<12\n  - cuda-nvtx<12\n  - cuda-nvvp<12\n  - cuda-opencl<12\n  - cuda-opencl-dev<12\n  - cuda-profiler-api<12\n  - cuda-runtime<12\n  - cuda-sanitizer-api<12\n  - cuda-toolkit<12\n  - cuda-tools<12\n  - cuda-visual-tools<12\n
+" >> environment-build.yml
       - name: Setup Python and Conda
         uses: conda-incubator/setup-miniconda@v2
         with:
