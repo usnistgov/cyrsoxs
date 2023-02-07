@@ -298,8 +298,9 @@ private:
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     if(ReadValue(cfg,"DumpMorphology",dumpMorphology)){}
     if(ReadValue(cfg,"MaxStreams",numMaxStreams)){}
-    int _temp1;
+    UINT _temp1;
     if(ReadValue(cfg,"ReferenceFrame",_temp1)){
+      validate("Reference Frame ",_temp1,2);
        referenceFrame = static_cast<bool>(_temp1);
     }
 
@@ -382,6 +383,9 @@ private:
       validate("Ewalds Interpolation",ewaldsInterpolation,Interpolation::EwaldsInterpolation::MAX_SIZE);
       validate("Morphology Type",ewaldsInterpolation,MorphologyType::MAX_MORPHOLOGY_TYPE);
       validate("Case Type",caseType,CaseTypes::MAX_CASE_TYPE);
+      if(referenceFrame == ReferenceFrame::MATERIAL){
+      	std::cout << YLW<<  "[WARNING] Accuracy of Material reference frame is currently under investigation and should not be used for production runs" << NRM << "\n";
+      } 
       std::cout << GRN << "Input Data : [OK] " << NRM << "\n";
   }
     /**
