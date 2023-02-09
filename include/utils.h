@@ -141,7 +141,7 @@ static void printCopyrightInfo(){
   std::cout << "|  Comments/Questions :                                                                            |\n";
   std::cout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
   std::cout << "|          2. Dr. Adarsh Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
-  std::cout << "|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
+  std::cout << "|          3. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
   std::cout << " -------------------------------------------------------------------------------------------------- \n";
 
   std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << " " << VERSION_TWEAK << "\n";
@@ -168,7 +168,7 @@ static void printPyBindCopyrightInfo(){
   pybind11::print("|  Comments/Questions :                                                                            |");
   pybind11::print("|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |");
   pybind11::print("|          2. Dr. Adarsh Krishnamurthy        (adarsh@iastate.edu)                                 |");
-  pybind11::print("|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |");
+  pybind11::print("|          3. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |");
   pybind11::print(" -------------------------------------------------------------------------------------------------- ");
 
   pybind11::print("Version   : " , VERSION_MAJOR , ".", VERSION_MINOR , ".", VERSION_PATCH, ".", VERSION_TWEAK );
@@ -194,7 +194,7 @@ static void printCopyrightInfo(std::ofstream & fout){
   fout << "|  Comments/Questions :                                                                            |\n";
   fout << "|          1. Dr. Baskar GanapathySubramanian (baskarg@iastate.edu)                                |\n";
   fout << "|          2. Dr. Adarsh Krishnamurthy        (adarsh@iastate.edu)                                 |\n";
-  fout << "|          2. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
+  fout << "|          3. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
   fout << " -------------------------------------------------------------------------------------------------- \n";
 
   fout << "\n";

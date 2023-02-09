@@ -218,7 +218,7 @@ private:
 
   UINT caseType;
   UINT morphologyType;
-  bool referenceFrame = ReferenceFrame::MATERIAL;
+  bool referenceFrame = ReferenceFrame::LAB;
 
   Real3 detectorCoordinates{0,0,1};
   int algorithmType = Algorithm::CommunicationMinimizing;
@@ -298,6 +298,11 @@ private:
     if(ReadValue(cfg,"ScatterApproach",scatterApproach)){}
     if(ReadValue(cfg,"DumpMorphology",dumpMorphology)){}
     if(ReadValue(cfg,"MaxStreams",numMaxStreams)){}
+    UINT _temp1;
+    if(ReadValue(cfg,"ReferenceFrame",_temp1)){
+      validate("Reference Frame ",_temp1,2);
+       referenceFrame = static_cast<bool>(_temp1);
+    }
 
     if(caseType == CaseTypes::DEFAULT) {
       kVectors.resize(1,{0,0,1});
@@ -378,6 +383,9 @@ private:
       validate("Ewalds Interpolation",ewaldsInterpolation,Interpolation::EwaldsInterpolation::MAX_SIZE);
       validate("Morphology Type",ewaldsInterpolation,MorphologyType::MAX_MORPHOLOGY_TYPE);
       validate("Case Type",caseType,CaseTypes::MAX_CASE_TYPE);
+      if(referenceFrame == ReferenceFrame::MATERIAL){
+      	std::cout << YLW<<  "[WARNING] Accuracy of Material reference frame is currently under investigation and should not be used for production runs" << NRM << "\n";
+      } 
       std::cout << GRN << "Input Data : [OK] " << NRM << "\n";
   }
     /**
@@ -407,6 +415,7 @@ private:
         std::cout << "HDF Output Directory : " << HDF5DirName << "\n";
         std::cout << "Scatter Approach     : " << scatterApproachName[scatterApproach] << "\n";
         std::cout << "Algorithm            : " << algorithmName[algorithmType] << "\n";
+	std::cout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "(" << referenceFrame << ")\n";
          if(algorithmType==Algorithm::MemoryMinizing) {
           std::cout  << "MaxStreams           : " << numMaxStreams << "\n";
         }
@@ -609,7 +618,7 @@ private:
         fout << "CaseType             : " << caseTypenames[caseType] << "\n";
         fout << "Morphology Type      : " << morphologyTypeName[morphologyType] << "\n";
         fout << "Morphology Order     : " << morphologyOrderName[morphologyOrder] << "\n";
-        fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "\n";
+        fout << "Reference Frame      : " << referenceFrameName[(UINT)referenceFrame] << "(" << referenceFrame << ")\n";
         if(morphologyOrder == MorphologyOrder::XYZ){
           fout << "Dimensions [X Y Z]   : ["<< voxelDims[0] << " " <<  voxelDims[1] << " " << voxelDims[2] << "]\n";
         }

@@ -1338,8 +1338,8 @@ int cudaMainStreams(const UINT *voxel,
             START_TIMER(TIMERS::IMAGE_ROTATION)
           }
 #endif
-          const double alpha = cos(-Eangle);
-          const double beta = sin(-Eangle);
+          const double alpha = cos(Eangle);
+          const double beta = sin(Eangle);
 
           /**https://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html?highlight=warpaffine**/
           const double coeffs[2][3]{
