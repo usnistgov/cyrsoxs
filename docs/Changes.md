@@ -1,6 +1,6 @@
 # CyRSoXS Changes History
 
-## Version 1.1.5.2
+## Version 1.1.6.0
 
 * Add option to install build dependencies using conda rather than manual
 * Changes to CMakeLists to enable Conda packaging of CyRSoXS

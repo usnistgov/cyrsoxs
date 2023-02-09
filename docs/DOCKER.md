@@ -1,4 +1,4 @@
-# GPU enabled RSoXS simulation (1.1.5.2)
+# GPU enabled RSoXS simulation (1.1.6.0)
 
 * **NOTE:** The current Docker image was created from the developer version of CyRSoXS at <https://bitbucket.org/baskargroup/CyRSoXS>, and the following installation instructions reflect this.
 
