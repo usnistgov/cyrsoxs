@@ -1,0 +1,120 @@
+name: CyRSoXS Build and Test
+run-name: CyRSoXS Build and Test
+on: 
+  pull_request:
+    branches: [ main ]
+  push:
+
+      
+jobs:
+  CyRSoXS-Build-and-Test:
+    runs-on: self-hosted
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Provide diagnostic data
+        shell: bash
+        run: echo "Trigger ${{ github.event_name }}, initiated by ${{ github.actor }} running on ${{ runner.os }}, working on ${{ github.repository }} @ ${{ github.ref }}."
+      - name: Clone cyrsoxs code
+        uses: actions/checkout@v3
+      - name: Cache conda
+        uses: actions/cache@v2
+        env:
+          # Increase this value to reset cache if etc/example-environment.yml has not changed
+          CACHE_NUMBER: 0
+        with:
+          path: ~/conda_pkgs_dir
+          key:
+            ${{ runner.os }}-conda-${{ env.CACHE_NUMBER }}-${{
+            hashFiles('environment-build.yml') }}
+      - name: Check out NRSS code
+        uses: actions/checkout@v3
+        with:
+          repository: usnistgov/NRSS    
+          ref: main
+          path: ${{ github.workspace }}/NRSS/
+      - name: Patch environment to not use cuda 12. series
+        if: false
+        shell: bash
+        run: |
+          sed -i 's/nvidia::cuda/nvidia::cuda<12/g' environment-build.yml 
+          echo -e -n "\n  - nvidia::cuda-toolkit<12\n  - nvidia::cuda-cccl<12\n  - nvidia::cuda-command-line-tools<12\n  - nvidia::cuda-compiler<12\n  - nvidia::cuda-cudart<12\n  - nvidia::cuda-cudart-dev<12\n  - nvidia::cuda-cuobjdump<12\n  - nvidia::cuda-cupti<12\n  - nvidia::cuda-cuxxfilt<12\n  - nvidia::cuda-demo-suite<12\n  - nvidia::cuda-documentation<12\n  - nvidia::cuda-driver-dev<12\n  - nvidia::cuda-gdb<12\n  - nvidia::cuda-libraries<12\n  - nvidia::cuda-libraries-dev<12\n  - nvidia::cuda-nsight<12\n  - nvidia::cuda-nsight-compute<12\n  - nvidia::cuda-nvcc<12\n  - nvidia::cuda-nvdisasm<12\n  - nvidia::cuda-nvml-dev<12\n  - nvidia::cuda-nvprof<12\n  - nvidia::cuda-nvprune<12\n  - nvidia::cuda-nvrtc<12\n  - nvidia::cuda-nvrtc-dev<12\n  - nvidia::cuda-nvtx<12\n  - nvidia::cuda-nvvp<12\n  - nvidia::cuda-profiler-api<12\n  - nvidia::cuda-runtime<12\n  - nvidia::cuda-sanitizer-api<12\n  - nvidia::cuda-toolkit<12\n  - nvidia::cuda-tools<12\n  - nvidia::cuda-visual-tools<12\n" >> environment-build.yml
+      - name: Setup Python and Conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-version: "latest"
+          activate-environment: cyrsoxs-build
+          environment-file: environment-build.yml
+          python-version: 3.9          
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+      - name: Install NRSS/run dependencies
+        run: |
+            # $CONDA is an environment variable pointing to the root of the miniconda directory
+            $CONDA/bin/conda install -n base mamba
+            sed '/cyrsoxs/d' NRSS/environment.yml > NRSS/environment-patched.yml
+            $CONDA/bin/mamba env update --file NRSS/environment-patched.yml
+      - name: Checkout PyBind
+        run: |
+          git submodule update --init
+      - name: Build standalone binaries
+        run: |
+          conda activate cyrsoxs-build
+          cd ${{ github.workspace }}
+          mkdir build;
+          cd build;
+          cmake .. -DCMAKE_BUILD_TYPE=Release;
+          make
+      - name: Build with Pybind
+        run: |
+          conda activate cyrsoxs-build
+          cd ${{ github.workspace }}
+          mkdir build-pybind;
+          cd build-pybind;
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND=Yes -USE_SUBMODULE_PYBIND=Yes;
+          make
+      - name: List files in the repository
+        run: |
+          ls ${{ github.workspace }}
+          ls ${{ github.workspace }}/NRSS
+      - name: Upload the built CyRSoXS binary as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CyRSoXS-binaries
+          path: build/CyRSoXS
+
+      - name: Upload the built CyRSoXS Python library as an artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CyRSoXS-binaries
+          path: build-pybind/CyRSoXS.*.so      
+      - name: Test that PyBind-built CyRSoXS can be imported.
+        run: |
+          conda activate nrss
+          cd ${{ github.workspace }}
+          python -c "import sys; sys.path.insert(0,'build-pybind');import CyRSoXS;"
+      - name: Test that CyRSoXS can simulate the NRSS core-shell model
+        run: |
+          conda activate nrss
+          export CUDA_VISIBLE_DEVICES=2
+          cd NRSS/tutorials/coreshell_disk
+          ../../../build/CyRSoXS *.hdf5
+      - name: Upload coreshell-disk results artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: CoreShell-results
+          path: ${{ github.workspace }}/NRSS/tutorials/coreshell_disk/HDF5        
+      - name: Comment on PR with report
+        uses: actions/github-script@v5
+        if: contains(github.event_name,'pull_request')
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'This PR built and tested successfully, see attachments.'
+            })
