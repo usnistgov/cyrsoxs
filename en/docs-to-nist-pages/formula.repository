@@ -1,0 +1,12 @@
+\_form#0=11x9:$s_x$
+\_form#1=11x10:$s_y$
+\_form#2=10x9:$s_z$
+\_form#3=19x13:$\phi_{ua}$
+\_form#4=6x10:$\theta$
+\_form#5=9x13:$\psi$
+\_form#6=10x15:$\delta_{\parallel}$
+\_form#7=13x15:$\beta_{\parallel}$
+\_form#8=13x13:$\delta_{\perp}$
+\_form#9=15x13:$\beta_{\perp}$
+\_form#10=8x13:$\phi$
+\_form#11=9x8:$ \approx $

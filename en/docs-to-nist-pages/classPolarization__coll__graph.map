@@ -1,0 +1,4 @@
+<map id="Polarization" name="Polarization">
+<area shape="rect" id="node1" title="Polarization computation for debugging." alt="" coords="5,95,95,121"/>
+<area shape="rect" id="node2" href="$classInputData.html" title="This function reads the input data from the file." alt="" coords="11,5,89,32"/>
+</map>

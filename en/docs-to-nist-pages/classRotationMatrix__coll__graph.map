@@ -1,0 +1,5 @@
+<map id="RotationMatrix" name="RotationMatrix">
+<area shape="rect" id="node1" title="Class to compute the rotation matrix for all k Vector." alt="" coords="67,95,172,121"/>
+<area shape="rect" id="node2" href="$structMatrix.html" title="Class to store 3D matrix." alt="" coords="5,5,63,32"/>
+<area shape="rect" id="node3" href="$classInputData.html" title="This function reads the input data from the file." alt="" coords="167,5,245,32"/>
+</map>

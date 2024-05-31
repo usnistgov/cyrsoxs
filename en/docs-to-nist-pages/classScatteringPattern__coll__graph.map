@@ -1,0 +1,4 @@
+<map id="ScatteringPattern" name="ScatteringPattern">
+<area shape="rect" id="node1" title="Stores the Scattering pattern data." alt="" coords="5,95,128,121"/>
+<area shape="rect" id="node2" href="$classInputData.html" title="This function reads the input data from the file." alt="" coords="27,5,106,32"/>
+</map>
