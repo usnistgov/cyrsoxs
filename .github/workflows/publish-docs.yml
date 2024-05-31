@@ -9,6 +9,7 @@ jobs:
       - uses: usnistgov/Docs4NIST@0.6
         with:
           docs-folder: docs/sphinx/
+          apt-packages: 'doxygen'
           formats: |-
             epub
             pdf
