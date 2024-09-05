@@ -139,32 +139,51 @@ public:
       return;
     }
     const BigUINT numVoxels = inputData_.voxelDims[0] * inputData_.voxelDims[1] * inputData_.voxelDims[2];
-    std::vector<Real> _S(numVoxels);
-    std::vector<Real> _Theta(numVoxels);
-    std::vector<Real> _Psi(numVoxels);
-    std::vector<Real> _Vfrac(numVoxels);
-    for (BigUINT i = 0; i < numVoxels; i++) {
-      _S[i] = matSVector.data()[i];
-      _Theta[i] = matThetaVector.data()[i];
-      _Psi[i] = matPsiVector.data()[i];
-      _Vfrac[i] = matVfracVector.data()[i];
-    }
+
     if (inputData_.morphologyOrder == MorphologyOrder::XYZ) {
+      std::vector<Real> _S(numVoxels);
+      std::vector<Real> _Theta(numVoxels);
+      std::vector<Real> _Psi(numVoxels);
+      std::vector<Real> _Vfrac(numVoxels);
+
+      for (BigUINT i = 0; i < numVoxels; i++) {
+        _S[i] = matSVector.data()[i];
+        _Theta[i] = matThetaVector.data()[i];
+        _Psi[i] = matPsiVector.data()[i];
+        _Vfrac[i] = matVfracVector.data()[i];
+      }
+
       H5::XYZ_to_ZYX(_S, 1, inputData_.voxelDims);
       H5::XYZ_to_ZYX(_Theta, 1, inputData_.voxelDims);
       H5::XYZ_to_ZYX(_Psi, 1, inputData_.voxelDims);
       H5::XYZ_to_ZYX(_Vfrac, 1, inputData_.voxelDims);
-    }
-    for (BigUINT i = 0; i < numVoxels; i++) {
-      voxel[(matID - 1) * numVoxels + i].s1.x = _S[i];
-      if (_S[i] != 0) {
-        voxel[(matID - 1) * numVoxels + i].s1.y = _Theta[i];
-        voxel[(matID - 1) * numVoxels + i].s1.z = _Psi[i];
-      } else {
-        voxel[(matID - 1) * numVoxels + i].s1.y = 0;
-        voxel[(matID - 1) * numVoxels + i].s1.z = 0;
+    
+
+      for (BigUINT i = 0; i < numVoxels; i++) {
+        voxel[(matID - 1) * numVoxels + i].s1.x = _S[i];
+        if (_S[i] != 0) {
+          voxel[(matID - 1) * numVoxels + i].s1.y = _Theta[i];
+          voxel[(matID - 1) * numVoxels + i].s1.z = _Psi[i];
+        } else {
+          voxel[(matID - 1) * numVoxels + i].s1.y = 0;
+          voxel[(matID - 1) * numVoxels + i].s1.z = 0;
+        }
+        voxel[(matID - 1) * numVoxels + i].s1.w = _Vfrac[i];
       }
-      voxel[(matID - 1) * numVoxels + i].s1.w = _Vfrac[i];
+    }
+    else{
+      // #pragma omp parallel for
+      for (BigUINT i = 0; i < numVoxels; i++) {
+        voxel[(matID - 1) * numVoxels + i].s1.x = matSVector.data()[i];
+        if (matSVector.data()[i] != 0) {
+          voxel[(matID - 1) * numVoxels + i].s1.y = matThetaVector.data()[i];
+          voxel[(matID - 1) * numVoxels + i].s1.z = matPsiVector.data()[i];
+        } else {
+          voxel[(matID - 1) * numVoxels + i].s1.y = 0;
+          voxel[(matID - 1) * numVoxels + i].s1.z = 0;
+        }
+        voxel[(matID - 1) * numVoxels + i].s1.w = matVfracVector.data()[i];
+      }
     }
 
     validData_.set(matID - 1, true);
