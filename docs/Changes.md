@@ -1,5 +1,9 @@
 # CyRSoXS Changes History
 
+## Version 1.1.7.0
+
+* Changed pybind write to voxeldata to do extra copy step only when XYZ morphology is used
+
 ## Version 1.1.6.0
 
 * Add option to install build dependencies using conda rather than manual

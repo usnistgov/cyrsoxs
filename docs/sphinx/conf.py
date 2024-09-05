@@ -15,7 +15,7 @@ subprocess.call('cd .. ; doxygen', shell=True)
 project = 'CyRSoXS'
 copyright = '2019-2022 Iowa State University'
 author = 'Kumar Saurabh, Adarsh Krishnamurthy, Baskar Ganapathysubramanian, Eliot Gann, Dean M. Delongchamp, Peter J. Dudenas, Tyler B. Martin, Peter Beaucage'
-release = '1.1.6.0'
+release = '1.1.7.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

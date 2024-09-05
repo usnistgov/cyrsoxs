@@ -6,7 +6,7 @@ Currently, it supports both 32 bit and 64 bit float data types.
 * The code can be executed through Python (enabled through [Pybind11](https://github.com/pybind/pybind11))
 or directly through the executable.
 
-## Version  : 1.1.6.0
+## Version  : 1.1.7.0
 
 The developer version of the CyRSoXS code is available at <https://bitbucket.org/baskargroup/cy-rsoxs>. All stable future releases will be merged with the current usnistgov repository.
 
