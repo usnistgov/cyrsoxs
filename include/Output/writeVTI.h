@@ -30,7 +30,7 @@
 #include <Input/Input.h>
 #include <iostream>
 #include <vector>
-#include <vector_types.h>
+// #include <vector_types.h>
 #include <Output/cencode.h>
 #include <assert.h>
 #include <omp.h>

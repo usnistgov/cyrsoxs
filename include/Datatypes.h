@@ -27,7 +27,7 @@
 
 #include <cstdio>
 #include <cinttypes>
-#include <vector_types.h>
+#include <hip/hip_runtime.h>
 #include <cassert>
 
 #ifdef DOUBLE_PRECISION

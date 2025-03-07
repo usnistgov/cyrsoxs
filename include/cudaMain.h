@@ -32,12 +32,12 @@
 #include <vector>
 #include <Input/InputData.h>
 #include <Rotation.h>
-#include <cufft.h>
+#include <hipfft/hipfft.h>
 #include <RotationMatrix.h>
 #ifdef DOUBLE_PRECISION
-static constexpr cufftType_t fftType = CUFFT_Z2Z;
+static constexpr hipfftType_t fftType = HIPFFT_Z2Z;
 #else
-static constexpr cufftType_t fftType = CUFFT_C2C;
+static constexpr hipfftType_t fftType = HIPFFT_C2C;
 #endif
 
 /**
@@ -181,11 +181,11 @@ __host__ int computePolarization(const Complex *d_Nt, Complex *d_pX,
  * @param [in] plan The plan context
  * @return
  */
-__host__ INLINE inline cufftResult  performFFT(Complex *polarization, cufftHandle &plan) {
+__host__ INLINE inline hipfftResult  performFFT(Complex *polarization, hipfftHandle &plan) {
 #ifdef DOUBLE_PRECISION
-    return (cufftExecZ2Z(plan, polarization, polarization, CUFFT_FORWARD));
+    return (hipfftExecZ2Z(plan, polarization, polarization, HIPFFT_FORWARD));
 #else
-  return (cufftExecC2C(plan, polarization, polarization, CUFFT_FORWARD));
+  return (hipfftExecC2C(plan, polarization, polarization, HIPFFT_FORWARD));
 #endif
 }
 
@@ -197,7 +197,7 @@ __host__ INLINE inline cufftResult  performFFT(Complex *polarization, cufftHandl
  * @param stream cuda stream context
  * @return
  */
-__host__ int performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx,  const cudaStream_t stream);
+__host__ int performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx,  const hipStream_t stream);
 
 /**
  *
@@ -301,7 +301,7 @@ __host__ int computeNt(const Material * d_materialConstants,
                        const BigUINT & endID,
                        const UINT & materialID,
                        const UINT & numStreams,
-                       cudaStream_t stream,
+                       hipStream_t stream,
                        const int NUM_MATERIAL);
 
 

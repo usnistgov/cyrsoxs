@@ -1,20 +1,21 @@
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
-cmake_policy(SET CMP0048 NEW)
-project(CyRSoXS VERSION 1.1.7.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
+cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
+cmake_policy(VERSION 3.5...3.27)
+
+project(CyRSoXS VERSION 1.1.7.0 DESCRIPTION BetaVersion LANGUAGES CXX HIP)
 
 
-option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
-option(VTI_BINARY "Write VTI in binary with 64 base encoding" ON)
-option(DUMP_FILES "Dump files for debugging " OFF)
-option(Profiling "Enable Profiling " OFF)
-option(EOC "Ewald projection on CPU" OFF)
-option(BIAXIAL "Biaxial Computation" OFF)
-option(BUILD_DOCS "Build Documentation" OFF)
-option(PYBIND "Pybind support for CyRSoXS" OFF)
-option(USE_64_BIT_INDICES, "Use 64 Bit Indices" OFF)
-option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" ON)
-option(ENABLE_TEST, "Enable test" ON)
-option(OUTPUT_BASE_NAME, "Output base name" "CyRSoXS")
+# option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
+# option(VTI_BINARY "Write VTI in binary with 64 base encoding" ON)
+# option(DUMP_FILES "Dump files for debugging " OFF)
+# option(Profiling "Enable Profiling " OFF)
+# option(EOC "Ewald projection on CPU" OFF)
+# option(BIAXIAL "Biaxial Computation" OFF)
+# option(BUILD_DOCS "Build Documentation" OFF)
+# option(PYBIND "Pybind support for CyRSoXS" OFF)
+# option(USE_64_BIT_INDICES, "Use 64 Bit Indices" OFF)
+# option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" ON)
+# option(ENABLE_TEST, "Enable test" ON)
+# option(OUTPUT_BASE_NAME, "Output base name" "CyRSoXS")
 
 if(NOT OUTPUT_BASE_NAME)
         set(OUTPUT_BASE_NAME "CyRSoXS")
@@ -74,20 +75,22 @@ if (ENABLE_TEST)
     message("Test enabled")
 endif ()
 
-enable_language(CUDA)
-find_package(CUDAToolkit)
-# x peter commenting out to use new CUDA machinery in cmake >= 3.8 find_package(CUDA 9 REQUIRED)
+# enable_language(HIP)
+
+# # Find the required HIP package
+find_package(HIP REQUIRED)
+# # x peter commenting out to use new CUDA machinery in cmake >= 3.8 find_package(CUDA 9 REQUIRED)
 find_package(OpenMP REQUIRED)
 
-if (OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif ()
+# if (OPENMP_FOUND)
+#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+#     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+# endif ()
 
-# BEGIN code that was contributed by employees of the National Institute of Standards and Technology (NIST), 
-# an agency of the Federal Government and is being made available as a public service.
-# Pursuant to title 17 United States Code Section 105, works of NIST employees are not subject to copyright protection in the United States
+# # BEGIN code that was contributed by employees of the National Institute of Standards and Technology (NIST), 
+# # an agency of the Federal Government and is being made available as a public service.
+# # Pursuant to title 17 United States Code Section 105, works of NIST employees are not subject to copyright protection in the United States
 
 if (PYBIND)
     # find_package(PythonInterp 3.6 REQUIRED)
@@ -113,38 +116,39 @@ else ()
 endif ()
 
 
-# END code that was contributed by employees of NIST
+# # END code that was contributed by employees of NIST
 
 
-find_package(HDF5 COMPONENTS CXX HL REQUIRED)
+find_package(HDF5 REQUIRED)
 
 
 
 set(CMAKE_CUDA_STANDARD 14) # pab added
 set(CMAKE_CXX_STANDARD 14)
 set(CYRSOXS_SRC
-        src/RotationMatrix.cpp
-        src/cudaMain.cu)
+#         # src/RotationMatrix.cpp
+#         # src/cudaMain.cu
+        )
 
 set(CYRSOXS_INC
-        include/cudaUtils.h
-        include/cudaMain.h
-        include/cudaHeaders.h
-        include/Datatypes.h
-        include/uniaxial.h
-        include/Output/writeVTI.h
-        include/Output/cencode.h
-        include/Output/outputUtils.h
-        include/Input/InputData.h
-        include/Input/Input.h
-        include/Output/writeH5.h
-        include/utils.h
-        include/Rotation.h
-        include/RotationMatrix.h
+#         # include/cudaUtils.h
+#         # include/cudaMain.h
+#         # include/cudaHeaders.h
+#         # include/Datatypes.h
+#         # include/uniaxial.h
+#         # include/Output/writeVTI.h
+#         # include/Output/cencode.h
+#         # include/Output/outputUtils.h
+#         # include/Input/InputData.h
+#         # include/Input/Input.h
+#         # include/Output/writeH5.h
+#         # include/utils.h
+#         include/Rotation.h
+#         include/RotationMatrix.h
         )
 
 
-find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
+# # find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 include(cmake/version.cmake)
 generate_version_h()
 
@@ -154,8 +158,11 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp -DNDEBUG --use_fast_math")
+# set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp -DNDEBUG --use_fast_math")
+find_package(hipBLAS REQUIRED)
 
+# message(STATUS "HIP_LIBRARIES = ${HIP_LIBRARIES}")
+# message(STATUS "hipBLAS_FOUND = ${hipBLAS_FOUND}")
 
 if (PYBIND)
     if (MAX_NUM_MATERIAL)
@@ -180,7 +187,7 @@ if (PYBIND)
     target_include_directories(${OUTPUT_BASE_NAME} PUBLIC ${Python_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(${OUTPUT_BASE_NAME}
-            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cublas CUDA::cufft CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps)
+            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} HIP::hipblas)# CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps)
     #${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas -lcudart "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
     
 
@@ -203,95 +210,113 @@ if (PYBIND)
     set_target_properties(${OUTPUT_BASE_NAME} PROPERTIES CXX_VISIBILITY_PRESET "hidden"
                                          CUDA_VISIBILITY_PRESET "hidden") 
 else ()
+    # add_executable(CyRSoXS src/main.cpp)
+
+    # target_link_libraries(CyRSoXS PRIVATE hip::host)
+
     set(EXE_SRC
             src/main.cpp
             )
     add_executable(${OUTPUT_BASE_NAME} ${CYRSOXS_INC} ${CYRSOXS_SRC} ${EXE_SRC})
+    # target_link_libraries(${OUTPUT_BASE_NAME} PRIVATE hip::host)
 
-    set_target_properties(
-            ${OUTPUT_BASE_NAME}
-            PROPERTIES
-            CUDA_SEPARABLE_COMPILATION ON
-    )
-    target_include_directories(${OUTPUT_BASE_NAME} PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include)
-    target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR}/generated)
+    # set_target_properties(
+    #         ${OUTPUT_BASE_NAME}
+    #         PROPERTIES
+    #         HIP_SEPARABLE_COMPILATION ON
+    # )${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} 
+    # target_include_directories(${OUTPUT_BASE_NAME} PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include)
+    # target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(${OUTPUT_BASE_NAME}
-            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cufft CUDA::cublas CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps ${CONFIG++_LIBRARY})
-    if (EOC)
-        target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
-        target_link_libraries(${OUTPUT_BASE_NAME} ${OpenCV_LIBS})
-    endif ()
+            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} roc::hipblas)# HIP::hipfft HIP::hipblas)# CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps ${CONFIG++_LIBRARY})
+    # if (EOC)
+    #     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
+    #     target_link_libraries(${OUTPUT_BASE_NAME} ${OpenCV_LIBS})
+    # endif ()
 endif ()
-set_property(TARGET ${OUTPUT_BASE_NAME} PROPERTY CUDA_ARCHITECTURES  52 53 60 61 62 70 72)
+# # set_property(TARGET ${OUTPUT_BASE_NAME} PROPERTY CUDA_ARCHITECTURES  52 53 60 61 62 70 72)
 
-if (ENABLE_TEST)
-    if (PYBIND)
-        message("No tests with pybind with gtest framework")
-    else ()
-        add_definitions(-DCMAKE_ROOT=\"${CMAKE_SOURCE_DIR}\")
-        add_subdirectory(external/googletest)
-        set(TEST_SRC
-                tests/tests.cpp
-                )
-        set(TEST_INC
-                tests/include/basicFramework.h
-                tests/include/testUtils.h
-                tests/include/unitTest.h
-                tests/include/fullFramework.h
-                )
-        add_executable(test ${CYRSOXS_INC} ${CYRSOXS_SRC} ${TEST_SRC} ${TEST_INC})
-        target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include tests/include ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
-        target_include_directories(test PRIVATE ${PROJECT_BINARY_DIR}/generated)
-        target_link_libraries(test gtest gtest_main
-                ${HDF5_CXX_LIBRARIES} -lcufft -lcublas "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
-    endif ()
-endif ()
+# set_property(TARGET ${OUTPUT_BASE_NAME} PROPERTY HIP_ARCHITECTURES  "gfx906" )
+# add_executable(MyApp src/main.cpp)
+# target_link_libraries(MyApp PRIVATE hip::host)
 
-if (BUILD_DOCS)
-    find_package(Doxygen)
-    if (DOXYGEN_FOUND)
-        # set input and output files
-        set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile)
-        set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+# if (ENABLE_TEST)
+#     if (PYBIND)
+#         message("No tests with pybind with gtest framework")
+#     else ()
+#         add_definitions(-DCMAKE_ROOT=\"${CMAKE_SOURCE_DIR}\")
+#         add_subdirectory(external/googletest)
+#         set(TEST_SRC
+#                 tests/tests.cpp
+#                 )
+#         set(TEST_INC
+#                 tests/include/basicFramework.h
+#                 tests/include/testUtils.h
+#                 tests/include/unitTest.h
+#                 tests/include/fullFramework.h
+#                 )
+#         add_executable(test ${CYRSOXS_INC} ${CYRSOXS_SRC} ${TEST_SRC} ${TEST_INC})
+#         target_include_directories(test PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include tests/include ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+#         target_include_directories(test PRIVATE ${PROJECT_BINARY_DIR}/generated)
+#         target_link_libraries(test gtest gtest_main
+#                 ${HDF5_CXX_LIBRARIES} -lcufft -lcublas "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
+#     endif ()
+# endif ()
 
-        # request to configure the file
-        configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
-        message("Doxygen build started")
+# if (BUILD_DOCS)
+#     find_package(Doxygen)
+#     if (DOXYGEN_FOUND)
+#         # set input and output files
+#         set(DOXYGEN_IN ${CMAKE_CURRENT_SOURCE_DIR}/docs/Doxyfile)
+#         set(DOXYGEN_OUT ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
 
-        # note the option ALL which allows to build the docs together with the application
-        add_custom_target(doc_doxygen ALL
-                COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-                COMMENT "Generating API documentation with Doxygen"
-                VERBATIM)
-    else (DOXYGEN_FOUND)
-        message("Doxygen need to be installed to generate the doxygen documentation")
-    endif (DOXYGEN_FOUND)
-endif ()
+#         # request to configure the file
+#         configure_file(${DOXYGEN_IN} ${DOXYGEN_OUT} @ONLY)
+#         message("Doxygen build started")
 
-if (PYBIND)
-        install(FILES build-pybind/$<TARGET_FILE_NAME:${OUTPUT_BASE_NAME}> DESTINATION lib )#RENAME ${OUTPUT_PYTHON_NAME})
-        install(FILES build-pybind/$<TARGET_FILE_NAME:${OUTPUT_BASE_NAME}> DESTINATION ${Python_SITEARCH}) #RENAME ${OUTPUT_PYTHON_NAME})
-else ()
-        install(FILES build/${OUTPUT_BASE_NAME} DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)# RENAME ${OUTPUT_BASE_NAME})
-endif ()
+#         # note the option ALL which allows to build the docs together with the application
+#         add_custom_target(doc_doxygen ALL
+#                 COMMAND ${DOXYGEN_EXECUTABLE} ${DOXYGEN_OUT}
+#                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+#                 COMMENT "Generating API documentation with Doxygen"
+#                 VERBATIM)
+#     else (DOXYGEN_FOUND)
+#         message("Doxygen need to be installed to generate the doxygen documentation")
+#     endif (DOXYGEN_FOUND)
+# endif ()
 
-
-if (BUILD_DOCS)
-	add_custom_command(
-		TARGET doc_doxygen 
-		POST_BUILD
-	        WORKING_DIRECTORY "./latex"	
-		COMMAND make pdf
-		VERBATIM)
-	add_custom_command(
-		TARGET doc_doxygen 
-		POST_BUILD 
-		COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/latex/refman.pdf ${CMAKE_CURRENT_BINARY_DIR}/latex/CyRSoXS_Manual.pdf
-		VERBATIM)
-endif ()
-
-unset(OUTPUT_BASE_NAME CACHE)
+# if (PYBIND)
+#         install(FILES build-pybind/$<TARGET_FILE_NAME:${OUTPUT_BASE_NAME}> DESTINATION lib )#RENAME ${OUTPUT_PYTHON_NAME})
+#         install(FILES build-pybind/$<TARGET_FILE_NAME:${OUTPUT_BASE_NAME}> DESTINATION ${Python_SITEARCH}) #RENAME ${OUTPUT_PYTHON_NAME})
+# else ()
+#         install(FILES build/${OUTPUT_BASE_NAME} DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)# RENAME ${OUTPUT_BASE_NAME})
+# endif ()
 
 
+# if (BUILD_DOCS)
+# 	add_custom_command(
+# 		TARGET doc_doxygen 
+# 		POST_BUILD
+# 	        WORKING_DIRECTORY "./latex"	
+# 		COMMAND make pdf
+# 		VERBATIM)
+# 	add_custom_command(
+# 		TARGET doc_doxygen 
+# 		POST_BUILD 
+# 		COMMAND mv ${CMAKE_CURRENT_BINARY_DIR}/latex/refman.pdf ${CMAKE_CURRENT_BINARY_DIR}/latex/CyRSoXS_Manual.pdf
+# 		VERBATIM)
+# endif ()
 
+# unset(OUTPUT_BASE_NAME CACHE)
+
+
+
+# cmake_minimum_required(VERSION 3.21 FATAL_ERROR)
+# cmake_policy(VERSION 3.5...3.27)
+
+# project(MyProj LANGUAGES CXX HIP)
+# find_package(hip REQUIRED)
+# find_package(hipBLAS REQUIRED)
+
+# add_executable(MyApp src/main.cpp)
+# target_link_libraries(MyApp PRIVATE hip::host roc::hipblas )

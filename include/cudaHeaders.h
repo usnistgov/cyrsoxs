@@ -25,9 +25,10 @@
 #ifndef CUDA_BASE_CUDAHEADERS_H
 #define CUDA_BASE_CUDAHEADERS_H
 
-#include <cuda_runtime_api.h>
-#include <driver_types.h>
-#include <device_launch_parameters.h>
+// #include <cuda_runtime_api.h>
+#include <hip/hip_runtime.h>
+// #include <driver_types.h>
+// #include <device_launch_parameters.h>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -40,11 +41,11 @@
 
 
 #define gpuErrchk(ans) { gpuAssert((ans), __FILE__, __LINE__); }
-inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort = true)
+inline void gpuAssert(hipError_t code, const char *file, int line, bool abort = true)
 {
-    if (code != cudaSuccess)
+    if (code != hipSuccess)
     {
-        fprintf(stderr, "GPUassert: %s %s %d\n", cudaGetErrorString(code), file, line);
+        fprintf(stderr, "GPUassert: %s %s %d\n", hipGetErrorString(code), file, line);
         if (abort) exit(code);
     }
 }
@@ -54,24 +55,24 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort =
  * the application if the call has failed.
  *
  */
-static void CheckCudaErrorAux (const char *file, unsigned line, const char *statement, cudaError_t err)
+static void CheckCudaErrorAux (const char *file, unsigned line, const char *statement, hipError_t err)
 {
-    if (err == cudaSuccess)
+    if (err == hipSuccess)
         return;
-    std::cerr << statement<<" returned " << cudaGetErrorString(err) << "("<<err<< ") at "<<file<<":"<<line << std::endl;
+    std::cerr << statement<<" returned " << hipGetErrorString(err) << "("<<err<< ") at "<<file<<":"<<line << std::endl;
     exit (EXIT_FAILURE);
 }
 
 template <typename T, typename GI>
-__host__ INLINE inline void hostDeviceExchange(T * dest, const T * src, const GI & size, const cudaMemcpyKind direction){
-  CUDA_CHECK_RETURN(cudaMemcpy(dest,src,sizeof(T) * size ,direction));
-  gpuErrchk(cudaPeekAtLastError());
+__host__ INLINE inline void hostDeviceExchange(T * dest, const T * src, const GI & size, const hipMemcpyKind direction){
+  CUDA_CHECK_RETURN(hipMemcpy(dest,src,sizeof(T) * size ,direction));
+  gpuErrchk(hipPeekAtLastError());
 
 }
 template <typename T, typename GI>
 __host__ INLINE inline void mallocGPU(T *& d_data, const GI & size){
-  CUDA_CHECK_RETURN(cudaMalloc((void **) &d_data, sizeof(T) * size));
-  gpuErrchk(cudaPeekAtLastError());
+  CUDA_CHECK_RETURN(hipMalloc((void **) &d_data, sizeof(T) * size));
+  gpuErrchk(hipPeekAtLastError());
 
 }
 
@@ -82,8 +83,8 @@ __host__ INLINE inline void mallocCPU(T *& data, const GI & size){
 
 template <typename T, typename GI>
 __host__ INLINE inline void mallocCPUPinned(T *& data, const GI & size){
-  CUDA_CHECK_RETURN(cudaMallocHost((void**)&data,sizeof(T)*size));
-  gpuErrchk(cudaPeekAtLastError());
+  CUDA_CHECK_RETURN(hipMalloc((void**)&data,sizeof(T)*size));
+  gpuErrchk(hipPeekAtLastError());
 }
 
 template <typename T, typename GI>
@@ -91,7 +92,7 @@ __host__ INLINE inline void cudaZeroEntries(T * d_data, const GI & size){
   cudaMemset(d_data,0,sizeof(T)*size);
 }
 
-#define freeCudaMemory(X) CUDA_CHECK_RETURN(cudaFree(X)); gpuErrchk(cudaPeekAtLastError());
+#define freeCudaMemory(X) CUDA_CHECK_RETURN(cudaFree(X)); gpuErrchk(hipPeekAtLastError());
 #ifdef DOUBLE_PRECISION
 #define cublasScale cublasDscal
 #define cublasAXPY cublasDaxpy
