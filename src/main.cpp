@@ -107,21 +107,21 @@
 int main(int argc, char **argv) {
 
 
-  // if (argc < 2) {
-  //   std::cout << "Usage : " << argv[0] << " " << "HDF5FileName" << " HDF5OutputDirname [optional]";
-  //   exit(EXIT_FAILURE);
-  // }
-  // std::string fname = argv[1];
+  if (argc < 2) {
+    std::cout << "Usage : " << argv[0] << " " << "HDF5FileName" << " HDF5OutputDirname [optional]";
+    exit(EXIT_FAILURE);
+  }
+  std::string fname = argv[1];
 
-  // std::vector<Material> materialInput;
-  // InputData inputData;
-  // inputData.NUM_MATERIAL = H5::getNumberOfMaterial(fname);
-  // inputData.readRefractiveIndexData(materialInput);
-  // inputData.validate();
-  // const int & NUM_MATERIAL = inputData.NUM_MATERIAL;
-  // if (argc > 2) {
-  //   inputData.HDF5DirName = argv[2];
-  // }
+  std::vector<Material> materialInput;
+  InputData inputData;
+  inputData.NUM_MATERIAL = H5::getNumberOfMaterial(fname);
+  inputData.readRefractiveIndexData(materialInput);
+  inputData.validate();
+  const int & NUM_MATERIAL = inputData.NUM_MATERIAL;
+  if (argc > 2) {
+    inputData.HDF5DirName = argv[2];
+  }
   // H5::getDimensionAndOrder(fname, (MorphologyType) inputData.morphologyType, inputData.voxelDims,inputData.physSize,
   //                          inputData.morphologyOrder);
   // inputData.check2D();
