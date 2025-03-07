@@ -87,16 +87,16 @@
  *
  */
 
-// #include <cudaMain.h>
-// #include <Input/readH5.h>
-// #include <cstdlib>
-// #include <Input/InputData.h>
-// #include <Output/writeH5.h>
+#include <cudaMain.h>
+#include <Input/readH5.h>
+#include <cstdlib>
+#include <Input/InputData.h>
+#include <Output/writeH5.h>
 #include <cstring>
 #include <omp.h>
 #include <iomanip>
-// #include <utils.h>
-// #include <RotationMatrix.h>
+#include <utils.h>
+#include <RotationMatrix.h>
 
 /**
  * main function
