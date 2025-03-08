@@ -59,6 +59,63 @@ __host__ int performFFTShift(Complex *polarization, const UINT &blockSize, const
   return EXIT_SUCCESS;
 }
 
+__global__ void replaceDCComponentWithAverage(Complex *polarization, const uint3 vx) {
+  // Only execute this function with a single thread to avoid race conditions
+  if (threadIdx.x == 0 && blockIdx.x == 0) {
+    // DC component is at index [0,0,0]
+    const int dcIndex = 0;
+    
+    // Calculate average of 6 immediate face-adjacent neighbors in 3D
+    Complex sum = {0.0f, 0.0f};
+    int count = 0;
+    
+    // Neighbor at (1,0,0)
+    int idx = 1;
+    sum.x += polarization[idx].x;
+    sum.y += polarization[idx].y;
+    count++;
+    
+    // Neighbor at (0,1,0)
+    idx = vx.x;
+    sum.x += polarization[idx].x;
+    sum.y += polarization[idx].y;
+    count++;
+    
+    // Neighbor at (0,0,1)
+    idx = vx.x * vx.y;
+    sum.x += polarization[idx].x;
+    sum.y += polarization[idx].y;
+    count++;
+    
+    // Neighbor at (vx.x-1,0,0) - wrap around due to periodicity
+    idx = vx.x - 1;
+    sum.x += polarization[idx].x;
+    sum.y += polarization[idx].y;
+    count++;
+    
+    // Neighbor at (0,vx.y-1,0) - wrap around due to periodicity
+    idx = (vx.y - 1) * vx.x;
+    sum.x += polarization[idx].x;
+    sum.y += polarization[idx].y;
+    count++;
+    
+    // Neighbor at (0,0,vx.z-1) - wrap around due to periodicity
+    idx = (vx.z - 1) * vx.x * vx.y;
+    sum.x += polarization[idx].x;
+    sum.y += polarization[idx].y;
+    count++;
+    
+    // Replace DC component with average
+    polarization[dcIndex].x = sum.x / count;
+    polarization[dcIndex].y = sum.y / count;
+  }
+}
+
+__host__ int replaceDCComponent(Complex *polarization, const uint3 &vx, const cudaStream_t stream) {
+  replaceDCComponentWithAverage<<<1, 1, 0, stream>>>(polarization, vx);
+  return EXIT_SUCCESS;
+}
+
 __host__  int performScatter3DComputation(const Complex *d_polarizationX, const Complex *d_polarizationY,
                                           const Complex *d_polarizationZ,
                                           Real *d_scatter3D,
@@ -547,6 +604,12 @@ int cudaMain(const UINT *voxel,
           result[1] = performFFT(d_polarizationY, plan[1]);
           result[2] = performFFT(d_polarizationZ, plan[2]);
 
+          // Replace DC component with average of surrounding voxels
+          replaceDCComponent(d_polarizationX, vx, streams[0]);
+          replaceDCComponent(d_polarizationY, vx, streams[1]);
+          replaceDCComponent(d_polarizationZ, vx, streams[2]);
+          cudaDeviceSynchronize();
+          gpuErrchk(cudaPeekAtLastError());
 
 #ifdef DUMP_FILES
           CUDA_CHECK_RETURN(cudaMemcpy(polarizationX,
@@ -1238,6 +1301,13 @@ int cudaMainStreams(const UINT *voxel,
           result[0] = performFFT(d_polarizationX, plan[0]);
           result[1] = performFFT(d_polarizationY, plan[1]);
           result[2] = performFFT(d_polarizationZ, plan[2]);
+
+          // Replace DC component with average of surrounding voxels
+          replaceDCComponent(d_polarizationX, vx, streams[0]);
+          replaceDCComponent(d_polarizationY, vx, streams[1]);
+          replaceDCComponent(d_polarizationZ, vx, streams[2]);
+          cudaDeviceSynchronize();
+          gpuErrchk(cudaPeekAtLastError());
 
           performFFTShift(d_polarizationX, BlockSize, vx,streams[0]);
           performFFTShift(d_polarizationY, BlockSize, vx,streams[1]);
