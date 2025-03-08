@@ -200,6 +200,22 @@ __host__ INLINE inline cufftResult  performFFT(Complex *polarization, cufftHandl
 __host__ int performFFTShift(Complex *polarization, const UINT & blockSize, const uint3 & vx,  const cudaStream_t stream);
 
 /**
+ * @brief Replaces the DC component (index 0,0,0) with the average of surrounding voxels
+ * @param [in,out] polarization The FFT result to modify
+ * @param [in] vx Voxel dimensions in all directions
+ */
+__global__ void replaceDCComponentWithAverage(Complex *polarization, const uint3 vx);
+
+/**
+ * @brief Host wrapper for DC component replacement
+ * @param [in,out] polarization The FFT result to modify
+ * @param [in] vx Voxel dimensions in all directions
+ * @param [in] stream CUDA stream for asynchronous execution
+ * @return EXIT_SUCCESS on successful execution
+ */
+__host__ int replaceDCComponent(Complex *polarization, const uint3 &vx, const cudaStream_t stream);
+
+/**
  *
  * @param d_polarizationX device polarization X vector
  * @param d_polarizationY device polarization Y vector
