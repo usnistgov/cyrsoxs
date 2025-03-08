@@ -1,4 +1,4 @@
-# GPU enabled RSoXS simulation (1.1.7.0)
+# GPU enabled RSoXS simulation (1.1.8.0)
 
 CyRSoXS prints output in `.h5` and  `.vti` format. Both these file format can
 be easily visualized in Paraview. The output in `.h5` is stored in the directory

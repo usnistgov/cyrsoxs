@@ -1,5 +1,12 @@
 # CyRSoXS Changes History
 
+## Version 1.1.8.0
+
+* Implemented DC component replacement in FFT with local averaging
+* Added CUDA kernel to replace DC component (index [0,0,0]) with average of surrounding voxels
+* Integrated DC component replacement after FFT but before FFT shift in both workflow paths
+* Improved numerical stability in Ewald projections and reduced artifacts in scattering patterns
+
 ## Version 1.1.7.0
 
 * Changed pybind write to voxeldata to do extra copy step only when XYZ morphology is used

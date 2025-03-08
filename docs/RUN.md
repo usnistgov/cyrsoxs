@@ -1,4 +1,4 @@
-# Running CyRSoXS (1.1.7.0)
+# Running CyRSoXS (1.1.8.0)
 
 For more information on the structure of each input file, please refer to [docs/DATA.md](docs/Data.md).
 

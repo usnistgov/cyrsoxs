@@ -1,4 +1,4 @@
-# CyRSoXS Installation Instructions (1.1.7.0)
+# CyRSoXS Installation Instructions (1.1.8.0)
 
 ## Conda
 
