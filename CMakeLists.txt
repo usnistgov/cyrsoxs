@@ -4,18 +4,18 @@ cmake_policy(VERSION 3.5...3.27)
 project(CyRSoXS VERSION 1.1.7.0 DESCRIPTION BetaVersion LANGUAGES CXX HIP)
 
 
-# option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
-# option(VTI_BINARY "Write VTI in binary with 64 base encoding" ON)
-# option(DUMP_FILES "Dump files for debugging " OFF)
-# option(Profiling "Enable Profiling " OFF)
-# option(EOC "Ewald projection on CPU" OFF)
-# option(BIAXIAL "Biaxial Computation" OFF)
-# option(BUILD_DOCS "Build Documentation" OFF)
-# option(PYBIND "Pybind support for CyRSoXS" OFF)
-# option(USE_64_BIT_INDICES, "Use 64 Bit Indices" OFF)
-# option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" ON)
-# option(ENABLE_TEST, "Enable test" ON)
-# option(OUTPUT_BASE_NAME, "Output base name" "CyRSoXS")
+option(DOUBLE_PRECISION "Use 64 bit indices for floating point" OFF)
+option(VTI_BINARY "Write VTI in binary with 64 base encoding" ON)
+option(DUMP_FILES "Dump files for debugging " OFF)
+option(Profiling "Enable Profiling " OFF)
+option(EOC "Ewald projection on CPU" OFF)
+option(BIAXIAL "Biaxial Computation" OFF)
+option(BUILD_DOCS "Build Documentation" OFF)
+option(PYBIND "Pybind support for CyRSoXS" OFF)
+option(USE_64_BIT_INDICES, "Use 64 Bit Indices" OFF)
+option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" ON)
+option(ENABLE_TEST, "Enable test" ON)
+option(OUTPUT_BASE_NAME, "Output base name" "CyRSoXS")
 
 if(NOT OUTPUT_BASE_NAME)
         set(OUTPUT_BASE_NAME "CyRSoXS")
@@ -82,11 +82,11 @@ find_package(HIP REQUIRED)
 # # x peter commenting out to use new CUDA machinery in cmake >= 3.8 find_package(CUDA 9 REQUIRED)
 find_package(OpenMP REQUIRED)
 
-# if (OPENMP_FOUND)
-#     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-#     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-#     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-# endif ()
+if (OPENMP_FOUND)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif ()
 
 # # BEGIN code that was contributed by employees of the National Institute of Standards and Technology (NIST), 
 # # an agency of the Federal Government and is being made available as a public service.
@@ -131,22 +131,22 @@ set(CYRSOXS_SRC
         )
 
 set(CYRSOXS_INC
-#         # include/cudaUtils.h
-#         # include/cudaMain.h
-#         # include/cudaHeaders.h
-#         # include/Datatypes.h
-#         # include/uniaxial.h
-#         # include/Output/writeVTI.h
-#         # include/Output/cencode.h
-#         # include/Output/outputUtils.h
-#         # include/Input/InputData.h
-#         # include/Input/Input.h
-#         # include/Output/writeH5.h
-#         # include/utils.h
+        include/cudaUtils.h
+        include/cudaMain.h
+        include/cudaHeaders.h
+        include/Datatypes.h
+        include/uniaxial.h
+        include/Output/writeVTI.h
+        include/Output/cencode.h
+        include/Output/outputUtils.h
+        include/Input/InputData.h
+        include/Input/Input.h
+        include/Output/writeH5.h
+        include/utils.h
         include/Rotation.h
         include/RotationMatrix.h
         )
-
+set_source_files_properties(src/cudaMain.cu PROPERTIES LANGUAGE HIP)
 
 # # find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 include(cmake/version.cmake)
@@ -158,11 +158,12 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 
-# set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler -fopenmp -DNDEBUG --use_fast_math")
+set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -fopenmp -DNDEBUG")
 find_package(hipBLAS REQUIRED )
+find_package(rocFFT REQUIRED )
 
 # message(STATUS "HIP_LIBRARIES = ${HIP_LIBRARIES}")
-# message(STATUS "hipBLAS_FOUND = ${hipBLAS_FOUND}")
+# message(STATUS "hipBLAS_FOUND = ${hipFFT_FOUND}")
 
 
 if (PYBIND)
@@ -221,15 +222,15 @@ else ()
     add_executable(${OUTPUT_BASE_NAME} ${CYRSOXS_INC} ${CYRSOXS_SRC} ${EXE_SRC})
     # target_link_libraries(${OUTPUT_BASE_NAME} PRIVATE hip::host)
 
-    # set_target_properties(
-    #         ${OUTPUT_BASE_NAME}
-    #         PROPERTIES
-    #         HIP_SEPARABLE_COMPILATION ON
-    # 
+    set_target_properties(
+            ${OUTPUT_BASE_NAME}
+            PROPERTIES
+            HIP_SEPARABLE_COMPILATION ON)
+    
     target_include_directories(${OUTPUT_BASE_NAME} PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include)
     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(${OUTPUT_BASE_NAME}
-            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${CONFIG++_LIBRARY} roc::hipblas)# HIP::hipfft HIP::hipblas)# CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps )
+            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${CONFIG++_LIBRARY} roc::hipblas roc::rocfft)# HIP::hipfft HIP::hipblas)# CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps )
     # if (EOC)
     #     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
     #     target_link_libraries(${OUTPUT_BASE_NAME} ${OpenCV_LIBS})

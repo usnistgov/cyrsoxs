@@ -122,51 +122,51 @@ int main(int argc, char **argv) {
   if (argc > 2) {
     inputData.HDF5DirName = argv[2];
   }
-  // H5::getDimensionAndOrder(fname, (MorphologyType) inputData.morphologyType, inputData.voxelDims,inputData.physSize,
-  //                          inputData.morphologyOrder);
-  // inputData.check2D();
-  // inputData.print();
-  // if(inputData.caseType != CaseTypes::DEFAULT){
-  //   std::cout << BLU << "This is an experimental feature which is not tested. " << NRM <<"\n";
-  // }
-  // RotationMatrix matrix(&inputData);
-  // Voxel *voxelData;
-  // BigUINT voxelSize = inputData.voxelDims[0] * inputData.voxelDims[1] * inputData.voxelDims[2];
+  H5::getDimensionAndOrder(fname, (MorphologyType) inputData.morphologyType, inputData.voxelDims,inputData.physSize,
+                           inputData.morphologyOrder);
+  inputData.check2D();
+  inputData.print();
+  if(inputData.caseType != CaseTypes::DEFAULT){
+    std::cout << BLU << "This is an experimental feature which is not tested. " << NRM <<"\n";
+  }
+  RotationMatrix matrix(&inputData);
+  Voxel *voxelData;
+  BigUINT voxelSize = inputData.voxelDims[0] * inputData.voxelDims[1] * inputData.voxelDims[2];
 
-  // mallocCPUPinned(voxelData, voxelSize * NUM_MATERIAL);
-  // H5::readFile(fname, inputData.voxelDims, voxelData, static_cast<MorphologyType>(inputData.morphologyType),
-  //              inputData.morphologyOrder, NUM_MATERIAL, true);
-  // if(inputData.dumpMorphology){
-  //   H5::writeXDMF(inputData,voxelData);
-  // }
-  // if(not(checkMorphology(voxelData,inputData.voxelDims,NUM_MATERIAL))){
-  //   throw std::runtime_error("Nan detected in the morphology");
-  // }
-  // Real *projectionGPUAveraged;
-  // const UINT
-  //   numEnergyLevel = inputData.energies.size();
+  mallocCPUPinned(voxelData, voxelSize * NUM_MATERIAL);
+  H5::readFile(fname, inputData.voxelDims, voxelData, static_cast<MorphologyType>(inputData.morphologyType),
+               inputData.morphologyOrder, NUM_MATERIAL, true);
+  if(inputData.dumpMorphology){
+    H5::writeXDMF(inputData,voxelData);
+  }
+  if(not(checkMorphology(voxelData,inputData.voxelDims,NUM_MATERIAL))){
+    throw std::runtime_error("Nan detected in the morphology");
+  }
+  Real *projectionGPUAveraged;
+  const UINT
+    numEnergyLevel = inputData.energies.size();
 
-  // const std::size_t totalArraySize = static_cast<std::size_t>(numEnergyLevel) * static_cast<std::size_t>(inputData.voxelDims[0] * inputData.voxelDims[1]) *
-  //                                    inputData.kVectors.size();
-  // projectionGPUAveraged = new Real[totalArraySize];
+  const std::size_t totalArraySize = static_cast<std::size_t>(numEnergyLevel) * static_cast<std::size_t>(inputData.voxelDims[0] * inputData.voxelDims[1]) *
+                                     inputData.kVectors.size();
+  projectionGPUAveraged = new Real[totalArraySize];
 
-  // printCopyrightInfo();
-  // RotationMatrix rotationMatrix(&inputData);
-  // if (inputData.algorithmType == Algorithm::MemoryMinizing) {
-  //   cudaMainStreams(inputData.voxelDims, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
-  // } else {
-  //   cudaMain(inputData.voxelDims, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
-  // }
-  // if (inputData.writeHDF5) {
-  //   writeH5(inputData, inputData.voxelDims, projectionGPUAveraged, inputData.HDF5DirName);
-  // }
-  // if (inputData.writeVTI) {
-  //   writeVTI(inputData, inputData.voxelDims, projectionGPUAveraged, inputData.VTIDirName);
-  // }
-  // printMetaData(inputData, rotationMatrix);
-  // delete[] projectionGPUAveraged;
-  // hipFreeHost(voxelData);
-  // std::cout << "Complete. Exiting \n";
+  printCopyrightInfo();
+  RotationMatrix rotationMatrix(&inputData);
+  if (inputData.algorithmType == Algorithm::MemoryMinizing) {
+    cudaMainStreams(inputData.voxelDims, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
+  } else {
+    cudaMain(inputData.voxelDims, inputData, materialInput, projectionGPUAveraged, rotationMatrix, voxelData);
+  }
+  if (inputData.writeHDF5) {
+    writeH5(inputData, inputData.voxelDims, projectionGPUAveraged, inputData.HDF5DirName);
+  }
+  if (inputData.writeVTI) {
+    writeVTI(inputData, inputData.voxelDims, projectionGPUAveraged, inputData.VTIDirName);
+  }
+  printMetaData(inputData, rotationMatrix);
+  delete[] projectionGPUAveraged;
+  hipFreeHost(voxelData);
+  std::cout << "Complete. Exiting \n";
 
   return EXIT_SUCCESS;
 
