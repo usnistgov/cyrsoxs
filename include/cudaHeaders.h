@@ -89,20 +89,20 @@ __host__ INLINE inline void mallocCPUPinned(T *& data, const GI & size){
 
 template <typename T, typename GI>
 __host__ INLINE inline void cudaZeroEntries(T * d_data, const GI & size){
-  cudaMemset(d_data,0,sizeof(T)*size);
+  gpuErrchk(hipMemset(d_data,0,sizeof(T)*size));
 }
 
-#define freeCudaMemory(X) CUDA_CHECK_RETURN(cudaFree(X)); gpuErrchk(hipPeekAtLastError());
+#define freeCudaMemory(X) CUDA_CHECK_RETURN(hipFree(X)); gpuErrchk(hipPeekAtLastError());
 #ifdef DOUBLE_PRECISION
-#define cublasScale cublasDscal
-#define cublasAXPY cublasDaxpy
-#define warpAffine nppiWarpAffine_64f_C1R
-#define cufftC2C cufftExecZ2Z
+#define cublasScale hiplasDscal
+#define cublasAXPY hiplasDaxpy
+#define warpAffine rppiWarpAffine_64f_C1R
+#define cufftC2C hipfftExecZ2Z
 #else
-#define cublasScale cublasSscal
-#define cublasAXPY cublasSaxpy
-#define warpAffine nppiWarpAffine_32f_C1R
-#define cufftC2C cufftExecC2C
+#define cublasScale hipblasSscal
+#define cublasAXPY hipblasSaxpy
+#define warpAffine rppiWarpAffine_32f_C1R
+#define cufftC2C hipfftExecC2C
 #endif
 
 #endif //CUDA_BASE_CUDAHEADERS_H

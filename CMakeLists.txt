@@ -123,8 +123,8 @@ find_package(HDF5 COMPONENTS C CXX HL REQUIRED)
 
 
 
-set(CMAKE_CUDA_STANDARD 14) # pab added
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CUDA_STANDARD 17) # pab added
+set(CMAKE_CXX_STANDARD 17)
 set(CYRSOXS_SRC
         src/RotationMatrix.cpp
         src/cudaMain.cu
@@ -160,11 +160,11 @@ endif ()
 
 set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -fopenmp -DNDEBUG")
 find_package(hipBLAS REQUIRED )
-find_package(rocFFT REQUIRED )
+find_package(hipFFT REQUIRED )
+# find_package(miopen REQUIRED )
 
 # message(STATUS "HIP_LIBRARIES = ${HIP_LIBRARIES}")
 # message(STATUS "hipBLAS_FOUND = ${hipFFT_FOUND}")
-
 
 if (PYBIND)
     if (MAX_NUM_MATERIAL)
@@ -222,15 +222,17 @@ else ()
     add_executable(${OUTPUT_BASE_NAME} ${CYRSOXS_INC} ${CYRSOXS_SRC} ${EXE_SRC})
     # target_link_libraries(${OUTPUT_BASE_NAME} PRIVATE hip::host)
 
-    set_target_properties(
-            ${OUTPUT_BASE_NAME}
-            PROPERTIES
-            HIP_SEPARABLE_COMPILATION ON)
+    # set_target_properties(
+    #         ${OUTPUT_BASE_NAME}
+    #         PROPERTIES
+    #         HIP_SEPARABLE_COMPILATION ON)
+    # target_include_directories( PUBLIC <dir>
+
     
-    target_include_directories(${OUTPUT_BASE_NAME} PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include)
+    target_include_directories(${OUTPUT_BASE_NAME} PUBLIC  ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include "/home/ksaurabh/softwares/rpp/include/")
     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(${OUTPUT_BASE_NAME}
-            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${CONFIG++_LIBRARY} roc::hipblas roc::rocfft)# HIP::hipfft HIP::hipblas)# CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps )
+            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} ${CONFIG++_LIBRARY} roc::hipblas hip::hipfft rpp )# HIP::hipfft HIP::hipblas)# CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps )
     # if (EOC)
     #     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
     #     target_link_libraries(${OUTPUT_BASE_NAME} ${OpenCV_LIBS})
