@@ -165,7 +165,7 @@ int main(int argc, char **argv) {
   }
   printMetaData(inputData, rotationMatrix);
   delete[] projectionGPUAveraged;
-  gpuErrchk(hipFreeHost(voxelData));
+  gpuErrchk(hipHostFree(voxelData));
   std::cout << "Complete. Exiting \n";
 
   return EXIT_SUCCESS;

@@ -121,7 +121,9 @@ endif ()
 
 find_package(HDF5 COMPONENTS C CXX HL REQUIRED)
 
-
+add_definitions(-DGPU_SUPPORT)
+set(RPP_BACKEND_HIP 1)
+add_definitions(-DRPP_BACKEND_HIP=${RPP_BACKEND_HIP})
 
 set(CMAKE_CUDA_STANDARD 17) # pab added
 set(CMAKE_CXX_STANDARD 17)
@@ -161,10 +163,7 @@ endif ()
 set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -fopenmp -DNDEBUG")
 find_package(hipBLAS REQUIRED )
 find_package(hipFFT REQUIRED )
-# find_package(miopen REQUIRED )
 
-# message(STATUS "HIP_LIBRARIES = ${HIP_LIBRARIES}")
-# message(STATUS "hipBLAS_FOUND = ${hipFFT_FOUND}")
 
 if (PYBIND)
     if (MAX_NUM_MATERIAL)
