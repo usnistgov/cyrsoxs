@@ -56,7 +56,7 @@
  * @param [in] NUM_MATERIAL number of material
  */
 template<ReferenceFrame referenceFrame>
-__device__ void computePolarizationEulerAngles(const Material *material,
+__device__ void __forceinline__  computePolarizationEulerAngles(const Material *material,
                                             const Voxel *voxelInput, const BigUINT threadID,
                                             Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
                                             const BigUINT & numVoxels, const Matrix & rotationMatrix, int NUM_MATERIAL) {
@@ -90,7 +90,7 @@ __device__ void computePolarizationEulerAngles(const Material *material,
     const Real   phi_ui = Vfrac - phi_a;
 
     const Real  & phi =  Vfrac;
-
+    
     nsum.x = npar.x + 2 * nper.x;
     nsum.y = npar.y + 2 * nper.y;
 
@@ -105,7 +105,8 @@ __device__ void computePolarizationEulerAngles(const Material *material,
 
     pX.x += rotatedNr.x*matVec.x;
     pX.y += rotatedNr.y*matVec.x;
-
+    // if(threadIdx.x > 1024)
+    {
     // (1)
     rotatedNr.x = phi_a*(npar.x - nper.x)*sx*sy;
     rotatedNr.y = phi_a*(npar.y - nper.y)*sx*sy;
@@ -149,6 +150,7 @@ __device__ void computePolarizationEulerAngles(const Material *material,
 
     pZ.x += rotatedNr.x*matVec.z;
     pZ.y += rotatedNr.y*matVec.z;
+    }
 
   }
 
@@ -182,7 +184,7 @@ __device__ void computePolarizationEulerAngles(const Material *material,
  */
 
 template<ReferenceFrame referenceFrame>
-__device__ void computePolarizationVectorMorphologyOptimized(const Material *material,
+__device__ void __forceinline__ computePolarizationVectorMorphologyOptimized(const Material *material,
                                                     const Voxel *voxelInput, const BigUINT & threadID,
                                                     Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
                                                     const BigUINT & numVoxels, const Matrix & rotationMatrix, int NUM_MATERIAL) {

@@ -150,6 +150,7 @@ set(CYRSOXS_INC
         )
 set_source_files_properties(src/cudaMain.cu PROPERTIES LANGUAGE HIP)
 
+
 # # find_library(CUDART_LIBRARY cudart ${CMAKE_CUDA_IMPLICIT_LINK_DIRECTORIES})
 include(cmake/version.cmake)
 generate_version_h()
@@ -160,7 +161,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 
-set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS} -fopenmp -DNDEBUG")
+set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS}   --save-temps  -fopenmp -DNDEBUG --offload-arch=gfx90a  -Rpass-analysis=kernel-resource-usage -ffast-math")
 find_package(hipBLAS REQUIRED )
 find_package(hipFFT REQUIRED )
 

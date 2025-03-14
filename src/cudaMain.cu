@@ -134,6 +134,7 @@ __host__ int peformEwaldProjectionGPU(Real *d_projection,
 }
 
 template <ReferenceFrame referenceFrame>
+__launch_bounds__(NUM_THREADS)
 __global__ void computePolarization(const Material *d_materialConstants,
                                     const Voxel *voxelInput,
                                     const uint3 voxel,
@@ -147,6 +148,7 @@ __global__ void computePolarization(const Material *d_materialConstants,
                                     const BigUINT numVoxels, const int DEVICE_NUM_MATERIAL)
 {
   BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
+
   if (threadID > numVoxels)
   {
     return;
@@ -293,7 +295,6 @@ int cudaMain(const UINT *voxel,
   }
 
   const BigUINT numVoxels = voxel[0] * voxel[1] * voxel[2]; /// Voxel size
-  std::cout << numVoxels << "\n";
   const UINT numVoxel2D = voxel[0] * voxel[1];
   const uint3 vx{voxel[0], voxel[1], voxel[2]};
   const UINT
