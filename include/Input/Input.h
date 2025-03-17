@@ -83,7 +83,7 @@ struct Voxel
   /**
    * @brief Constructor
    */
-  __host__ __device__ Voxel() : s1{0.0, 0.0, 0.0, 0.0}
+  __host__ __device__ Voxel()
   {
   }
   /**

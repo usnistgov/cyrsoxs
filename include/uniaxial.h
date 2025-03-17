@@ -75,10 +75,24 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
   Real3 matVec;
   doMatVec<false>(rotationMatrix,eleField,matVec);
   Complex nsum;
+  // __shared__ Voxel s_temp[NUM_MATERIAL];
+  // {
+  //   Voxel temp[NUM_MATERIAL];
+
+  //   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++){
+  //    temp[numMaterial] = voxelInput[numVoxels * numMaterial + threadID];
+  //   }
+  //   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++){
+  //     s_temp[numMaterial] = temp[numMaterial];
+  //   }
+
+  // }
+
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
     Complex npar = material[numMaterial].npara;
     Complex nper = material[numMaterial].nperp;
-    Voxel matProp = voxelInput[numVoxels * numMaterial + threadID];
+    Voxel  matProp = voxelInput[numVoxels * numMaterial + threadID];
+    // Voxel  matProp = s_temp[numMaterial];
     
     const Real & psiAngle      = matProp.getValueAt<Voxel::EULER_ANGLE::PSI>();
     const Real & thetaAngle    = matProp.getValueAt<Voxel::EULER_ANGLE::THETA>();
@@ -86,13 +100,13 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
     const Real & phi_a         = Vfrac*matProp.getValueAt<Voxel::EULER_ANGLE::S>();
     Real sinThetha, cosThetha,sinPsi,cosPsi;
     
-    __sincosf(thetaAngle,&sinThetha,&cosThetha);
-    __sincosf(psiAngle,&sinPsi,&cosPsi);
+    // sincosf(thetaAngle,&sinThetha,&cosThetha);
+    // sincosf(psiAngle,&sinPsi,&cosPsi);
 
-    // sinThetha =  __sinf(thetaAngle);
-    // cosThetha = sqrtf(CONST_ONE-(sinThetha*sinThetha)); //sqrtf(CONST_ONE-(sinThetha*sinThetha));// __cosf(thetaAngle);
-    // sinPsi = 0.1f;//__sinf(psiAngle);
-    // cosPsi = sqrtf(CONST_ONE-(sinPsi*sinPsi)); // __cosf(psiAngle);//sqrtf(CONST_ONE-(sinPsi*sinPsi));
+    sinThetha =  __sinf(thetaAngle);
+    cosThetha =  __cosf(thetaAngle);
+    sinPsi = __sinf(psiAngle);
+    cosPsi = __cosf(psiAngle);
 
     const Real sx = cosPsi*sinThetha;
     const Real sy = sinPsi*sinThetha;

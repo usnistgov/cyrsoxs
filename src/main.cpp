@@ -115,15 +115,22 @@ int main(int argc, char **argv) {
 
   std::vector<Material> materialInput;
   InputData inputData;
-  inputData.NUM_MATERIAL = H5::getNumberOfMaterial(fname);
+  inputData.NUM_MATERIAL = 3; // H5::getNumberOfMaterial(fname);
   inputData.readRefractiveIndexData(materialInput);
   inputData.validate();
   const int & NUM_MATERIAL = inputData.NUM_MATERIAL;
   if (argc > 2) {
     inputData.HDF5DirName = argv[2];
   }
-  H5::getDimensionAndOrder(fname, (MorphologyType) inputData.morphologyType, inputData.voxelDims,inputData.physSize,
-                           inputData.morphologyOrder);
+  inputData.morphologyType = MorphologyType::EULER_ANGLES;
+  inputData.voxelDims[0] = 512;
+  inputData.voxelDims[1] = 512;
+  inputData.voxelDims[2] = 512;
+  inputData.physSize = 2.5;
+  inputData.morphologyOrder = MorphologyOrder::ZYX;
+  // H5::getDimensionAndOrder(fname, (MorphologyType) inputData.morphologyType, inputData.voxelDims,inputData.physSize,
+  //                          inputData.morphologyOrder);
+  std::cout << "Inside \n";
   inputData.check2D();
   inputData.print();
   if(inputData.caseType != CaseTypes::DEFAULT){
@@ -133,9 +140,10 @@ int main(int argc, char **argv) {
   Voxel *voxelData;
   BigUINT voxelSize = inputData.voxelDims[0] * inputData.voxelDims[1] * inputData.voxelDims[2];
 
-  mallocCPUPinned(voxelData, voxelSize * NUM_MATERIAL);
-  H5::readFile(fname, inputData.voxelDims, voxelData, static_cast<MorphologyType>(inputData.morphologyType),
-               inputData.morphologyOrder, NUM_MATERIAL, true);
+  mallocCPU(voxelData, voxelSize * NUM_MATERIAL);
+  
+  // H5::readFile(fname, inputData.voxelDims, voxelData, static_cast<MorphologyType>(inputData.morphologyType),
+  //              inputData.morphologyOrder, NUM_MATERIAL, true);
   if(inputData.dumpMorphology){
     H5::writeXDMF(inputData,voxelData);
   }
@@ -165,7 +173,8 @@ int main(int argc, char **argv) {
   }
   printMetaData(inputData, rotationMatrix);
   delete[] projectionGPUAveraged;
-  gpuErrchk(hipHostFree(voxelData));
+  delete[] voxelData;
+  // gpuErrchk(delete(voxelData));
   std::cout << "Complete. Exiting \n";
 
   return EXIT_SUCCESS;
