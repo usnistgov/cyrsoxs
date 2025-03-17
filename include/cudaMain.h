@@ -112,7 +112,7 @@ int warmup();
  * @param [in] DEVICE_NUM_MATERIAL Number of material on Device.
  */
 
-template<ReferenceFrame referenceFrame>
+template<ReferenceFrame referenceFrame, MorphologyType morphologyType>
 __global__ void computePolarization(const Material * d_materialConstants,
                                     const Voxel *voxelInput,
                                     const uint3 voxel,
@@ -121,7 +121,6 @@ __global__ void computePolarization(const Material * d_materialConstants,
                                     Complex *polarizationZ,
                                     FFT::FFTWindowing windowing,
                                     const bool enable2D,
-                                    const MorphologyType morphologyType,
                                     const Matrix rotationMatrix,
                                     const BigUINT numVoxels, const int DEVICE_NUM_MATERIAL
 );

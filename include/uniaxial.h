@@ -55,15 +55,16 @@
  * @param [in] rotationMatrix rotation matrix for given k/E
  * @param [in] NUM_MATERIAL number of material
  */
-template<ReferenceFrame referenceFrame>
+template<ReferenceFrame referenceFrame, int NUM_MATERIAL>
 __device__ void __forceinline__  computePolarizationEulerAngles(const Material *material,
                                             const Voxel *voxelInput, const BigUINT threadID,
                                             Complex *polarizationX, Complex *polarizationY, Complex *polarizationZ,
-                                            const BigUINT & numVoxels, const Matrix & rotationMatrix, int NUM_MATERIAL) {
+                                            const BigUINT & numVoxels, const Matrix & rotationMatrix) {
 
   Complex pX{0.0,0.0}, pY{0.0,0.0}, pZ{0.0,0.0};
 
-  static constexpr Real OneBy4Pi = static_cast<Real> (1.0 / (4.0 * M_PI));
+  static constexpr __device__  Real OneBy4Pi = static_cast<Real> (CONST_ONE/ (CONST_FOUR * M_PI));
+  static constexpr __device__ Real OneBy9 = static_cast<Real> (CONST_ONE/ (CONST_NINE));
   /**
  * [0 1 2]
  * [1 3 4]
@@ -77,22 +78,34 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
     Complex npar = material[numMaterial].npara;
     Complex nper = material[numMaterial].nperp;
-    const Voxel matProp = voxelInput[numVoxels * numMaterial + threadID];
+    Voxel matProp = voxelInput[numVoxels * numMaterial + threadID];
+    
+    const Real & psiAngle      = matProp.getValueAt<Voxel::EULER_ANGLE::PSI>();
+    const Real & thetaAngle    = matProp.getValueAt<Voxel::EULER_ANGLE::THETA>();
+    const Real & Vfrac         = matProp.getValueAt<Voxel::EULER_ANGLE::VFRAC>();
+    const Real & phi_a         = Vfrac*matProp.getValueAt<Voxel::EULER_ANGLE::S>();
+    Real sinThetha, cosThetha,sinPsi,cosPsi;
+    
+    __sincosf(thetaAngle,&sinThetha,&cosThetha);
+    __sincosf(psiAngle,&sinPsi,&cosPsi);
 
-    const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
-    const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
-    const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
-    const Real & phi_a         = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S);
+    // sinThetha =  __sinf(thetaAngle);
+    // cosThetha = sqrtf(CONST_ONE-(sinThetha*sinThetha)); //sqrtf(CONST_ONE-(sinThetha*sinThetha));// __cosf(thetaAngle);
+    // sinPsi = 0.1f;//__sinf(psiAngle);
+    // cosPsi = sqrtf(CONST_ONE-(sinPsi*sinPsi)); // __cosf(psiAngle);//sqrtf(CONST_ONE-(sinPsi*sinPsi));
 
-    const Real   sx     =  cos(psiAngle)*sin(thetaAngle);
-    const Real   sy     =  sin(psiAngle)*sin(thetaAngle);
-    const Real   sz     =  cos(thetaAngle);
+    const Real sx = cosPsi*sinThetha;
+    const Real sy = sinPsi*sinThetha;
+    const Real sz = cosThetha;
+    // const Real   sx     =   cosf(psiAngle)*sinf(thetaAngle);
+    // const Real   sy     =   sinf(psiAngle)*sinf(thetaAngle);
+    // const Real   sz     =   cosf(thetaAngle);
     const Real   phi_ui = Vfrac - phi_a;
 
     const Real  & phi =  Vfrac;
     
-    nsum.x = npar.x + 2 * nper.x;
-    nsum.y = npar.y + 2 * nper.y;
+    nsum.x = npar.x + CONST_TWO * nper.x;
+    nsum.y = npar.y + CONST_TWO * nper.y;
 
     computeComplexSquare(nsum);
     computeComplexSquare(npar);
@@ -100,14 +113,14 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
 
     // S = fraction of aligned components
     // (0)
-    rotatedNr.x = phi_a*(npar.x*sx*sx + nper.x*(sy*sy + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr.y = phi_a*(npar.y*sx*sx + nper.y*(sy*sy + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr.x = phi_a*(npar.x*sx*sx + nper.x*(sy*sy + sz*sz)) + ((phi_ui * nsum.x) * OneBy9) - phi;
+    rotatedNr.y = phi_a*(npar.y*sx*sx + nper.y*(sy*sy + sz*sz)) + ((phi_ui * nsum.y) * OneBy9);
 
     pX.x += rotatedNr.x*matVec.x;
     pX.y += rotatedNr.y*matVec.x;
-    // if(threadIdx.x > 1024)
-    {
-    // (1)
+    // // if(threadIdx.x > 100)
+    // {
+    // // (1)
     rotatedNr.x = phi_a*(npar.x - nper.x)*sx*sy;
     rotatedNr.y = phi_a*(npar.y - nper.y)*sx*sy;
 
@@ -117,7 +130,7 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
     pY.x += rotatedNr.x*matVec.x;
     pY.y += rotatedNr.y*matVec.x;
 
-    // (2)
+    // // (2)
     rotatedNr.x = phi_a*(npar.x - nper.x)*sx*sz;
     rotatedNr.y = phi_a*(npar.y - nper.y)*sx*sz;
 
@@ -127,9 +140,9 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
     pZ.x += rotatedNr.x*matVec.x;
     pZ.y += rotatedNr.y*matVec.x;
 
-    // (3)
-    rotatedNr.x = phi_a*(npar.x*sy*sy + nper.x*(sx*sx + sz*sz)) + ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr.y = phi_a*(npar.y*sy*sy + nper.y*(sx*sx + sz*sz)) + ((phi_ui * nsum.y) / (Real) 9.0);
+    // // (3)
+    rotatedNr.x = phi_a*(npar.x*sy*sy + nper.x*(sx*sx + sz*sz)) + ((phi_ui * nsum.x) * OneBy9) - phi;
+    rotatedNr.y = phi_a*(npar.y*sy*sy + nper.y*(sx*sx + sz*sz)) + ((phi_ui * nsum.y) * OneBy9);
 
     pY.x += rotatedNr.x*matVec.y;
     pY.y += rotatedNr.y*matVec.y;
@@ -145,12 +158,12 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
     pZ.y += rotatedNr.y*matVec.y;
 
     // (5)
-    rotatedNr.x = phi_a*(npar.x*sz*sz + nper.x*(sx*sx + sy*sy)) +  ((phi_ui * nsum.x) / (Real) 9.0) - phi;
-    rotatedNr.y = phi_a*(npar.y*sz*sz + nper.y*(sx*sx + sy*sy)) +  ((phi_ui * nsum.y) / (Real) 9.0);
+    rotatedNr.x = phi_a*(npar.x*sz*sz + nper.x*(sx*sx + sy*sy)) +  ((phi_ui * nsum.x) * OneBy9) - phi;
+    rotatedNr.y = phi_a*(npar.y*sz*sz + nper.y*(sx*sx + sy*sy)) +  ((phi_ui * nsum.y) * OneBy9);
 
     pZ.x += rotatedNr.x*matVec.z;
     pZ.y += rotatedNr.y*matVec.z;
-    }
+    // }
 
   }
 
@@ -385,10 +398,10 @@ __global__ void computeNtEulerAngles(const Material  * materialConstants,
   Complex npar = materialConstants[materialID].npara;
   Complex nper = materialConstants[materialID].nperp;
   const Voxel matProp = voxelInput[offset + threadID];
-  const Real & psiAngle      = matProp.getValueAt(Voxel::EULER_ANGLE::PSI);
-  const Real & thetaAngle    = matProp.getValueAt(Voxel::EULER_ANGLE::THETA);
-  const Real & Vfrac         = matProp.getValueAt(Voxel::EULER_ANGLE::VFRAC);
-  const Real & phi_a             = Vfrac*matProp.getValueAt(Voxel::EULER_ANGLE::S); //  S = fraction of voxel with aligned component
+  const Real & psiAngle      = matProp.getValueAt<Voxel::EULER_ANGLE::PSI>();
+  const Real & thetaAngle    = matProp.getValueAt<Voxel::EULER_ANGLE::THETA>();
+  const Real & Vfrac         = matProp.getValueAt<Voxel::EULER_ANGLE::VFRAC>();
+  const Real & phi_a             = Vfrac*matProp.getValueAt<Voxel::EULER_ANGLE::S>(); //  S = fraction of voxel with aligned component
 
   const Real   sx     =  cos(psiAngle)*sin(thetaAngle);
   const Real   sy     =  sin(psiAngle)*sin(thetaAngle);

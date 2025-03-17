@@ -133,19 +133,20 @@ __host__ int peformEwaldProjectionGPU(Real *d_projection,
   return EXIT_SUCCESS;
 }
 
-template <ReferenceFrame referenceFrame>
-__launch_bounds__(NUM_THREADS)
-__global__ void computePolarization(const Material *d_materialConstants,
-                                    const Voxel *voxelInput,
-                                    const uint3 voxel,
-                                    Complex *polarizationX,
-                                    Complex *polarizationY,
-                                    Complex *polarizationZ,
-                                    FFT::FFTWindowing windowing,
-                                    const bool enable2D,
-                                    const MorphologyType morphologyType,
-                                    const Matrix rotationMatrix,
-                                    const BigUINT numVoxels, const int DEVICE_NUM_MATERIAL)
+template <ReferenceFrame referenceFrame, MorphologyType morphologyType, int NUM_MATERIAL>
+    __global__ void 
+    __launch_bounds__(NUM_THREADS, NUM_BLOCKS)
+    computePolarization(const Material *d_materialConstants,
+                                        const Voxel *voxelInput,
+                                        const uint3 voxel,
+                                        Complex *polarizationX,
+                                        Complex *polarizationY,
+                                        Complex *polarizationZ,
+                                        FFT::FFTWindowing windowing,
+                                        const bool enable2D,
+                                        const Matrix rotationMatrix,
+                                        const BigUINT numVoxels, 
+                                        int DEVICE_MATERIAL)
 {
   BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
 
@@ -154,42 +155,44 @@ __global__ void computePolarization(const Material *d_materialConstants,
     return;
   }
 #ifndef BIAXIAL
-  if (morphologyType == MorphologyType::VECTOR_MORPHOLOGY)
+  if constexpr (morphologyType == MorphologyType::VECTOR_MORPHOLOGY)
   {
     computePolarizationVectorMorphologyOptimized<referenceFrame>(d_materialConstants, voxelInput, threadID, polarizationX,
                                                                  polarizationY,
-                                                                 polarizationZ, numVoxels, rotationMatrix, DEVICE_NUM_MATERIAL);
+                                                                 polarizationZ, numVoxels, rotationMatrix, NUM_MATERIAL);
   }
   else
   {
-    computePolarizationEulerAngles<referenceFrame>(d_materialConstants, voxelInput, threadID, polarizationX, polarizationY,
-                                                   polarizationZ, numVoxels, rotationMatrix, DEVICE_NUM_MATERIAL);
+    
+    computePolarizationEulerAngles<referenceFrame,NUM_MATERIAL>(d_materialConstants, voxelInput, threadID, polarizationX, polarizationY,
+                                                   polarizationZ, numVoxels, rotationMatrix);
   }
 #else
   printf("Kernel not supported\n");
 #endif
 
-  if (windowing == FFT::FFTWindowing::HANNING)
-  {
-    UINT Z = static_cast<UINT>(threadID / (voxel.y * voxel.x * 1.0));
-    UINT Y = static_cast<UINT>((threadID - Z * voxel.y * voxel.x) / (voxel.x * 1.0));
-    UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
-    Real3 hanningWeight;
-    hanningWeight.x = static_cast<Real>(0.5 * (1 - cos(2 * M_PI * X / (voxel.x))));
-    hanningWeight.y = static_cast<Real>(0.5 * (1 - cos(2 * M_PI * Y / (voxel.y))));
-    hanningWeight.z = static_cast<Real>(1.0);
-    if (not(enable2D))
-    {
-      hanningWeight.z = static_cast<Real>(0.5 * (1 - cos(2 * M_PI * Z / (voxel.z))));
-    }
-    Real totalHanningWeight = hanningWeight.x * hanningWeight.y * hanningWeight.z;
-    polarizationX[threadID].x *= totalHanningWeight;
-    polarizationX[threadID].y *= totalHanningWeight;
-    polarizationY[threadID].x *= totalHanningWeight;
-    polarizationY[threadID].y *= totalHanningWeight;
-    polarizationZ[threadID].x *= totalHanningWeight;
-    polarizationZ[threadID].y *= totalHanningWeight;
-  }
+  // if (windowing == FFT::FFTWindowing::HANNING)
+  // {
+  //   UINT Z = static_cast<UINT>(threadID / (voxel.y * voxel.x * 1.0));
+  //   UINT Y = static_cast<UINT>((threadID - Z * voxel.y * voxel.x) / (voxel.x * 1.0));
+  //   UINT X = static_cast<UINT>(threadID - Y * voxel.x - Z * voxel.y * voxel.x);
+  //   Real3 hanningWeight;
+  //   #define M_PIF 3.141592653589793238462643383279502884e+00F
+  //   hanningWeight.x = static_cast<Real>(0.5f * (1 - __cosf(2 * M_PIF * X / (voxel.x))));
+  //   hanningWeight.y = static_cast<Real>(0.5f * (1 - __cosf(2 * M_PIF * Y / (voxel.y))));
+  //   hanningWeight.z = static_cast<Real>(1.0);
+  //   if (not(enable2D))
+  //   {
+  //     hanningWeight.z = static_cast<Real>(0.5f * (1 - __cosf(2 * M_PIF * Z / (voxel.z))));
+  //   }
+  //   Real totalHanningWeight = hanningWeight.x * hanningWeight.y * hanningWeight.z;
+  //   polarizationX[threadID].x *= totalHanningWeight;
+  //   polarizationX[threadID].y *= totalHanningWeight;
+  //   polarizationY[threadID].x *= totalHanningWeight;
+  //   polarizationY[threadID].y *= totalHanningWeight;
+  //   polarizationZ[threadID].x *= totalHanningWeight;
+  //   polarizationZ[threadID].y *= totalHanningWeight;
+  // }
 }
 
 __host__ int computePolarization(const Material *d_materialConstants,
@@ -206,23 +209,46 @@ __host__ int computePolarization(const Material *d_materialConstants,
                                  const Matrix &rotationMatrix,
                                  const BigUINT &numVoxels, const int NUM_MATERIAL)
 {
+  #define args d_materialConstants, d_voxelInput, vx, d_polarizationX,d_polarizationY, d_polarizationZ, windowing, enable2D,rotationMatrix, numVoxels, NUM_MATERIAL
+
   if (referenceFrame == ReferenceFrame::MATERIAL)
   {
-    computePolarization<ReferenceFrame::MATERIAL><<<blockSize, NUM_THREADS>>>(d_materialConstants, d_voxelInput,
-                                                                              vx, d_polarizationX,
-                                                                              d_polarizationY, d_polarizationZ,
-                                                                              windowing,
-                                                                              enable2D,
-                                                                              morphologyType, rotationMatrix, numVoxels, NUM_MATERIAL);
+    if (morphologyType == VECTOR_MORPHOLOGY)                                                                                         
+    {
+          if (NUM_MATERIAL == 1) computePolarization<ReferenceFrame::MATERIAL, VECTOR_MORPHOLOGY, 1><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 2) computePolarization<ReferenceFrame::MATERIAL, VECTOR_MORPHOLOGY, 2><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 3) computePolarization<ReferenceFrame::MATERIAL, VECTOR_MORPHOLOGY, 3><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 4) computePolarization<ReferenceFrame::MATERIAL, VECTOR_MORPHOLOGY, 4><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 5) computePolarization<ReferenceFrame::MATERIAL, VECTOR_MORPHOLOGY, 5><<<blockSize, NUM_THREADS>>>(args);
+      
+    }
+    else
+    {
+          if (NUM_MATERIAL == 1) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 1><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 2) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 2><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 3) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 3><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 4) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 4><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 5) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 5><<<blockSize, NUM_THREADS>>>(args);
+    }
   }
   else
   {
-    computePolarization<ReferenceFrame::LAB><<<blockSize, NUM_THREADS>>>(d_materialConstants, d_voxelInput,
-                                                                         vx, d_polarizationX,
-                                                                         d_polarizationY, d_polarizationZ,
-                                                                         windowing,
-                                                                         enable2D,
-                                                                         morphologyType, rotationMatrix, numVoxels, NUM_MATERIAL);
+    if (morphologyType == VECTOR_MORPHOLOGY)
+    {
+          if (NUM_MATERIAL == 1) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 1><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 2) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 2><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 3) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 3><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 4) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 4><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 5) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 5><<<blockSize, NUM_THREADS>>>(args);
+    }
+    else
+    {
+          if (NUM_MATERIAL == 1) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 1><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 2) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 2><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 3) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 3><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 4) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 4><<<blockSize, NUM_THREADS>>>(args);
+    else  if (NUM_MATERIAL == 5) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 5><<<blockSize, NUM_THREADS>>>(args);
+    }
   }
   gpuErrchk(hipDeviceSynchronize());
   gpuErrchk(hipPeekAtLastError());
@@ -490,7 +516,7 @@ int cudaMain(const UINT *voxel,
     imageDesc.strides.wStride = 1;
     RpptDesc *d_imageDesc = nullptr;
     mallocGPU(d_imageDesc, 1);
-    hostDeviceExchange(d_imageDesc,&imageDesc,1,hipMemcpyHostToDevice);
+    hostDeviceExchange(d_imageDesc, &imageDesc, 1, hipMemcpyHostToDevice);
 
     RpptRoiType roiType = RpptRoiType::XYWH;
 
@@ -501,7 +527,7 @@ int cudaMain(const UINT *voxel,
     roiTensorPtrSrc.xywhROI.roiHeight = voxel[0];
     RpptROI *d_roiTensorPtrSrc = nullptr;
     mallocGPU(d_roiTensorPtrSrc, 1);
-    hostDeviceExchange(d_roiTensorPtrSrc,&roiTensorPtrSrc,1,hipMemcpyHostToDevice);
+    hostDeviceExchange(d_roiTensorPtrSrc, &roiTensorPtrSrc, 1, hipMemcpyHostToDevice);
 #endif
 
 #ifdef PROFILING

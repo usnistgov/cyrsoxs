@@ -48,7 +48,7 @@ typedef float2 Complex;
 #define CONST_ONE Real(1.0)
 #define CONST_TWO Real(2.0)
 #define CONST_FOUR Real(4.0)
-
+#define CONST_NINE Real(9.0)
 
 
 #ifdef USE_64_BIT_INDICES
@@ -58,7 +58,8 @@ typedef uint32_t BigUINT;
 #endif
 typedef uint32_t UINT;
 
-#define NUM_THREADS 256
+#define NUM_THREADS 128
+#define NUM_BLOCKS 8
 
 
 

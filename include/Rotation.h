@@ -368,7 +368,7 @@ __host__ __device__ static void doMatVec(const Matrix & matrix, const Real3 & ve
  * @param [in,out] vecZ rotated vector
  */
 template <bool transpose>
-__host__ __device__ static void rotate(const Matrix & rotationMatrix,  Complex & vecX, Complex & vecY, Complex & vecZ){
+__host__ __device__ __forceinline__ static void rotate(const Matrix & rotationMatrix,  Complex & vecX, Complex & vecY, Complex & vecZ){
   Complex tempX, tempY, tempZ;
   if(transpose) {
     tempX.x = rotationMatrix.template getValue<0,0>() * vecX.x + rotationMatrix.template getValue<1,0>() * vecY.x + rotationMatrix.template getValue<2,0>() * vecZ.x;

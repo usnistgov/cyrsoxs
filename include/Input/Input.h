@@ -1,25 +1,25 @@
 /////////////////////////////////////////////////////////////////////////////////
 // MIT License
 //
-//Copyright (c) 2019 - 2022 Iowa State University
+// Copyright (c) 2019 - 2022 Iowa State University
 //
-//Permission is hereby granted, free of charge, to any person obtaining a copy
-//of this software and associated documentation files (the "Software"), to deal
-//in the Software without restriction, including without limitation the rights
-//to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-//copies of the Software, and to permit persons to whom the Software is
-//furnished to do so, subject to the following conditions:
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 //
-//The above copyright notice and this permission notice shall be included in all
-//copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 //
-//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-//AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-//OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-//SOFTWARE.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 //////////////////////////////////////////////////////////////////////////////////
 
 #ifndef CUDA_BASE_INPUT_H
@@ -32,7 +32,8 @@
 
 #ifndef BIAXIAL
 /// Stores the material refractive index data
-struct Material {
+struct Material
+{
 
   /** Parallel component of Refractive index **/
   Complex npara;
@@ -43,9 +44,10 @@ struct Material {
   /**
    * @brief Constructor
    */
-  Material(){
-      std::memset (&npara, 0, sizeof (Complex));
-      std::memset (&nperp, 0, sizeof (Complex));
+  Material()
+  {
+    std::memset(&npara, 0, sizeof(Complex));
+    std::memset(&nperp, 0, sizeof(Complex));
   }
 };
 
@@ -56,9 +58,11 @@ struct Material {
  * @tparam num_component number of component
  */
 
-struct Voxel {
+struct Voxel
+{
 
-  enum EULER_ANGLE:int{
+  enum EULER_ANGLE : int
+  {
     S = 0,
     THETA = 1,
     PSI = 2,
@@ -79,18 +83,33 @@ struct Voxel {
   /**
    * @brief Constructor
    */
-  Voxel():
-  s1{0.0,0.0,0.0,0.0}{
+  __host__ __device__ Voxel() : s1{0.0, 0.0, 0.0, 0.0}
+  {
   }
   /**
    * @brief Getter
    * @param [in] id 0-3 depending to s.x,s.y,s.z or s.w
    * @return values at given id
    */
-  Real  __host__ __device__ getValueAt(const int id) const{
-    const Real val[4]{s1.x,s1.y,s1.z,s1.w};
+  template <int id>
+  Real __host__ __device__ __forceinline__ getValueAt() const
+  {
+    // const Real val[4]{s1.x,s1.y,s1.z,s1.w};
+    if constexpr (id == 0)
+      return s1.x;
+    else if constexpr (id == 1)
+      return s1.y;
+    else if constexpr (id == 2)
+      return s1.z;
+    else if constexpr (id == 3)
+      return s1.w;
+  }
+
+  Real __host__ __forceinline__ getValueAt(int id) const
+  {
+    const Real val[4]{s1.x, s1.y, s1.z, s1.w};
     return val[id];
   }
 };
 
-#endif //CUDA_BASE_INPUT_H
+#endif // CUDA_BASE_INPUT_H
