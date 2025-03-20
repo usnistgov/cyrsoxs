@@ -161,7 +161,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif ()
 
 
-set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS}  -fopenmp -O3 --save-temps -g --offload-arch=gfx90a  -Rpass-analysis=kernel-resource-usage -ffast-math")
+set(CMAKE_HIP_FLAGS "${CMAKE_HIP_FLAGS}  -fopenmp -O3 --save-temps -g --offload-arch=gfx942  -Rpass-analysis=kernel-resource-usage -ffast-math")
 find_package(hipBLAS REQUIRED )
 find_package(hipFFT REQUIRED )
 

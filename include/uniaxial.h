@@ -64,7 +64,7 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
   Complex pX{0.0,0.0}, pY{0.0,0.0}, pZ{0.0,0.0};
 
   static constexpr __device__  Real OneBy4Pi = static_cast<Real> (CONST_ONE/ (CONST_FOUR * M_PI));
-  static constexpr __device__ Real OneBy9 = static_cast<Real> (CONST_ONE/ (CONST_NINE));
+  const Real OneBy9 = (CONST_ONE/ (CONST_NINE));
   /**
  * [0 1 2]
  * [1 3 4]
@@ -75,6 +75,21 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
   Real3 matVec;
   doMatVec<false>(rotationMatrix,eleField,matVec);
   Complex nsum;
+
+  extern __shared__ Voxel sdata[];
+  {
+    Voxel matProp1[3];
+    for (int numMaterial = 0; numMaterial < 3; numMaterial++) {
+      matProp1[numMaterial] = voxelInput[numVoxels * numMaterial + threadID];
+    }
+
+    for (int numMaterial = 0; numMaterial < 3; numMaterial++) {
+       
+      sdata[threadIdx.x*NUM_MATERIAL + numMaterial] = matProp1[numMaterial]; //voxelInput[numVoxels * numMaterial + threadID];
+      
+    }
+  }
+  __syncthreads();
   // __shared__ Voxel s_temp[NUM_MATERIAL];
   // {
   //   Voxel temp[NUM_MATERIAL];
@@ -91,8 +106,8 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
   for (int numMaterial = 0; numMaterial < NUM_MATERIAL; numMaterial++) {
     Complex npar = material[numMaterial].npara;
     Complex nper = material[numMaterial].nperp;
-    Voxel  matProp = voxelInput[numVoxels * numMaterial + threadID];
-    // Voxel  matProp = s_temp[numMaterial];
+    // Voxel  matProp = voxelInput[numVoxels * numMaterial + threadID];
+    const Voxel  matProp =sdata[threadIdx.x*NUM_MATERIAL + numMaterial];//voxelInput[numVoxels * numMaterial + threadID];
     
     const Real & psiAngle      = matProp.getValueAt<Voxel::EULER_ANGLE::PSI>();
     const Real & thetaAngle    = matProp.getValueAt<Voxel::EULER_ANGLE::THETA>();
@@ -100,8 +115,8 @@ __device__ void __forceinline__  computePolarizationEulerAngles(const Material *
     const Real & phi_a         = Vfrac*matProp.getValueAt<Voxel::EULER_ANGLE::S>();
     Real sinThetha, cosThetha,sinPsi,cosPsi;
     
-    // sincosf(thetaAngle,&sinThetha,&cosThetha);
-    // sincosf(psiAngle,&sinPsi,&cosPsi);
+    // __sincosf(thetaAngle,&sinThetha,&cosThetha);
+    // __sincosf(psiAngle,&sinPsi,&cosPsi);
 
     sinThetha =  __sinf(thetaAngle);
     cosThetha =  __cosf(thetaAngle);

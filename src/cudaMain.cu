@@ -163,7 +163,7 @@ template <ReferenceFrame referenceFrame, MorphologyType morphologyType, int NUM_
   }
   else
   {
-    
+
     computePolarizationEulerAngles<referenceFrame,NUM_MATERIAL>(d_materialConstants, voxelInput, threadID, polarizationX, polarizationY,
                                                    polarizationZ, numVoxels, rotationMatrix);
   }
@@ -210,7 +210,8 @@ __host__ int computePolarization(const Material *d_materialConstants,
                                  const BigUINT &numVoxels, const int NUM_MATERIAL)
 {
   #define args d_materialConstants, d_voxelInput, vx, d_polarizationX,d_polarizationY, d_polarizationZ, windowing, enable2D,rotationMatrix, numVoxels, NUM_MATERIAL
-
+  unsigned shared_mem_size = (NUM_THREADS*sizeof(Real4)*NUM_MATERIAL);
+  
   if (referenceFrame == ReferenceFrame::MATERIAL)
   {
     if (morphologyType == VECTOR_MORPHOLOGY)                                                                                         
@@ -224,11 +225,11 @@ __host__ int computePolarization(const Material *d_materialConstants,
     }
     else
     {
-          if (NUM_MATERIAL == 1) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 1><<<blockSize, NUM_THREADS>>>(args);
-    else  if (NUM_MATERIAL == 2) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 2><<<blockSize, NUM_THREADS>>>(args);
-    else  if (NUM_MATERIAL == 3) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 3><<<blockSize, NUM_THREADS>>>(args);
-    else  if (NUM_MATERIAL == 4) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 4><<<blockSize, NUM_THREADS>>>(args);
-    else  if (NUM_MATERIAL == 5) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 5><<<blockSize, NUM_THREADS>>>(args);
+          if (NUM_MATERIAL == 1) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 1><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
+    else  if (NUM_MATERIAL == 2) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 2><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
+    else  if (NUM_MATERIAL == 3) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 3><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
+    else  if (NUM_MATERIAL == 4) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 4><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
+    else  if (NUM_MATERIAL == 5) computePolarization<ReferenceFrame::MATERIAL, EULER_ANGLES, 5><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
     }
   }
   else
@@ -243,11 +244,11 @@ __host__ int computePolarization(const Material *d_materialConstants,
     }
     else
     {
-          if (NUM_MATERIAL == 1) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 1><<<blockSize, NUM_THREADS>>>(args);
-    else  if (NUM_MATERIAL == 2) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 2><<<blockSize, NUM_THREADS>>>(args);
-    else  if (NUM_MATERIAL == 3) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 3><<<blockSize, NUM_THREADS>>>(args);
-    else  if (NUM_MATERIAL == 4) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 4><<<blockSize, NUM_THREADS>>>(args);
-    else  if (NUM_MATERIAL == 5) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 5><<<blockSize, NUM_THREADS>>>(args);
+          if (NUM_MATERIAL == 1) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 1><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
+    else  if (NUM_MATERIAL == 2) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 2><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
+    else  if (NUM_MATERIAL == 3) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 3><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
+    else  if (NUM_MATERIAL == 4) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 4><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
+    else  if (NUM_MATERIAL == 5) computePolarization<ReferenceFrame::LAB, EULER_ANGLES, 5><<<blockSize, NUM_THREADS, shared_mem_size>>>(args);
     }
   }
   gpuErrchk(hipDeviceSynchronize());

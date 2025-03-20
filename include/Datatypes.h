@@ -59,7 +59,7 @@ typedef uint32_t BigUINT;
 typedef uint32_t UINT;
 
 #define NUM_THREADS 128
-#define NUM_BLOCKS 8
+#define NUM_BLOCKS 1
 
 
 
