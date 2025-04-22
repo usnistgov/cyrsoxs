@@ -45,8 +45,6 @@ jobs:
           python3 -m pip install --upgrade pip setuptools wheel cibuildwheel
 
       - name: Build wheels with cibuildwheel
-        env:
-          CIBW_BEFORE_BUILD: cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND=Yes -DUSE_SUBMODULE_PYBIND=Yes
         run: |
           cibuildwheel --platform linux --output-dir dist/
           
