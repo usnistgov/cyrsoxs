@@ -1,0 +1,39 @@
+[build-system]
+requires = [
+  "scikit-build-core>=0.10",        # CMake-based build backend
+  "setuptools>=64",                 # PEP 517 frontend
+  "setuptools-scm[toml]>=8.0",      # Auto-version from Git tags
+  "wheel",                          # Wheel packaging
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "cyrsoxs"
+dynamic = ["version"]               # ← no static version here  [oai_citation_attribution:7‡Stack Overflow](https://stackoverflow.com/questions/77981266/how-to-set-dynamic-version-for-tool-setuptools-scm-in-pyproject-toml?utm_source=chatgpt.com)
+description = "CUDA‑accelerated RSoXS simulator"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "BSD‑3‑Clause" }
+authors = [
+  { name = "Dean Delongchamp", email = "dean.delongchamp@nist.gov" }
+]
+dependencies = [
+  # your runtime deps here, e.g. "h5py", "numpy"
+]
+
+[tool.setuptools-scm]
+# leaving empty is fine; presence enables version inference
+version_scheme = "post-release"
+local_scheme = "node-and-date"
+write_to = "cyrsoxs/_version.py"    # embed version in your package
+[tool.scikit-build]
+minimum-version = "0.10"            # lock scikit-build-core version
+# you can add CMake args here if static, e.g.:
+cmake-args = ["-DCMAKE_BUILD_TYPE=Release",
+              "-DPYBIND=Yes",
+              "-DUSE_SUBMODULE_PYBIND=No"]
+
+[tool.cibuildwheel]
+# run CMake configure before building any wheels
+before-build = "cmake {project_dir} -DCMAKE_BUILD_TYPE=Release"
+# you can add test-command, dependency-versions, etc. here  [oai_citation_attribution:10‡GitHub](https://github.com/pypa/cibuildwheel/blob/main/docs/options.md?utm_source=chatgpt.com)
