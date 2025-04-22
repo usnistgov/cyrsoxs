@@ -35,5 +35,5 @@ cmake-args = ["-DCMAKE_BUILD_TYPE=Release",
 
 [tool.cibuildwheel]
 # run CMake configure before building any wheels
-before-build = "cmake {project_dir} -DCMAKE_BUILD_TYPE=Release"
-# you can add test-command, dependency-versions, etc. here  [oai_citation_attribution:10‡GitHub](https://github.com/pypa/cibuildwheel/blob/main/docs/options.md?utm_source=chatgpt.com)
+before-build = "cmake {project_dir}/src -DCMAKE_BUILD_TYPE=Release -DPYBIND=Yes -DUSE_SUBMODULE_PYBIND=No"
+# you can add test-command, dependency-versions, etc. here 
