@@ -22,7 +22,7 @@ jobs:
         cmake --build . --config Release
     steps:
       - uses: actions/checkout@v4
-    - name: Install GCC
+      - name: Install GCC
         run:
           sudo apt-get update
           sudo apt-get install -y gcc-9 g++-9
