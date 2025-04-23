@@ -22,8 +22,8 @@ jobs:
         cmake --build . --config Release
     steps:
       - uses: actions/checkout@v4
-      - name: Install GCC
-        run: |
+    - name: Install GCC
+        run:
           sudo apt-get update
           sudo apt-get install -y gcc-9 g++-9
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
@@ -38,6 +38,9 @@ jobs:
           sudo apt-get install -y cmake python3-dev libhdf5-dev libomp-dev
       - name: Install Python build tools
         run: pip install --upgrade pip setuptools wheel cibuildwheel
+      - name: Install GCC
+        run: |
+          nvcc --version
       - name: Build wheels
         run: cibuildwheel --platform linux --output-dir dist/
       - name: Upload wheels
