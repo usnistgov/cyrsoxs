@@ -21,6 +21,12 @@ jobs:
       CIBW_MANYLINUX_X86_64_IMAGE: sameli/manylinux2014_x86_64_cuda_11.8
     steps:
       - uses: actions/checkout@v4
+      - name: Install system deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake python3-dev libhdf5-dev libomp-dev
+      - name: Install Python build tools
+        run: pip install --upgrade pip setuptools wheel cibuildwheel
       - name: Build wheels
         run: cibuildwheel --platform linux --output-dir dist/
       - name: Upload wheels
@@ -28,10 +34,3 @@ jobs:
         with:
           name: dist
           path: dist/*.whl
-          
-      - name: Upload CUDA Installer Log
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cuda-installer-log
-          path: /var/log/cuda-installer.log
