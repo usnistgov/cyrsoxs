@@ -9,51 +9,43 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      CIBW_BEFORE_BUILD: |
+        export PATH=/usr/local/cuda-11.8/bin:$PATH
+        export CUDAToolkit_ROOT=/usr/local/cuda-11.8
+        rm -rf build
+        mkdir build && cd build
+        cmake ${PWD}/.. \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DPYBIND=Yes \
+              -DUSE_SUBMODULE_PYBIND=No
+        cmake --build . --config Release
     steps:
-      - name: Checkout repository (with submodules)
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive  
-
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache
-          key: ${{ runner.os }}-cuda-11.7.0
-          restore-keys: |
-            ${{ runner.os }}-cuda-
-
+      - uses: actions/checkout@v4
       - name: Install GCC
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc-9 g++-9
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-9 100
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 100
-
       - name: Install CUDA Toolkit
         uses: Jimver/cuda-toolkit@v0.2.23
         with:
-          cuda: '11.7.0'
-
-      - name: Install build dependencies
+          cuda: '11.8.0'
+      - name: Install system deps
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake python3-dev libhdf5-dev libomp-dev
-
       - name: Install Python build tools
-        run: |
-          python3 -m pip install --upgrade pip setuptools wheel cibuildwheel
-
-      - name: Build wheels with cibuildwheel
-        run: |
-          cibuildwheel --platform linux --output-dir dist/
-          
-      - name: Upload wheel artifacts
+        run: pip install --upgrade pip setuptools wheel cibuildwheel
+      - name: Build wheels
+        run: cibuildwheel --platform linux --output-dir dist/
+      - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: cyrsoxs-wheels
+          name: dist
           path: dist/*.whl
-
+          
       - name: Upload CUDA Installer Log
         if: failure()
         uses: actions/upload-artifact@v4
