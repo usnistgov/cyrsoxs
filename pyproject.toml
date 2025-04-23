@@ -28,12 +28,6 @@ local_scheme = "node-and-date"
 write_to = "cyrsoxs/_version.py"    # embed version in your package
 [tool.scikit-build]
 minimum-version = "0.10"            # lock scikit-build-core version
-# you can add CMake args here if static, e.g.:
-cmake-args = ["-DCMAKE_BUILD_TYPE=Release",
-              "-DPYBIND=Yes",
-              "-DUSE_SUBMODULE_PYBIND=No"]
 
 [tool.cibuildwheel]
-# run CMake configure before building any wheels
-before-build = "cmake -DCMAKE_BUILD_TYPE=Release -DPYBIND=Yes -DUSE_SUBMODULE_PYBIND=No"
 # you can add test-command, dependency-versions, etc. here 
