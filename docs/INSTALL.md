@@ -8,6 +8,18 @@ CyRSoXS is available as a pre-built binary on the `conda-forge` channel. To inst
 conda install cyrsoxs -c conda-forge
 ```
 
+## pip (experimental)
+
+Linux wheels built with CUDA support are published on GitHub. They can be
+installed directly with `pip`:
+
+```bash
+pip install cyrsoxs
+```
+
+The wheel only requires the CUDA toolkit libraries to be present at run time;
+no GPU is needed to build the package.
+
 ## Building from source
 
 To build CyRSoXS from source, the following dependencies need to be installed:

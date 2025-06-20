@@ -1,0 +1,23 @@
+[build-system]
+requires = [
+    "scikit-build-core>=0.8",
+    "pybind11",
+]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "cyrsoxs"
+version = "1.1.8.0"
+description = "GPU-enabled RSoXS simulator"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+
+[tool.scikit-build]
+minimum-version = "0.8"
+wheel.packages = ["cyrsoxs"]
+cmake.args = [
+    "-DPYBIND=Yes",
+    "-DUSE_SUBMODULE_PYBIND=No",
+    "-DOUTPUT_BASE_NAME=CyRSoXS",
+]

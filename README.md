@@ -38,6 +38,9 @@ The developer version of the CyRSoXS code is available at <https://bitbucket.org
 
 ## [Installation Instructions](docs/INSTALL.md)
 
+Pre-built Linux wheels are available on GitHub and can be installed with `pip
+install cyrsoxs`.
+
 ## [Simulation Componenets](docs/DATA.md)
 
 ## [Running CyRSoXS](docs/RUN.md)
