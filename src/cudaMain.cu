@@ -64,50 +64,53 @@ __global__ void replaceDCComponentWithAverage(Complex *polarization, const uint3
   if (threadIdx.x == 0 && blockIdx.x == 0) {
     // DC component is at index [0,0,0]
     const int dcIndex = 0;
-    
-    // Calculate average of 6 immediate face-adjacent neighbors in 3D
+
+    // Use an in-plane stencil for single-slice inputs and preserve the
+    // existing six-neighbor stencil for true 3D morphologies.
     Complex sum = {0.0f, 0.0f};
     int count = 0;
-    
+
     // Neighbor at (1,0,0)
-    int idx = 1;
+    BigUINT idx = 1;
     sum.x += polarization[idx].x;
     sum.y += polarization[idx].y;
     count++;
-    
+
     // Neighbor at (0,1,0)
     idx = vx.x;
     sum.x += polarization[idx].x;
     sum.y += polarization[idx].y;
     count++;
-    
-    // Neighbor at (0,0,1)
-    idx = vx.x * vx.y;
-    sum.x += polarization[idx].x;
-    sum.y += polarization[idx].y;
-    count++;
-    
+
     // Neighbor at (vx.x-1,0,0) - wrap around due to periodicity
     idx = vx.x - 1;
     sum.x += polarization[idx].x;
     sum.y += polarization[idx].y;
     count++;
-    
+
     // Neighbor at (0,vx.y-1,0) - wrap around due to periodicity
-    idx = (vx.y - 1) * vx.x;
+    idx = static_cast<BigUINT>(vx.y - 1) * static_cast<BigUINT>(vx.x);
     sum.x += polarization[idx].x;
     sum.y += polarization[idx].y;
     count++;
-    
-    // Neighbor at (0,0,vx.z-1) - wrap around due to periodicity
-    idx = (vx.z - 1) * vx.x * vx.y;
-    sum.x += polarization[idx].x;
-    sum.y += polarization[idx].y;
-    count++;
-    
+
+    if (vx.z > 1) {
+      // Neighbor at (0,0,1)
+      idx = static_cast<BigUINT>(vx.x) * static_cast<BigUINT>(vx.y);
+      sum.x += polarization[idx].x;
+      sum.y += polarization[idx].y;
+      count++;
+
+      // Neighbor at (0,0,vx.z-1) - wrap around due to periodicity
+      idx = static_cast<BigUINT>(vx.z - 1) * static_cast<BigUINT>(vx.x) * static_cast<BigUINT>(vx.y);
+      sum.x += polarization[idx].x;
+      sum.y += polarization[idx].y;
+      count++;
+    }
+
     // Replace DC component with average
-    polarization[dcIndex].x = sum.x / count;
-    polarization[dcIndex].y = sum.y / count;
+    polarization[dcIndex].x = sum.x / static_cast<Real>(count);
+    polarization[dcIndex].y = sum.y / static_cast<Real>(count);
   }
 }
 
@@ -192,7 +195,7 @@ __global__ void computePolarization(const Material * d_materialConstants,
                                     const BigUINT numVoxels, const int DEVICE_NUM_MATERIAL
 ) {
   BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
-  if(threadID > numVoxels){
+  if(threadID >= numVoxels){
     return;
   }
 #ifndef BIAXIAL

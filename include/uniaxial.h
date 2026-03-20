@@ -443,7 +443,7 @@ __global__ void computePolarizationVectorMorphologyLowMemory(const Real4 * __res
                                                              Complex *polarizationY, Complex *polarizationZ,
                                                              const Matrix rotationMatrix, const BigUINT numVoxels) {
   const BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
-  if(threadID > numVoxels){
+  if(threadID >= numVoxels){
     return;
   }
   Complex pX{0,0}, pY{0,0}, pZ{0,0};
