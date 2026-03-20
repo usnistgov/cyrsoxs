@@ -1050,7 +1050,7 @@ __host__ void rotateImage(Real *projection, const uint3 voxel, const Real rotAng
   cv::Point2f pc(image.cols/2., image.rows/2.);
   cv::Mat r = cv::getRotationMatrix2D(pc, rotAngle, 1.0);
   cv::Mat rotatedImage;
-  warpAffine(image, rotatedImage, r, image.size());
+  cv::warpAffine(image, rotatedImage, r, image.size());
   if (rotatedImage.isContinuous()) {
     std::memcpy(projection,rotatedImage.data,rotatedImage.rows*rotatedImage.cols);
   }

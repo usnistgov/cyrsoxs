@@ -95,12 +95,10 @@ __host__ INLINE inline void cudaZeroEntries(T * d_data, const GI & size){
 #ifdef DOUBLE_PRECISION
 #define cublasScale cublasDscal
 #define cublasAXPY cublasDaxpy
-#define warpAffine nppiWarpAffine_64f_C1R
 #define cufftC2C cufftExecZ2Z
 #else
 #define cublasScale cublasSscal
 #define cublasAXPY cublasSaxpy
-#define warpAffine nppiWarpAffine_32f_C1R
 #define cufftC2C cufftExecC2C
 #endif
 
