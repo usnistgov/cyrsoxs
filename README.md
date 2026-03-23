@@ -44,6 +44,8 @@ The developer version of the CyRSoXS code is available at <https://bitbucket.org
 
 ## [Visualization](docs/Visualization.md)
 
+## [Known Issues](docs/KNOWN_ISSUES.md)
+
 ## Documentation
 
 CyRSoXS documentation is available at <https://cyrsoxs.readthedocs.io>, and instructions to build the documentation are in the [Installation Instructions](docs/INSTALL.md).

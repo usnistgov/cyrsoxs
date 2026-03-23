@@ -59,55 +59,119 @@ __host__ int performFFTShift(Complex *polarization, const UINT &blockSize, const
   return EXIT_SUCCESS;
 }
 
+// CUDA 13 removes nppGetStreamContext(), so populate the context explicitly.
+__host__ INLINE inline NppStreamContext getCurrentNppStreamContext() {
+  NppStreamContext nppCtx{};
+  const cudaStream_t stream = nppGetStream();
+
+  CUDA_CHECK_RETURN(cudaGetDevice(&nppCtx.nCudaDeviceId));
+
+  cudaDeviceProp deviceProps;
+  CUDA_CHECK_RETURN(cudaGetDeviceProperties(&deviceProps, nppCtx.nCudaDeviceId));
+
+  CUDA_CHECK_RETURN(cudaDeviceGetAttribute(&nppCtx.nCudaDevAttrComputeCapabilityMajor,
+                                           cudaDevAttrComputeCapabilityMajor,
+                                           nppCtx.nCudaDeviceId));
+  CUDA_CHECK_RETURN(cudaDeviceGetAttribute(&nppCtx.nCudaDevAttrComputeCapabilityMinor,
+                                           cudaDevAttrComputeCapabilityMinor,
+                                           nppCtx.nCudaDeviceId));
+
+  nppCtx.hStream = stream;
+  nppCtx.nMultiProcessorCount = deviceProps.multiProcessorCount;
+  nppCtx.nMaxThreadsPerMultiProcessor = deviceProps.maxThreadsPerMultiProcessor;
+  nppCtx.nMaxThreadsPerBlock = deviceProps.maxThreadsPerBlock;
+  nppCtx.nSharedMemPerBlock = deviceProps.sharedMemPerBlock;
+  nppCtx.nStreamFlags = cudaStreamDefault;
+  if (stream != 0) {
+    CUDA_CHECK_RETURN(cudaStreamGetFlags(stream, &nppCtx.nStreamFlags));
+  }
+  return nppCtx;
+}
+
+#ifdef DOUBLE_PRECISION
+__host__ INLINE inline NppStatus nppWarpAffineCtx(const Real *src,
+                                                  const NppiSize &srcSize,
+                                                  const int srcStep,
+                                                  const NppiRect &srcRoi,
+                                                  Real *dst,
+                                                  const int dstStep,
+                                                  const NppiRect &dstRoi,
+                                                  const double coeffs[2][3],
+                                                  const int interpolation,
+                                                  const NppStreamContext &nppCtx) {
+  return nppiWarpAffine_64f_C1R_Ctx(src, srcSize, srcStep, srcRoi,
+                                    dst, dstStep, dstRoi,
+                                    coeffs, interpolation, nppCtx);
+}
+#else
+__host__ INLINE inline NppStatus nppWarpAffineCtx(const Real *src,
+                                                  const NppiSize &srcSize,
+                                                  const int srcStep,
+                                                  const NppiRect &srcRoi,
+                                                  Real *dst,
+                                                  const int dstStep,
+                                                  const NppiRect &dstRoi,
+                                                  const double coeffs[2][3],
+                                                  const int interpolation,
+                                                  const NppStreamContext &nppCtx) {
+  return nppiWarpAffine_32f_C1R_Ctx(src, srcSize, srcStep, srcRoi,
+                                    dst, dstStep, dstRoi,
+                                    coeffs, interpolation, nppCtx);
+}
+#endif
+
 __global__ void replaceDCComponentWithAverage(Complex *polarization, const uint3 vx) {
   // Only execute this function with a single thread to avoid race conditions
   if (threadIdx.x == 0 && blockIdx.x == 0) {
     // DC component is at index [0,0,0]
     const int dcIndex = 0;
-    
-    // Calculate average of 6 immediate face-adjacent neighbors in 3D
+
+    // Use an in-plane stencil for single-slice inputs and preserve the
+    // existing six-neighbor stencil for true 3D morphologies.
     Complex sum = {0.0f, 0.0f};
     int count = 0;
-    
+
     // Neighbor at (1,0,0)
-    int idx = 1;
+    BigUINT idx = 1;
     sum.x += polarization[idx].x;
     sum.y += polarization[idx].y;
     count++;
-    
+
     // Neighbor at (0,1,0)
     idx = vx.x;
     sum.x += polarization[idx].x;
     sum.y += polarization[idx].y;
     count++;
-    
-    // Neighbor at (0,0,1)
-    idx = vx.x * vx.y;
-    sum.x += polarization[idx].x;
-    sum.y += polarization[idx].y;
-    count++;
-    
+
     // Neighbor at (vx.x-1,0,0) - wrap around due to periodicity
     idx = vx.x - 1;
     sum.x += polarization[idx].x;
     sum.y += polarization[idx].y;
     count++;
-    
+
     // Neighbor at (0,vx.y-1,0) - wrap around due to periodicity
-    idx = (vx.y - 1) * vx.x;
+    idx = static_cast<BigUINT>(vx.y - 1) * static_cast<BigUINT>(vx.x);
     sum.x += polarization[idx].x;
     sum.y += polarization[idx].y;
     count++;
-    
-    // Neighbor at (0,0,vx.z-1) - wrap around due to periodicity
-    idx = (vx.z - 1) * vx.x * vx.y;
-    sum.x += polarization[idx].x;
-    sum.y += polarization[idx].y;
-    count++;
-    
+
+    if (vx.z > 1) {
+      // Neighbor at (0,0,1)
+      idx = static_cast<BigUINT>(vx.x) * static_cast<BigUINT>(vx.y);
+      sum.x += polarization[idx].x;
+      sum.y += polarization[idx].y;
+      count++;
+
+      // Neighbor at (0,0,vx.z-1) - wrap around due to periodicity
+      idx = static_cast<BigUINT>(vx.z - 1) * static_cast<BigUINT>(vx.x) * static_cast<BigUINT>(vx.y);
+      sum.x += polarization[idx].x;
+      sum.y += polarization[idx].y;
+      count++;
+    }
+
     // Replace DC component with average
-    polarization[dcIndex].x = sum.x / count;
-    polarization[dcIndex].y = sum.y / count;
+    polarization[dcIndex].x = sum.x / static_cast<Real>(count);
+    polarization[dcIndex].y = sum.y / static_cast<Real>(count);
   }
 }
 
@@ -192,7 +256,7 @@ __global__ void computePolarization(const Material * d_materialConstants,
                                     const BigUINT numVoxels, const int DEVICE_NUM_MATERIAL
 ) {
   BigUINT threadID = threadIdx.x + blockIdx.x * blockDim.x;
-  if(threadID > numVoxels){
+  if(threadID >= numVoxels){
     return;
   }
 #ifndef BIAXIAL
@@ -392,6 +456,7 @@ int cudaMain(const UINT *voxel,
     cudaSetDevice(omp_get_thread_num());
     cudaDeviceProp dprop;
     cudaGetDeviceProperties(&dprop, omp_get_thread_num());
+    const NppStreamContext nppCtx = getCurrentNppStreamContext();
 
 #ifdef PROFILING
     if(warmup() == EXIT_SUCCESS){
@@ -790,15 +855,16 @@ int cudaMain(const UINT *voxel,
           };
 
 
-          NppStatus status = warpAffine(d_projection,
-                                        sizeImage,
-                                        voxel[1] * sizeof(Real),
-                                        rect,
-                                        d_rotProjection,
-                                        voxel[1] * sizeof(Real),
-                                        rect,
-                                        coeffs,
-                                        NPPI_INTER_LINEAR);
+          NppStatus status = nppWarpAffineCtx(d_projection,
+                                              sizeImage,
+                                              static_cast<int>(voxel[1] * sizeof(Real)),
+                                              rect,
+                                              d_rotProjection,
+                                              static_cast<int>(voxel[1] * sizeof(Real)),
+                                              rect,
+                                              coeffs,
+                                              NPPI_INTER_LINEAR,
+                                              nppCtx);
 
           if (status < 0) {
             std::cout << "Image rotation failed with error = " << status << "\n";
@@ -874,15 +940,16 @@ int cudaMain(const UINT *voxel,
         computeWarpAffineMatrix(srcPoints, destPoints, coeffs);
         Real _factor = idata.rotMask ? 0 : NAN;
         stat = cublasScale(handle, numVoxel2D, &_factor, d_projectionAverage, 1);
-        NppStatus status = warpAffine(d_projection,
-                                      sizeImage,
-                                      voxel[1] * sizeof(Real),
-                                      rect,
-                                      d_projectionAverage,
-                                      voxel[1] * sizeof(Real),
-                                      rect,
-                                      coeffs,
-                                      NPPI_INTER_LINEAR);
+        NppStatus status = nppWarpAffineCtx(d_projection,
+                                            sizeImage,
+                                            static_cast<int>(voxel[1] * sizeof(Real)),
+                                            rect,
+                                            d_projectionAverage,
+                                            static_cast<int>(voxel[1] * sizeof(Real)),
+                                            rect,
+                                            coeffs,
+                                            NPPI_INTER_LINEAR,
+                                            nppCtx);
 
         if (status < 0) {
           std::cout << "Image rotation failed with error = " << status << "\n";
@@ -1054,6 +1121,7 @@ int cudaMainStreams(const UINT *voxel,
     cudaSetDevice(omp_get_thread_num());
     cudaDeviceProp dprop;
     cudaGetDeviceProperties(&dprop, omp_get_thread_num());
+    const NppStreamContext nppCtx = getCurrentNppStreamContext();
 
 #ifdef PROFILING
     if(warmup() == EXIT_SUCCESS){
@@ -1418,15 +1486,16 @@ int cudaMainStreams(const UINT *voxel,
           };
 
 
-          NppStatus status = warpAffine(d_projection,
-                                        sizeImage,
-                                        voxel[1] * sizeof(Real),
-                                        rect,
-                                        d_rotProjection,
-                                        voxel[1] * sizeof(Real),
-                                        rect,
-                                        coeffs,
-                                        NPPI_INTER_LINEAR);
+          NppStatus status = nppWarpAffineCtx(d_projection,
+                                              sizeImage,
+                                              static_cast<int>(voxel[1] * sizeof(Real)),
+                                              rect,
+                                              d_rotProjection,
+                                              static_cast<int>(voxel[1] * sizeof(Real)),
+                                              rect,
+                                              coeffs,
+                                              NPPI_INTER_LINEAR,
+                                              nppCtx);
 
           if (status < 0) {
             std::cout << "Image rotation failed with error = " << status << "\n";
@@ -1500,15 +1569,16 @@ int cudaMainStreams(const UINT *voxel,
         computeWarpAffineMatrix(srcPoints, destPoints, coeffs);
         Real _factor = idata.rotMask ? 0 : NAN;
         stat = cublasScale(handle, numVoxel2D, &_factor, d_projectionAverage, 1);
-        NppStatus status = warpAffine(d_projection,
-                                      sizeImage,
-                                      voxel[1] * sizeof(Real),
-                                      rect,
-                                      d_projectionAverage,
-                                      voxel[1] * sizeof(Real),
-                                      rect,
-                                      coeffs,
-                                      NPPI_INTER_LINEAR);
+        NppStatus status = nppWarpAffineCtx(d_projection,
+                                            sizeImage,
+                                            static_cast<int>(voxel[1] * sizeof(Real)),
+                                            rect,
+                                            d_projectionAverage,
+                                            static_cast<int>(voxel[1] * sizeof(Real)),
+                                            rect,
+                                            coeffs,
+                                            NPPI_INTER_LINEAR,
+                                            nppCtx);
 
         if (status < 0) {
           std::cout << "Image rotation failed with error = " << status << "\n";
