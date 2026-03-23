@@ -1,6 +1,6 @@
 # CyRSoXS Changes History
 
-## Version 1.1.8.0
+## Version 1.2.0.0
 
 * Implemented DC component replacement in FFT with local averaging
 * Added CUDA kernel to replace DC component (index [0,0,0]) with average of surrounding voxels

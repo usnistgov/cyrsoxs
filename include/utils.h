@@ -144,7 +144,7 @@ static void printCopyrightInfo(){
   std::cout << "|          3. Dr. Dean DeLongchamp            (dean.delongchamp@nist.gov)                          |\n";
   std::cout << " -------------------------------------------------------------------------------------------------- \n";
 
-  std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << " " << VERSION_TWEAK << "\n";
+  std::cout << "Version   : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "." << VERSION_TWEAK << "\n";
   std::cout << "Git patch : " << GIT_HASH << "\n";
   std::cout << "\n";
 
@@ -209,7 +209,7 @@ static void printMetaData(const InputData & inputData, const RotationMatrix & ro
   printCopyrightInfo(file);
   file << "\n\nCyRSoXS: \n";
   file << "=========================================================================================\n";
-  file << "Version              : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH <<  " "<< VERSION_TWEAK <<"\n";
+  file << "Version              : " << VERSION_MAJOR << "."<< VERSION_MINOR << "."<< VERSION_PATCH << "." << VERSION_TWEAK <<"\n";
   file << "Git patch            : " << GIT_HASH << "\n";
   file << "Size of Real         : " << sizeof(Real) << "\n";
   file << "Number of material   : " << inputData.NUM_MATERIAL << "\n";
