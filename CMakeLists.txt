@@ -1,5 +1,16 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
+
+if(UNIX AND NOT APPLE)
+    if(NOT DEFINED CMAKE_CUDA_HOST_COMPILER OR "${CMAKE_CUDA_HOST_COMPILER}" STREQUAL "")
+        find_program(_cyrsoxs_cuda_host_cxx NAMES g++-10 g++-9)
+        if(_cyrsoxs_cuda_host_cxx)
+            set(CMAKE_CUDA_HOST_COMPILER "${_cyrsoxs_cuda_host_cxx}" CACHE FILEPATH "Host C++ compiler for nvcc" FORCE)
+            message(STATUS "CUDA host compiler: ${CMAKE_CUDA_HOST_COMPILER}")
+        endif()
+    endif()
+endif()
+
 project(CyRSoXS VERSION 1.2.0.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
 

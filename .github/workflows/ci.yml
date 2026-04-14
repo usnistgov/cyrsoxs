@@ -14,7 +14,7 @@ jobs:
       - name: Install CUDA toolkit
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq nvidia-cuda-toolkit build-essential
+          sudo apt-get install -y -qq nvidia-cuda-toolkit build-essential g++-10
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5

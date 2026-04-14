@@ -42,6 +42,7 @@ else()
                 INSTALL_DIR "${CYRSOXS_HDF5_PREFIX}"
                 URL "${CYRSOXS_HDF5_URL}"
                 URL_HASH "${CYRSOXS_HDF5_URL_HASH}"
+                DOWNLOAD_EXTRACT_TIMESTAMP ON
                 CMAKE_ARGS
                 -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
                 -DCMAKE_BUILD_TYPE=Release
