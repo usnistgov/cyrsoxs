@@ -12,6 +12,7 @@ set(CYRSOXS_HDF5_URL "https://github.com/HDFGroup/hdf5/archive/refs/tags/hdf5_1.
 set(CYRSOXS_HDF5_URL_HASH "SHA256=09ee1c671a87401a5201c06106650f62badeea5a3b3941e9b1e2e1e08317357f" CACHE STRING "Expected hash for CYRSOXS_HDF5_URL")
 
 set(CYRSOXS_HDF5_EP_TARGET "")
+set(CYRSOXS_HDF5_RPATH "")
 
 find_package(HDF5 COMPONENTS CXX HL QUIET)
 
@@ -75,3 +76,44 @@ if(HDF5_FOUND AND CYRSOXS_HDF5_EP_TARGET STREQUAL "")
         set(HDF5_INCLUDE_DIR "${HDF5_INCLUDE_DIRS}")
     endif()
 endif()
+
+if(HDF5_FOUND AND CYRSOXS_HDF5_EP_TARGET STREQUAL "")
+    if(DEFINED HDF5_LIBRARY_DIRS AND HDF5_LIBRARY_DIRS)
+        set(CYRSOXS_HDF5_RPATH "${HDF5_LIBRARY_DIRS}")
+    else()
+        foreach(_lib IN LISTS HDF5_CXX_LIBRARIES HDF5_HL_LIBRARIES)
+            if(EXISTS "${_lib}")
+                get_filename_component(_hdf5_lib_dir "${_lib}" DIRECTORY)
+                list(APPEND CYRSOXS_HDF5_RPATH "${_hdf5_lib_dir}")
+            endif()
+        endforeach()
+        if(CYRSOXS_HDF5_RPATH)
+            list(REMOVE_DUPLICATES CYRSOXS_HDF5_RPATH)
+        endif()
+    endif()
+endif()
+
+function(cyrsoxs_target_link_hdf5 target_name)
+    if(CYRSOXS_HDF5_EP_TARGET AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        target_link_libraries(${target_name} PRIVATE
+                "-Wl,--whole-archive"
+                ${HDF5_CXX_LIBRARIES}
+                ${HDF5_HL_LIBRARIES}
+                "-Wl,--no-whole-archive")
+    elseif(CYRSOXS_HDF5_EP_TARGET AND APPLE)
+        foreach(_lib IN ITEMS ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+            target_link_libraries(${target_name} PRIVATE "-Wl,-force_load,${_lib}")
+        endforeach()
+    else()
+        target_link_libraries(${target_name} PRIVATE ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES})
+    endif()
+endfunction()
+
+function(cyrsoxs_target_apply_hdf5_rpath target_name)
+    if(CYRSOXS_HDF5_RPATH AND NOT CYRSOXS_HDF5_EP_TARGET)
+        set_target_properties(${target_name} PROPERTIES
+                BUILD_RPATH "${CYRSOXS_HDF5_RPATH}"
+                INSTALL_RPATH "${CYRSOXS_HDF5_RPATH}"
+                INSTALL_RPATH_USE_LINK_PATH TRUE)
+    endif()
+endfunction()

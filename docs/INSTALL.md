@@ -19,7 +19,9 @@ System requirements for a local build:
 - C++17 compiler and NVIDIA CUDA toolkit (`nvcc` on `PATH`)
 - OpenMP
 
-**HDF5:** For `uv sync`, `pip install .`, and other **scikit-build-core** (`SKBUILD`) builds, CMake defaults to **`CYRSOXS_FETCH_HDF5=ON`**. If no system HDF5 is found, HDF5 **1.14.6** is downloaded and built once as **static** libraries under the build tree and linked into the extension (no `libhdf5-dev` / `HDF5_ROOT` needed for typical Python installs). The first build can take several minutes.
+**HDF5:** For `uv sync`, `pip install .`, and other **scikit-build-core** (`SKBUILD`) builds, CMake defaults to **`CYRSOXS_FETCH_HDF5=ON`**. If no system HDF5 is found, HDF5 **1.14.6** is downloaded and built once as **static** libraries under the build tree and linked into the extension with **`--whole-archive`** (Linux) or **`-force_load`** (macOS) so every HDF5 object file is pulled into `CyRSoXS*.so` (avoids undefined symbols such as `H5Rcreate_object` from partial `.a` linking). The first build can take several minutes.
+
+If you use **system shared HDF5**, CMake sets **`BUILD_RPATH` / `INSTALL_RPATH`** to the library directory CMake discovered so the loader does not pick an older `libhdf5.so` from another package (for example `h5py`) instead of the version you built against.
 
 For **plain CMake** builds without `SKBUILD`, fetching defaults to **OFF**; install HDF5 C++/HL dev packages, or pass `-DCYRSOXS_FETCH_HDF5=ON`, or point CMake at an existing install:
 
