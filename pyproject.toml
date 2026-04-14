@@ -14,6 +14,15 @@ dependencies = []
 [project.optional-dependencies]
 dev = ["pytest>=9"]
 
+[dependency-groups]
+dev = ["pytest>=9"]
+jupyter = [
+    "h5py>=3.16.0",
+    "matplotlib>=3.10.8",
+    "numpy>=2.2.6",
+    "pandas>=2.3.3",
+]
+
 [project.urls]
 Homepage = "https://github.com/usnistgov/cyrsoxs"
 Documentation = "https://cyrsoxs.readthedocs.io"
@@ -25,6 +34,7 @@ cmake.args = [
     "-DPYBIND=ON",
     "-DUSE_SUBMODULE_PYBIND=OFF",
     "-DENABLE_TEST=OFF",
+    "-DCYRSOXS_FETCH_HDF5=ON",
 ]
 ninja.version = ">=1.11"
 wheel.packages = []

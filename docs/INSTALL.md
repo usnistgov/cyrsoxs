@@ -17,10 +17,11 @@ The repository is a [scikit-build-core](https://scikit-build-core.readthedocs.io
 System requirements for a local build:
 
 - C++17 compiler and NVIDIA CUDA toolkit (`nvcc` on `PATH`)
-- HDF5 C++ and HL **development** headers and libraries (e.g. Debian/Ubuntu `libhdf5-dev`, Fedora `hdf5-devel`)
 - OpenMP
 
-Point CMake at HDF5 when it is not in a default prefix:
+**HDF5:** For `uv sync`, `pip install .`, and other **scikit-build-core** (`SKBUILD`) builds, CMake defaults to **`CYRSOXS_FETCH_HDF5=ON`**. If no system HDF5 is found, HDF5 **1.14.6** is downloaded and built once as **static** libraries under the build tree and linked into the extension (no `libhdf5-dev` / `HDF5_ROOT` needed for typical Python installs). The first build can take several minutes.
+
+For **plain CMake** builds without `SKBUILD`, fetching defaults to **OFF**; install HDF5 C++/HL dev packages, or pass `-DCYRSOXS_FETCH_HDF5=ON`, or point CMake at an existing install:
 
 ```bash
 export HDF5_ROOT=/path/to/hdf5/prefix
@@ -32,7 +33,13 @@ Optional: override GPU architectures (semicolon-separated list, or `native` on C
 export CYRSOXS_CUDA_ARCHITECTURES="80;86"
 ```
 
-Install the project into a uv-managed environment (requires HDF5 dev packages on the machine):
+Install the project into a uv-managed environment (CUDA required; HDF5 is fetched automatically when missing):
+
+```bash
+uv sync --all-groups
+```
+
+Equivalent extras-based install:
 
 ```bash
 uv sync --all-extras

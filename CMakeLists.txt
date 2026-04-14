@@ -114,7 +114,10 @@ endif ()
 # END code that was contributed by employees of NIST
 
 
-find_package(HDF5 COMPONENTS CXX HL REQUIRED)
+include(cmake/CyRSoXSHDF5.cmake)
+if(CYRSOXS_HDF5_EP_TARGET)
+    find_package(Threads REQUIRED)
+endif()
 
 
 
@@ -182,6 +185,9 @@ if (PYBIND)
     target_link_libraries(${OUTPUT_BASE_NAME} PRIVATE
             pybind11::module
             ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cublas CUDA::cufft CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps)
+    if(CYRSOXS_HDF5_EP_TARGET)
+        target_link_libraries(${OUTPUT_BASE_NAME} PRIVATE Threads::Threads)
+    endif()
     #${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas -lcudart "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
     
 
@@ -218,11 +224,17 @@ else ()
     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(${OUTPUT_BASE_NAME}
             ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cufft CUDA::cublas CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps ${CONFIG++_LIBRARY})
+    if(CYRSOXS_HDF5_EP_TARGET)
+        target_link_libraries(${OUTPUT_BASE_NAME} PRIVATE Threads::Threads)
+    endif()
     if (EOC)
         target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(${OUTPUT_BASE_NAME} ${OpenCV_LIBS})
     endif ()
 endif ()
+if(CYRSOXS_HDF5_EP_TARGET)
+    add_dependencies(${OUTPUT_BASE_NAME} ${CYRSOXS_HDF5_EP_TARGET})
+endif()
 if(CYRSOXS_CUDA_ARCHITECTURES STREQUAL "native")
     set_property(TARGET ${OUTPUT_BASE_NAME} PROPERTY CUDA_ARCHITECTURES native)
 else()
@@ -257,6 +269,10 @@ if (ENABLE_TEST AND NOT SKBUILD)
         target_include_directories(test PRIVATE ${PROJECT_BINARY_DIR}/generated)
         target_link_libraries(test gtest gtest_main
                 ${HDF5_CXX_LIBRARIES} -lcufft -lcublas "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" ${CONFIG++_LIBRARY})
+        if(CYRSOXS_HDF5_EP_TARGET)
+            add_dependencies(test ${CYRSOXS_HDF5_EP_TARGET})
+            target_link_libraries(test PRIVATE Threads::Threads)
+        endif()
     endif ()
 endif ()
 
