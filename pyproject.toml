@@ -4,11 +4,21 @@ build-backend = "scikit_build_core.build"
 
 [project]
 name = "cyrsoxs"
+authors = [
+    { name = "Kumar Saurabh", email = "kumar.saurabh@iastate.edu" },
+    { name = "Adarsh Krishnamurthy", email = "adarsh.krishnamurthy@iastate.edu" },
+    { name = "Baskar Ganapathysubramanian", email = "baskar.ganapathysubramanian@iastate.edu" },
+    { name = "Eliot Gann", email = "eliot.gann@nist.gov" },
+    { name = "Dean M. DeLongchamp", email = "dean.delongchamp@nist.gov" },
+    { name = "Peter J. Dudenas", email = "peter.dudenas@nist.gov" },
+    { name = "Tyler B. Martin", email = "tyler.martin@nist.gov" },
+    { name = "Peter Beaucage", email = "peter.beaucage@nist.gov" },
+]
 version = "1.2.0"
-description = "GPU-accelerated resonant soft X-ray scattering simulation in the Born approximation"
+description = " Cy-RSoXS Forward Simulator for Resonant Soft X-Ray Scattering "
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = { text = "NIST" }
 dependencies = []
 
 [project.optional-dependencies]
