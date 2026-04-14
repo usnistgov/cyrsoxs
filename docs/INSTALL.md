@@ -10,6 +10,19 @@ conda install cyrsoxs -c conda-forge
 
 Pre-built binaries on conda-forge include compatible CUDA, HDF5, and compiler stacks. PyPI may publish source distributions and limited wheels; GPU-capable wheels are constrained by CUDA manylinux policy, so conda-forge remains the primary binary channel for most users.
 
+## pip (experimental)
+
+Linux installs can be build from wheels or from source directly from pip.
+```bash
+pip install cyrsoxs
+# or
+uv pip install cyrsoxs
+```
+For all dependencies needed to run the tutorial notebook, install the `jupyter` extra:
+```bash
+uv pip install cyrsoxs[jupyter]
+```
+
 ## Python package build with uv (PEP 517)
 
 The repository is a [scikit-build-core](https://scikit-build-core.readthedocs.io/) project. The native extension module is named `CyRSoXS` (import `import CyRSoXS`).
