@@ -3,7 +3,7 @@ requires = ["scikit-build-core>=0.10", "pybind11>=2.12"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "cyrsoxs"
+name = "cyrsoxs-temp"
 authors = [
     { name = "Kumar Saurabh", email = "kumar.saurabh@iastate.edu" },
     { name = "Adarsh Krishnamurthy", email = "adarsh.krishnamurthy@iastate.edu" },
