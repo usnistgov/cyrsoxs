@@ -19,9 +19,9 @@ The developer version of the CyRSoXS code is available at <https://bitbucket.org
 
 ### Required Dependencies for building from source
 
-* A C++ compiler with C++14 support is required.
-* gcc >= 7 (CUDA specific versions might have GCC requirements)
-* CUDA Toolkit (>=9)
+* A C++ compiler with C++17 support is required.
+* gcc compatible with your CUDA toolkit
+* CUDA Toolkit with nvcc
 * HDF5
   * Hierarchical Data Format (version 5) is a set of file formats designed to store and organize large amounts of data. CyRSoXS uses it to store models and simulated scattering patterns
 * OpenMP
@@ -29,14 +29,20 @@ The developer version of the CyRSoXS code is available at <https://bitbucket.org
 
 ### Additional dependencies for building with Pybind
 
-* Python >= 3.6
+* Python >= 3.10 (for the Pybind11 extension build via uv or pip)
 
 ### Optional Dependencies
 
 * Doxygen - for building the documentation.
 * Docker - if you want to run CyRSoXS in a Docker container.
 
-## [Installation Instructions](docs/INSTALL.md)
+## Installation
+
+- **conda-forge** (recommended pre-built GPU binaries): `conda install cyrsoxs -c conda-forge`
+- **uv / pip from source**: this repository ships a `pyproject.toml` using [scikit-build-core](https://scikit-build-core.readthedocs.io/). With CUDA, HDF5 development packages, and OpenMP available on the system, run `uv sync --all-extras` or `uv build`. Tag-triggered PyPI uploads currently publish **sdists only** (binary manylinux CUDA wheels would need a dedicated cibuildwheel image policy); conda-forge remains the primary channel for curated GPU stacks.
+- **CMake-only** flows for the CLI, libconfig, and detailed HDF5 setup are in [docs/INSTALL.md](docs/INSTALL.md).
+
+Publishing to PyPI on annotated tags is handled by [`.github/workflows/release.yml`](.github/workflows/release.yml) using [trusted publishing](https://docs.pypi.org/trusted-publishers/); configure the `cyrsoxs` project on PyPI to trust this GitHub repository and workflow before relying on automated uploads.
 
 ## [Simulation Componenets](docs/DATA.md)
 

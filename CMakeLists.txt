@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
 project(CyRSoXS VERSION 1.2.0.0 DESCRIPTION BetaVersion LANGUAGES CXX CUDA)
 
@@ -12,13 +12,20 @@ option(BIAXIAL "Biaxial Computation" OFF)
 option(BUILD_DOCS "Build Documentation" OFF)
 option(PYBIND "Pybind support for CyRSoXS" OFF)
 option(USE_64_BIT_INDICES, "Use 64 Bit Indices" OFF)
-option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" ON)
+option(USE_SUBMODULE_PYBIND,"Use submodule Pybind instead of system" OFF)
 option(ENABLE_TEST, "Enable test" ON)
 option(OUTPUT_BASE_NAME, "Output base name" "CyRSoXS")
+
+if(SKBUILD)
+    set(PYBIND ON CACHE BOOL "Pybind support for CyRSoXS" FORCE)
+    set(USE_SUBMODULE_PYBIND OFF CACHE BOOL "Use submodule Pybind instead of system" FORCE)
+endif()
 
 if(NOT OUTPUT_BASE_NAME)
         set(OUTPUT_BASE_NAME "CyRSoXS")
 endif()
+
+set(CYRSOXS_CUDA_ARCHITECTURES "70;75;80;86" CACHE STRING "CUDA GPU architectures (semicolon-separated), or native with CMake>=3.24")
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake_modules")
 if (DOUBLE_PRECISION)
@@ -90,21 +97,12 @@ endif ()
 # Pursuant to title 17 United States Code Section 105, works of NIST employees are not subject to copyright protection in the United States
 
 if (PYBIND)
-    # find_package(PythonInterp 3.6 REQUIRED)
-    # find_package(PythonLibs 3.6 REQUIRED)
-    find_package(Python 3 COMPONENTS Interpreter Development REQUIRED)
-    
-    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} --verbose")
-
-        if (USE_SUBMODULE_PYBIND)
-        set(PYBIND_LOCATION external/pybind11)
-        add_subdirectory(${PYBIND_LOCATION})
-        include_directories(external/pybind11/include)
-    else ()
+    find_package(Python 3 COMPONENTS Interpreter Development.Module REQUIRED)
+    if(USE_SUBMODULE_PYBIND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11/CMakeLists.txt")
+        add_subdirectory(external/pybind11)
+    else()
         find_package(pybind11 CONFIG REQUIRED)
-    endif ()
-    include_directories(${Python_INCLUDE_DIRS})
-    find_package(pybind11 CONFIG REQUIRED)
+    endif()
 else ()
     find_package(Config++)
     if (NOT ${CONFIG++_FOUND})
@@ -120,8 +118,10 @@ find_package(HDF5 COMPONENTS CXX HL REQUIRED)
 
 
 
-set(CMAKE_CUDA_STANDARD 14) # pab added
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CUDA_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CUDA_STANDARD_REQUIRED ON)
 set(CYRSOXS_SRC
         src/RotationMatrix.cpp
         src/cudaMain.cu)
@@ -177,10 +177,11 @@ if (PYBIND)
 
     add_library(${OUTPUT_BASE_NAME} SHARED
             ${PYBIND_SRC} ${CYRSOXS_SRC} ${CYRSOXS_INC})
-    target_include_directories(${OUTPUT_BASE_NAME} PUBLIC ${Python_INCLUDE_DIRS} ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
+    target_include_directories(${OUTPUT_BASE_NAME} PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} include)
     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR}/generated)
-    target_link_libraries(${OUTPUT_BASE_NAME}
-            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cublas CUDA::cufft CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps)
+    target_link_libraries(${OUTPUT_BASE_NAME} PRIVATE
+            pybind11::module
+            ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cublas CUDA::cufft CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps)
     #${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} -lcufft -lcublas -lcudart "${CUDA_nppc_LIBRARY};${CUDA_nppial_LIBRARY};${CUDA_nppicc_LIBRARY};${CUDA_nppidei_LIBRARY};${CUDA_nppif_LIBRARY};${CUDA_nppig_LIBRARY};${CUDA_nppim_LIBRARY};${CUDA_nppist_LIBRARY};${CUDA_nppisu_LIBRARY};${CUDA_nppitc_LIBRARY};${CUDA_npps_LIBRARY}" )
     
 
@@ -216,20 +217,32 @@ else ()
     target_include_directories(${OUTPUT_BASE_NAME} PUBLIC ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES} ${HDF5_INCLUDE_DIR} ${CONFIG++_INCLUDE_DIR} include)
     target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${PROJECT_BINARY_DIR}/generated)
     target_link_libraries(${OUTPUT_BASE_NAME}
-            ${Python_LIBRARIES} ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cufft CUDA::cublas CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps ${CONFIG++_LIBRARY})
+            ${HDF5_CXX_LIBRARIES} ${HDF5_HL_LIBRARIES} CUDA::cufft CUDA::cublas CUDA::nppc CUDA::nppial CUDA::nppicc CUDA::nppidei CUDA::nppif CUDA::nppig CUDA::nppim CUDA::nppist CUDA::nppisu CUDA::nppitc CUDA::npps ${CONFIG++_LIBRARY})
     if (EOC)
         target_include_directories(${OUTPUT_BASE_NAME} PRIVATE ${OpenCV_INCLUDE_DIRS})
         target_link_libraries(${OUTPUT_BASE_NAME} ${OpenCV_LIBS})
     endif ()
 endif ()
-set_property(TARGET ${OUTPUT_BASE_NAME} PROPERTY CUDA_ARCHITECTURES  52 53 60 61 62 70 72)
+if(CYRSOXS_CUDA_ARCHITECTURES STREQUAL "native")
+    set_property(TARGET ${OUTPUT_BASE_NAME} PROPERTY CUDA_ARCHITECTURES native)
+else()
+    set_property(TARGET ${OUTPUT_BASE_NAME} PROPERTY CUDA_ARCHITECTURES "${CYRSOXS_CUDA_ARCHITECTURES}")
+endif()
 
-if (ENABLE_TEST)
+if (ENABLE_TEST AND NOT SKBUILD)
     if (PYBIND)
         message("No tests with pybind with gtest framework")
     else ()
         add_definitions(-DCMAKE_ROOT=\"${CMAKE_SOURCE_DIR}\")
-        add_subdirectory(external/googletest)
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/googletest/CMakeLists.txt")
+            add_subdirectory(external/googletest)
+        else()
+            include(FetchContent)
+            FetchContent_Declare(googletest
+                    GIT_REPOSITORY https://github.com/google/googletest.git
+                    GIT_TAG v1.14.0)
+            FetchContent_MakeAvailable(googletest)
+        endif()
         set(TEST_SRC
                 tests/tests.cpp
                 )
@@ -270,10 +283,14 @@ if (BUILD_DOCS)
 endif ()
 
 if (PYBIND)
-        install(FILES build-pybind/$<TARGET_FILE_NAME:${OUTPUT_BASE_NAME}> DESTINATION lib )#RENAME ${OUTPUT_PYTHON_NAME})
-        install(FILES build-pybind/$<TARGET_FILE_NAME:${OUTPUT_BASE_NAME}> DESTINATION ${Python_SITEARCH}) #RENAME ${OUTPUT_PYTHON_NAME})
+    install(TARGETS ${OUTPUT_BASE_NAME}
+            LIBRARY DESTINATION .
+            RUNTIME DESTINATION .
+            ARCHIVE DESTINATION .)
 else ()
-        install(FILES build/${OUTPUT_BASE_NAME} DESTINATION bin PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)# RENAME ${OUTPUT_BASE_NAME})
+    install(TARGETS ${OUTPUT_BASE_NAME}
+            RUNTIME DESTINATION bin
+            PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
 endif ()
 
 

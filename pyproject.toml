@@ -1,0 +1,35 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11>=2.12"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "cyrsoxs"
+version = "1.2.0"
+description = "GPU-accelerated resonant soft X-ray scattering simulation in the Born approximation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=9"]
+
+[project.urls]
+Homepage = "https://github.com/usnistgov/cyrsoxs"
+Documentation = "https://cyrsoxs.readthedocs.io"
+
+[tool.scikit-build]
+minimum-version = "0.10"
+cmake.version = ">=3.26.1"
+cmake.args = [
+    "-DPYBIND=ON",
+    "-DUSE_SUBMODULE_PYBIND=OFF",
+    "-DENABLE_TEST=OFF",
+]
+ninja.version = ">=1.11"
+wheel.packages = []
+sdist.exclude = [".cursor/**", "external/pybind11/**"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

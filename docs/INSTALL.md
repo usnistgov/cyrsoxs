@@ -1,6 +1,6 @@
-# CyRSoXS Installation Instructions (1.2.0.0)
+# CyRSoXS Installation Instructions (1.2.0)
 
-## Conda
+## Conda (recommended for binaries)
 
 CyRSoXS is available as a pre-built binary on the `conda-forge` channel. To install:
 
@@ -8,29 +8,78 @@ CyRSoXS is available as a pre-built binary on the `conda-forge` channel. To inst
 conda install cyrsoxs -c conda-forge
 ```
 
-## Building from source
+Pre-built binaries on conda-forge include compatible CUDA, HDF5, and compiler stacks. PyPI may publish source distributions and limited wheels; GPU-capable wheels are constrained by CUDA manylinux policy, so conda-forge remains the primary binary channel for most users.
 
-To build CyRSoXS from source, the following dependencies need to be installed:
+## Python package build with uv (PEP 517)
 
-* A C++ compiler with C++14 support is required.
-* gcc >= 7 (CUDA specific versions might have GCC requirements )
-* Cuda Toolkit (>=9)
-* HDF5
-* OpenMP
+The repository is a [scikit-build-core](https://scikit-build-core.readthedocs.io/) project. The native extension module is named `CyRSoXS` (import `import CyRSoXS`).
 
-### Additional dependencies for building with Pybind
+System requirements for a local build:
 
-* Python >= 3.6
+- C++17 compiler and NVIDIA CUDA toolkit (`nvcc` on `PATH`)
+- HDF5 C++ and HL **development** headers and libraries (e.g. Debian/Ubuntu `libhdf5-dev`, Fedora `hdf5-devel`)
+- OpenMP
 
-### Additional dependencies for building without Pybind
+Point CMake at HDF5 when it is not in a default prefix:
 
-* libconfig
+```bash
+export HDF5_ROOT=/path/to/hdf5/prefix
+```
+
+Optional: override GPU architectures (semicolon-separated list, or `native` on CMake 3.24+):
+
+```bash
+export CYRSOXS_CUDA_ARCHITECTURES="80;86"
+```
+
+Install the project into a uv-managed environment (requires HDF5 dev packages on the machine):
+
+```bash
+uv sync --all-extras
+```
+
+Build wheels and sdists without installing into the active environment:
+
+```bash
+uv build -v
+```
+
+If you only need Python dev tools (for example `pytest`) and do not have HDF5 headers installed yet:
+
+```bash
+uv sync --all-extras --no-install-project
+```
+
+To run the smoke test without building the extension (the import is skipped when the module is absent):
+
+```bash
+uv run --no-project pytest tests/
+```
+
+## Building from source (CMake only)
+
+To build CyRSoXS from source without uv, the following dependencies need to be installed:
+
+- A C++ compiler with C++17 support
+- gcc compatible with your CUDA toolkit
+- CUDA Toolkit with nvcc
+- HDF5 (C++, HL)
+- OpenMP
+
+### Additional dependencies for building the Python extension (Pybind11)
+
+- Python >= 3.10
+- pybind11 (supplied automatically when building through uv / pip; for a pure CMake build, install pybind11 and pass `-DUSE_SUBMODULE_PYBIND=OFF`, or place a pybind11 source tree under `external/pybind11` and pass `-DUSE_SUBMODULE_PYBIND=ON`)
+
+### Additional dependencies for building without Pybind (CLI executable)
+
+- libconfig++
 
 ### Dependencies for building the documentation
 
-* Doxygen
-* Graphviz
-* latex
+- Doxygen
+- Graphviz
+- latex
 
 ## Compiling libconfig
 
@@ -67,6 +116,14 @@ source ~/.bashrc
 
 CyRSoXS needs [HDF5](https://en.wikipedia.org/wiki/Hierarchical_Data_Format)-based binary input format.
 
+On Debian or Ubuntu, prefer the packaged development files:
+
+```bash
+sudo apt-get install libhdf5-dev
+```
+
+Alternatively, build HDF5 from upstream sources (older workflow):
+
 ```bash
 cd $HDF5_INSTALL_DIRECTORY
 wget https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.10/hdf5-1.10.5/src/CMake-hdf5-1.10.5.tar.gz
@@ -80,7 +137,7 @@ cd CMake-hdf5-1.10.5
 ```
 
 This step might take some time. Do not cancel until all the tests have passed.
-This step will create a cmake files in location `$HFD5_DIR/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5`
+This step will create a cmake files in location `$HDF5_DIR/build/_CPack_Packages/Linux/TGZ/HDF5-1.10.5-Linux/HDF_Group/HDF5/1.10.5/share/cmake/hdf5`
 
 Export the path for HDF5:
 
@@ -92,18 +149,10 @@ source ~/.bashrc
 
 ## Downloading CyRSoXS
 
-Clone the CyRSoXS Github repo
+Clone the CyRSoXS Github repo:
 
 ```bash
 git clone https://github.com/usnistgov/cyrsoxs.git
-```
-
-### With Pybind
-
-If you want to use the Python support for CyRSoXS, add the submodule by
-
-```bash
-git submodule update --init
 ```
 
 ## Building CyRSoXS
@@ -115,38 +164,40 @@ To compile CyRSoXS as an executable that can be called from the command line or 
 
 ```bash
 cd $CyRSoXS_DIR
-mkdir build;
-cd build;
+mkdir build
+cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 ```
 
 This will generate a `CyRSoXS` executable.
 
-### Building with Pybind
+### Building with Pybind (CMake)
 
-CyRSoXS can also be compiled with Pybind so that it can be imported as a Python library. To compile for this functionality, run the following commands:
+CyRSoXS can also be compiled with Pybind11 so that it can be imported as a Python library. Example:
 
 ```bash
 cd $CyRSoXS_DIR
 mkdir build-pybind
 cd build-pybind
-cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND=Yes -USE_SUBMODULE_PYBIND=Yes
+cmake .. -DCMAKE_BUILD_TYPE=Release -DPYBIND=ON -DUSE_SUBMODULE_PYBIND=OFF
+cmake --build .
 ```
 
-This will generate a `CyRSoXS.so` Shared Library file, which can be imported into Python. Note that this does not create an executable.
+This produces a shared library that can be imported as `CyRSoXS` when placed on `PYTHONPATH`, or use `uv build` / `pip install .` for a proper install into the active environment.
 
 #### Optional CMake Flags
 
 ```console
-    
-    -DPYBIND=Yes            # Compiling with Pybind
-    -DUSE_PYBIND_SUBMODULE  # Choose to compile with the Pybind submodule, or Conda-installed Pybind 
-    -DMAX_NUM_MATERIAL=64   # To change the maximum number of materials (default is 32) 
+    -DPYBIND=ON             # Compiling with Pybind11
+    -DUSE_SUBMODULE_PYBIND=ON   # Use vendored pybind11 under external/pybind11 (optional)
+    -DUSE_SUBMODULE_PYBIND=OFF  # Use pybind11 from CMAKE_PREFIX_PATH (default for uv builds)
+    -DMAX_NUM_MATERIAL=64   # To change the maximum number of materials (default is 32)
     -DDOUBLE_PRECISION=Yes  # Calculations will performed with double precision numbers
     -DPROFILING=Yes         # Enables profiling of the code
     -DBUILD_DOCS=Yes        # To build documentation
     -DCMAKE_CXX_COMPILER=icpc -DCMAKE_C_COMPILER=icc # Compiling with the Intel compiler (does not work with Pybind)
     -DOUTPUT_BASE_NAME=CyRSoXS # Changes the name of the built output binary or Python module (if using Pybind)
+    -DCYRSOXS_CUDA_ARCHITECTURES=80;86 # Override default GPU architecture list
 ```
 
 ## Making CyRSoXS
@@ -154,7 +205,7 @@ This will generate a `CyRSoXS.so` Shared Library file, which can be imported int
 Once the CMake files has been generated run the following command:
 
 ```bash
-make
+cmake --build .
 ```
 
-If `-DBUILD_DOCS=Yes`, the make command will build the documentation in html and latex located in `$CyRSoXS_DIR/build/html` and `$CyRSoXS_DIR/build/latex`, respectively. A PDF of the documentation is also built as `$CyRSoXS_DIR/build/latex/CyRSoXS_Manual.pdf`.
+If `-DBUILD_DOCS=Yes`, the build also drives Doxygen and can produce documentation under the build tree, including `$CyRSoXS_DIR/build/latex/CyRSoXS_Manual.pdf` when LaTeX is available.
