@@ -1,0 +1,71 @@
+[build-system]
+requires = ["scikit-build-core>=0.10", "pybind11>=2.12"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "cyrsoxs-temp"
+authors = [
+    { name = "Kumar Saurabh", email = "kumar.saurabh@iastate.edu" },
+    { name = "Adarsh Krishnamurthy", email = "adarsh.krishnamurthy@iastate.edu" },
+    { name = "Baskar Ganapathysubramanian", email = "baskar.ganapathysubramanian@iastate.edu" },
+    { name = "Eliot Gann", email = "eliot.gann@nist.gov" },
+    { name = "Dean M. DeLongchamp", email = "dean.delongchamp@nist.gov" },
+    { name = "Peter J. Dudenas", email = "peter.dudenas@nist.gov" },
+    { name = "Tyler B. Martin", email = "tyler.martin@nist.gov" },
+    { name = "Peter Beaucage", email = "peter.beaucage@nist.gov" },
+]
+version = "1.2.0"
+description = " Cy-RSoXS Forward Simulator for Resonant Soft X-Ray Scattering "
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT and NIST"
+license-files = ["LICENSE", "NIST_LICENSE"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Operating System :: POSIX :: Linux",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Programming Language :: Python :: 3",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.3"]
+jupyter = [
+    "h5py>=3.10",
+    "ipykernel>=6.29.5",
+    "matplotlib>=3.8.4",
+    "numpy>=2.0",
+    "pandas>=2.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3"]
+jupyter = [
+    "h5py>=3.10",
+    "ipykernel>=6.29.5",
+    "matplotlib>=3.8.4",
+    "numpy>=2.0",
+    "pandas>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/usnistgov/cyrsoxs"
+Documentation = "https://cyrsoxs.readthedocs.io"
+
+[tool.scikit-build]
+minimum-version = "0.10"
+cmake.version = ">=3.26.1"
+cmake.args = [
+    "-DPYBIND=ON",
+    "-DUSE_SUBMODULE_PYBIND=OFF",
+    "-DENABLE_TEST=OFF",
+    "-DCYRSOXS_FETCH_HDF5=ON",
+]
+ninja.version = ">=1.11"
+wheel.packages = []
+sdist.exclude = [".cursor/**", "external/pybind11/**"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]

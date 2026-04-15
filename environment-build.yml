@@ -2,13 +2,15 @@ name: cyrsoxs-build
 
 channels:
   - conda-forge
-  - defaults
+  - nvidia
 dependencies:
   - cxx-compiler
   - pybind11
-  - cmake>3.8
+  - cmake>=3.18
   - make
+  - ninja
   - hdf5
   - libconfig
   - openmp
   - nvidia::cuda
+  - uv

@@ -1,0 +1,66 @@
+cff-version: 1.2.0
+message: >-
+  If you use CyRSoXS in research, please cite the Journal of Applied
+  Crystallography article below.
+title: CyRSoXS
+abstract: >-
+  Cy-RSoXS forward simulator for resonant soft X-ray scattering (RSoXS),
+  including GPU-accelerated Born-approximation calculations.
+type: software
+url: https://github.com/usnistgov/cyrsoxs
+repository-code: https://github.com/usnistgov/cyrsoxs
+authors:
+  - family-names: Saurabh
+    given-names: Kumar
+  - family-names: Krishnamurthy
+    given-names: Adarsh
+  - family-names: Ganapathysubramanian
+    given-names: Baskar
+  - family-names: Gann
+    given-names: Eliot
+  - family-names: DeLongchamp
+    given-names: Dean M.
+  - family-names: Dudenas
+    given-names: Peter J.
+  - family-names: Martin
+    given-names: Tyler B.
+  - family-names: Beaucage
+    given-names: Peter A.
+preferred-citation:
+  type: article
+  title: >-
+    CyRSoXS: a GPU-accelerated virtual instrument for polarized resonant
+    soft X-ray scattering
+  authors:
+    - family-names: Saurabh
+      given-names: K.
+    - family-names: Dudenas
+      given-names: P. J.
+    - family-names: Gann
+      given-names: E.
+    - family-names: Reynolds
+      given-names: V. G.
+    - family-names: Mukherjee
+      given-names: S.
+    - family-names: Sunday
+      given-names: D.
+    - family-names: Martin
+      given-names: T. B.
+    - family-names: Beaucage
+      given-names: P. A.
+    - family-names: Chabinyc
+      given-names: M. L.
+    - family-names: DeLongchamp
+      given-names: D. M.
+    - family-names: Krishnamurthy
+      given-names: A.
+    - family-names: Ganapathysubramanian
+      given-names: B.
+  year: 2023
+  journal: Journal of Applied Crystallography
+  volume: 56
+  issue: 3
+  start: 868
+  end: 883
+  doi: 10.1107/S1600576723002790
+  url: https://journals.iucr.org/j/issues/2023/03/00/jl5058/index.html

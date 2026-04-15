@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install CUDA and build dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq nvidia-cuda-toolkit build-essential g++-10 libhdf5-dev
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.6.14"
+
+      - name: Sync and build extension
+        run: |
+          uv python install ${{ matrix.python-version }}
+          uv sync --all-extras --python ${{ matrix.python-version }}
+          uv build --wheel -v --python ${{ matrix.python-version }}
+
+      - name: Smoke test (editable)
+        run: uv run --python ${{ matrix.python-version }} pytest tests/ -v
+
+      - name: Smoke test (wheel install)
+        run: |
+          uv venv /tmp/cyrsoxs-whl --python ${{ matrix.python-version }}
+          uv pip install --python /tmp/cyrsoxs-whl/bin/python dist/*.whl
+          /tmp/cyrsoxs-whl/bin/python -c "import CyRSoXS; print(CyRSoXS.__name__)"

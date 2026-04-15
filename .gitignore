@@ -1,6 +1,9 @@
 build/
 build-pybind/
 cmake-build-*/
+.venv/
+dist/
+*.egg-info/
 .idea/
 .vscode/
 # run-generated files
