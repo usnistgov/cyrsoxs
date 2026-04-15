@@ -108,7 +108,7 @@ endif ()
 # Pursuant to title 17 United States Code Section 105, works of NIST employees are not subject to copyright protection in the United States
 
 if (PYBIND)
-    find_package(Python 3 COMPONENTS Interpreter Development.Module REQUIRED)
+    find_package(Python 3.9 COMPONENTS Interpreter Development.Module REQUIRED)
     if(USE_SUBMODULE_PYBIND AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/external/pybind11/CMakeLists.txt")
         add_subdirectory(external/pybind11)
     else()

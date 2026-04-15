@@ -23,6 +23,13 @@ dependencies = []
 
 [project.optional-dependencies]
 dev = ["pytest>=9"]
+jupyter = [
+    "h5py>=3.16.0",
+    "ipykernel>=7.2.0",
+    "matplotlib>=3.10.8",
+    "numpy>=2.2.6",
+    "pandas>=2.3.3",
+]
 
 [dependency-groups]
 dev = ["pytest>=9"]
